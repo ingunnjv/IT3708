@@ -3,7 +3,7 @@ from itertools import chain
 
 class ProblemSpec:
     def __init__(self):
-        self.max_nr_vehicles = 0
+        self.max_vehicles_per_depot = 0
         self.nr_depots = 0
         self.nr_customers = 0
         self.depots = []
@@ -13,7 +13,7 @@ class ProblemSpec:
     def readProblemFile(self, fileName):
         with open('../data/Data Files/' + fileName, 'r') as f:
             main_data = list(map(int,(f.readline().strip('\n').split())))
-            self.max_nr_vehicles,  self.nr_customers, self.nr_depots = main_data
+            self.max_vehicles_per_depot, self.nr_customers, self.nr_depots = main_data
             for _ in range(0, self.nr_depots):
                 depot_data = list(map(int,(f.readline().strip('\n').split())))
                 D, Q = depot_data
