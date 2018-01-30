@@ -93,7 +93,8 @@ class Genotype:
         # Randomly initialize the chromsome
         max_vehicles = problem_spec.max_vehicles_per_depot * problem_spec.num_depots
         self.vehicle_routes = [ [] for i in range(0, max_vehicles)]
-        random.seed(None)
+        self.problem_spec = problem_spec
+        random.seed()
         for customer in problem_spec.customers:
             inserted = False
             while(not inserted):
@@ -102,7 +103,6 @@ class Genotype:
                 if not self.vehicleOverloaded(self.vehicle_routes[vehicle_nr], vehicle_nr, customer.q, problem_spec):
                     self.vehicle_routes[vehicle_nr].append(customer)
                     inserted = True
-        self.problem_spec = problem_spec
 
     ######################################################
     # Determine if the a vehicle becomes overloaded if its assigned an additional customer, returns True/False
@@ -158,13 +158,14 @@ class Genotype:
         for vehicle_nr, route in enumerate(self.vehicle_routes):
             depot_nr = self.getDepotNumber(vehicle_nr)
             # The depot is considered the very first "customer"
-            previous_customer = depot_nr + self.problem_spec.num_customers
+            prev_customer_index = depot_nr + self.problem_spec.num_customers
             for customer in route:
+                customer_index = customer.i - 1
                 # Find distance between the current customer and the previous
-                duration += self.problem_spec.cost_matrix[previous_customer, customer]
-                previous_customer = customer
+                duration += self.problem_spec.cost_matrix[prev_customer_index, customer_index]
+                prev_customer_index = customer_index
             # Remember to add the distance from last customer to depot
-            duration += self.problem_spec.cost_matrix[previous_customer, depot_nr + self.problem_spec.num_customers]
+            duration += self.problem_spec.cost_matrix[prev_customer_index, depot_nr + self.problem_spec.num_customers]
         return duration
 
 
@@ -173,7 +174,7 @@ class Genotype:
 
 ga = GA('p01', 10, 100, 0.6, 0.2, 0.25)
 ga.initializePopulation()
-#ga.population[0].vizualizeGenes()
+dur = ga.population[0].duration()
 #ga.population[0].vizualizeGenes()
 #ga.population[1].vizualizeGenes()
 #plt.close("all")
