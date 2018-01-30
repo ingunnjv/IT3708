@@ -12,20 +12,32 @@ colors = ['crimson', 'green', 'blue',
         'greenyellow', 'grey', 'aqua', 'olive',  'teal']
 
 class GA:
-    def __init__(self, fileName, population_size):
+    def __init__(self, fileName, population_size, generations, crossover_prob, intra_mutation_prob, inter_mutation_prob):
         self.problem_spec = pr.ProblemSpec(fileName)
+
+        # Parameters
         self.population_size = population_size
+        self.generations = generations
+        self.crossover_prob = crossover_prob
+        self.intra_mutation_prob = intra_mutation_prob
+        self.inter_mutation_prob = inter_mutation_prob
 
+        # Data storage
         self.population = []
+        self.fitness_history = []
 
-
+    ######################################################
+    # Create an initial population by creating Genotype()'s and storing them in self.population
     def initializePopulation(self):
         for _ in range(0, self.population_size):
             genotype = Genotype(self.problem_spec)
             self.population.append(genotype)
 
-    def fitness(self):
-        pass
+
+    ######################################################
+    # Returns the fitness (float) of a single individual
+    def fitness(self, individual):
+        return 0
 
     def parentSelection(self):
         pass
@@ -39,6 +51,36 @@ class GA:
     def survivorSelection(self):
         pass
 
+    ######################################################
+    # Evolves an initial population by means of mutation and recombinations over a given number of generations
+    def evolutionCycle(self):
+        random.seed(None)
+
+        # Generate initial population
+        self.initializePopulation()
+
+        # Start the evolution process
+        for generation in range(0, self.generations):
+            # Evaluate the fitness of all individuals in the population and compute the average
+            population_fitness = []
+            for individual in self.population:
+                population_fitness.append(self.fitness(individual))
+            average_fitness = sum(population_fitness) / self.population_size
+            self.fitness_history.append(average_fitness)
+
+            # Create a new population with 200 individuals by doing recombination, mutation and elitism
+            new_population = []
+            while len(new_population) < len(self.population_size):
+
+
+
+                pass
+
+
+
+
+
+
 
 
 class Genotype:
@@ -48,10 +90,10 @@ class Genotype:
         self.background = None
         self.fig = None
 
-        # Genes
+        # Randomly initialize the chromsome
         max_vehicles = problem_spec.max_vehicles_per_depot * problem_spec.num_depots
         self.vehicle_routes = [ [] for i in range(0, max_vehicles)]
-        random.seed()
+        random.seed(None)
         for customer in problem_spec.customers:
             inserted = False
             while(not inserted):
@@ -62,6 +104,8 @@ class Genotype:
                     inserted = True
         self.problem_spec = problem_spec
 
+    ######################################################
+    # Determine if the a vehicle becomes overloaded if its assigned an additional customer, returns True/False
     def vehicleOverloaded(self, vehicle_route, vehicle_nr, customer_demand, problem_spec):
         demand_sum = customer_demand
         for customer in vehicle_route:
@@ -72,6 +116,8 @@ class Genotype:
         else:
             return False
 
+    ######################################################
+    # Plots all the vehicle routes of the chromosome in a single plot
     def vizualizeGenes(self):
         fig, ax = plt.subplots(1, 1)
         ax.set_aspect('equal')
@@ -99,12 +145,15 @@ class Genotype:
         self.fig = fig
         self.ax = ax
 
+    def isFeasible(self):
+        pass
 
 
 
 
 
-ga = GA('p01', 10)
+
+ga = GA('p01', 10, 100, 0.6, 0.2, 0.25)
 ga.initializePopulation()
 #ga.population[0].vizualizeGenes()
 #ga.population[0].vizualizeGenes()

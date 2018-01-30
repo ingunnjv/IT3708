@@ -26,7 +26,7 @@ class ProblemSpec:
                 self.depots.append(Depot(D, Q))
             for _ in range(0, self.num_customers):
                 customer_data = list(map(int, (f.readline().strip('\n').split())))
-                i, x, y, d, q = customer_data[:5]
+                i, x, y, d, q = customer_data[:5] # only the first 5 datas of ustomers are used in this project
                 self.customers.append(Customer(i, x, y, d, q))
             for i in range(0, self.num_depots):
                 depot_coords = list(map(int, (f.readline().strip('\n').split())))
@@ -68,5 +68,3 @@ class Customer:
         self.d = d          # necessary service duration
         self.q = q          # demand for customer
 
-problem_spec = ProblemSpec('p01')
-yo = 5
