@@ -66,7 +66,7 @@ class Genotype:
         demand_sum = customer_demand
         for customer in vehicle_route:
             demand_sum += customer.q
-        depot_number = math.floor(vehicle_nr / problem_spec.num_depots)
+        depot_number = self.getDepotNumber(vehicle_nr)
         if demand_sum > problem_spec.depots[depot_number - 1].Q:
             return True
         else:
@@ -84,7 +84,7 @@ class Genotype:
         for vehicle_nr, route in enumerate(self.vehicle_routes):
             route_x_coords = np.zeros(len(route) + 2)
             route_y_coords = np.zeros(len(route) + 2)
-            depot_nr = math.floor(vehicle_nr / self.problem_spec.num_depots)
+            depot_nr = self.getDepotNumber(vehicle_nr)
             route_x_coords[0] = self.problem_spec.depots[depot_nr].x
             route_y_coords[0] = self.problem_spec.depots[depot_nr].y
             for customer_num in range(0, len(route)):
@@ -99,6 +99,27 @@ class Genotype:
         self.fig = fig
         self.ax = ax
 
+    ###########################################
+    # Get depot number of the specified vehicle
+    def getDepotNumber(self, vehicle_nr):
+        return math.floor(vehicle_nr / self.problem_spec.num_depots)
+
+    ######################################################
+    # Finds the duration (total cost) of a single solution
+    def duration(self):
+        duration = 0
+        # Go through all routes
+        for vehicle_nr, route in enumerate(self.vehicle_routes):
+            depot_nr = self.getDepotNumber(vehicle_nr)
+            # The depot is considered the very first "customer"
+            previous_customer = depot_nr + self.problem_spec.num_customers
+            for customer in route:
+                # Find distance between the current customer and the previous
+                duration += self.problem_spec.cost_matrix[previous_customer, customer]
+                previous_customer = customer
+            # Remember to add the distance from last customer to depot
+            duration += self.problem_spec.cost_matrix[previous_customer, depot_nr + self.problem_spec.num_customers]
+        return duration
 
 
 
