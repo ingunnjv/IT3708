@@ -239,18 +239,11 @@ class Genotype:
             for depot in range(closest_depot, closest_depot + problem_spec.num_depots):
                 depot = depot % problem_spec.num_depots
                 vehicle_start_index = depot * problem_spec.max_vehicles_per_depot
-            while(not inserted):
-                vehicle_nr = random.randrange(max_vehicles)  # Choose random vehicle
-                # Only append if it doesnt cause vehicle overload :
-                if ((not self.vehicleOverloaded(self.vehicle_routes[vehicle_nr], vehicle_nr, customer.q, problem_spec))
-                    and (not self.routeDurationLimitExceeded(self.vehicle_routes[vehicle_nr], vehicle_nr, customer, len(self.vehicle_routes[vehicle_nr])))):
-                    self.vehicle_routes[vehicle_nr].append(customer)
-                    inserted = True
-
                 # Proceed by putting the customer in the first available vehicle
                 for vehicle_nr in range(vehicle_start_index, vehicle_start_index + problem_spec.max_vehicles_per_depot - 1):
                     # Only append if it doesnt cause vehicle overload :
-                    if not self.vehicleOverloaded(self.vehicle_routes[vehicle_nr], vehicle_nr, customer.q, problem_spec):
+                    if ((not self.vehicleOverloaded(self.vehicle_routes[vehicle_nr], vehicle_nr, customer.q, problem_spec))
+                     and (not self.routeDurationLimitExceeded(self.vehicle_routes[vehicle_nr], vehicle_nr, customer, len(self.vehicle_routes[vehicle_nr])))):
                         self.vehicle_routes[vehicle_nr].append(customer)
                         inserted = True
                         break
