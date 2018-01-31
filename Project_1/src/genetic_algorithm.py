@@ -3,7 +3,8 @@ import random
 import math
 import matplotlib.pyplot as plt
 import numpy as np
-import time
+from timeit import default_timer as timer
+from operator import itemgetter
 
 
 colors = ['crimson', 'green', 'blue',
@@ -45,8 +46,64 @@ class GA:
     def mutation(self, parent):
         pass
 
+    ######################################################
+    # Perform Best Cost Route Crossover on two parents. Produces two offspring
     def crossover(self, parent1, parent2):
-        pass
+        start = timer()
+        # Randomly select a route from each parent, r1 in p1, r2 in p2
+        total_num_vehicles = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
+        route1 = parent1.vehicle_routes[random.randint(0, total_num_vehicles)]
+        route2 = parent2.vehicle_routes[random.randint(0, total_num_vehicles)]
+
+        # Remove all customers in r1 from p2 (pop(index))
+        for c1 in route1:
+            for vehicle_nr, route in enumerate(parent2.vehicle_routes):
+                parent2.vehicle_routes[vehicle_nr] = [c2 for c2 in route if c1 != c2]
+
+        # Remove all customers in r2 from p1
+        for c2 in route2:
+            for vehicle_nr, route in enumerate(parent1.vehicle_routes):
+                parent1.vehicle_routes[vehicle_nr] = [c1 for c1 in route if c1 != c2]
+
+        # List of position in p2 (index), insertion cost and feasibility[0,1] of the insertion
+        insertion_cost = []
+
+        # For each customer in r1:
+        for route1_customer in route1:
+
+            # Find insertion cost of the customer at each location in p2.
+            for vehicle_nr, r in enumerate(parent2.vehicle_routes):
+                depot_index = parent2.getDepotNumber(vehicle_nr) + parent2.problem_spec.num_customers
+                prev_customer_index = depot_index
+
+                for c_pos in range(0, len(r) + 1):
+                    if c_pos < len(r): next_customer_index = r[c_pos].i - 1
+                    else: next_customer_index = depot_index
+
+                    cost = parent2.problem_spec.cost_matrix[prev_customer_index, route1_customer.i - 1] \
+                           + parent2.problem_spec.cost_matrix[route1_customer.i - 1, next_customer_index]
+                    prev_customer_index = next_customer_index
+
+                    # Feasible?
+                    feasible = (not (parent2.vehicleOverloaded(r, vehicle_nr, route1_customer.q, parent2.problem_spec)
+                                or parent2.routeDurationLimitExceeded(r, vehicle_nr, route1_customer, c_pos)))
+                    # Save the position in p2
+                    pos = (vehicle_nr, c_pos)
+                    insertion_cost.append((pos, cost, feasible))
+
+            # Store in ordered list (increasing cost)
+            insertion_cost = sorted(insertion_cost, key=itemgetter(1))
+        # Random number (0,1)
+        # If k <= 0.8:
+            # choose first feasible insertion location
+            # no such exists:
+                # new route with this as only customer
+        # else:
+            # choose first entry in list
+
+        # Repeat for r2.
+        end = timer()
+        print("Time: ", 300*(end - start))
 
     def survivorSelection(self):
         pass
@@ -100,18 +157,32 @@ class Genotype:
             while(not inserted):
                 vehicle_nr = random.randrange(max_vehicles)  # Choose random vehicle
                 # Only append if it doesnt cause vehicle overload :
-                if not self.vehicleOverloaded(self.vehicle_routes[vehicle_nr], vehicle_nr, customer.q, problem_spec):
+                if ((not self.vehicleOverloaded(self.vehicle_routes[vehicle_nr], vehicle_nr, customer.q, problem_spec))
+                    and (not self.routeDurationLimitExceeded(self.vehicle_routes[vehicle_nr], vehicle_nr, customer, len(self.vehicle_routes[vehicle_nr])))):
                     self.vehicle_routes[vehicle_nr].append(customer)
                     inserted = True
 
     ######################################################
-    # Determine if the a vehicle becomes overloaded if its assigned an additional customer, returns True/False
+    # Determine if a vehicle becomes overloaded if its assigned an additional customer, returns True/False
     def vehicleOverloaded(self, vehicle_route, vehicle_nr, customer_demand, problem_spec):
         demand_sum = customer_demand
         for customer in vehicle_route:
             demand_sum += customer.q
         depot_number = self.getDepotNumber(vehicle_nr)
-        if demand_sum > problem_spec.depots[depot_number - 1].Q:
+        if demand_sum > problem_spec.depots[depot_number].Q:
+            return True
+        else:
+            return False
+
+    ######################################################
+    # Determine if a route becomes too long if an additional customer is assigned in a certain position
+    def routeDurationLimitExceeded(self, route, vehicle_nr, new_customer, new_customer_position):
+        new_route = list(route)
+        new_route.insert(new_customer_position, new_customer)
+
+        duration = self.routeDuration(new_route, vehicle_nr)
+        max_route_duration = self.problem_spec.depots[self.getDepotNumber(vehicle_nr)].D
+        if duration > max_route_duration and max_route_duration != 0:
             return True
         else:
             return False
@@ -156,25 +227,32 @@ class Genotype:
         duration = 0
         # Go through all routes
         for vehicle_nr, route in enumerate(self.vehicle_routes):
-            depot_nr = self.getDepotNumber(vehicle_nr)
-            # The depot is considered the very first "customer"
-            prev_customer_index = depot_nr + self.problem_spec.num_customers
-            for customer in route:
-                customer_index = customer.i - 1
-                # Find distance between the current customer and the previous
-                duration += self.problem_spec.cost_matrix[prev_customer_index, customer_index]
-                prev_customer_index = customer_index
-            # Remember to add the distance from last customer to depot
-            duration += self.problem_spec.cost_matrix[prev_customer_index, depot_nr + self.problem_spec.num_customers]
+            duration += self.routeDuration(route, vehicle_nr)
         return duration
 
+    ######################################################
+    # Finds the duration of a single route
+    def routeDuration(self, route, vehicle_nr):
+        duration = 0
+        # The depot is considered the very first "customer"
+        depot_nr = self.getDepotNumber(vehicle_nr)
+        prev_customer_index = depot_nr + self.problem_spec.num_customers
+        for customer in route:
+            customer_index = customer.i - 1
+            # Find distance between the current customer and the previous
+            duration += self.problem_spec.cost_matrix[prev_customer_index, customer_index]
+            prev_customer_index = customer_index
+        # Remember to add the distance from last customer to depot
+        duration += self.problem_spec.cost_matrix[prev_customer_index, depot_nr + self.problem_spec.num_customers]
+
+        return duration
 
 
 
 
 ga = GA('p01', 10, 100, 0.6, 0.2, 0.25)
 ga.initializePopulation()
-dur = ga.population[0].duration()
+ga.crossover(ga.population[0], ga.population[1])
 #ga.population[0].vizualizeGenes()
 #ga.population[1].vizualizeGenes()
 #plt.close("all")
