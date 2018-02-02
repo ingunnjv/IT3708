@@ -3,6 +3,7 @@ import random
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+import copy
 from timeit import default_timer as timer
 from operator import itemgetter
 
@@ -13,7 +14,8 @@ colors = ['crimson', 'green', 'blue',
         'greenyellow', 'grey', 'aqua', 'olive',  'teal']
 
 class GA:
-    def __init__(self, fileName, population_size, generations, elite_ratio, tournament_ratio, crossover_prob, intra_mutation_prob, inter_mutation_prob):
+    def __init__(self, fileName, population_size, generations, elite_ratio, tournament_ratio, crossover_prob, intra_mutation_prob, inter_mutation_prob,
+                 inter_mutation_attempt_rate):
         self.problem_spec = pr.ProblemSpec(fileName)
 
         # Parameters
@@ -24,6 +26,7 @@ class GA:
         self.crossover_prob = crossover_prob
         self.intra_mutation_prob = intra_mutation_prob
         self.inter_mutation_prob = inter_mutation_prob
+        self.inter_muation_attempt_rate = inter_mutation_attempt_rate
 
         # Data storage
         self.population = []
@@ -41,11 +44,57 @@ class GA:
         print("initalizePopulation timer: " + str(end-start))
 
 
-    def intraMutation(self, offspring):
-        pass
+    ######################################################
+    # Applies a change to one random vehicle route (inversion)
+    def intraMutation(self, offspring, type):
+        if type == "inversion":
+            num_vehicles = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
+            range_num_vehicles = list(range(0, num_vehicles))
+            vehicle_route = None
+            attempts = 1
+            while range_num_vehicles:
+                vehicle_nr = range_num_vehicles.pop(random.randint(0, num_vehicles - attempts))
+                vehicle_route = offspring.vehicle_routes[vehicle_nr]
+                if len(vehicle_route) >= 2:
+                    break
+                attempts += 1
+            vehicle_route_length = len(vehicle_route)
+            cutpoints = random.sample(range(0, vehicle_route_length), 2)
+            material = vehicle_route[min(cutpoints): max(cutpoints) + 1]
+            material.reverse()
+            vehicle_route[min(cutpoints): max(cutpoints) + 1] = material
+            pass
 
+
+    ######################################################
+    # Applies a swapping of customer between two vehicle routes
     def interMutation(self, offspring):
-        pass
+        num_vehicles = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
+        random_vehicle_route = None
+        # Acquire a random route which has a non-empty vehicle route
+        while not random_vehicle_route:
+            random_vehicle_route_nr = random.randint(0, num_vehicles - 1)
+            random_vehicle_route = offspring.vehicle_routes[random_vehicle_route_nr]
+        random_customer_nr = random.randint(0, len(random_vehicle_route) - 1)
+        customer = random_vehicle_route[random_customer_nr]
+
+        range_num_vehicles = list(range(0, num_vehicles))
+        attempts = 0
+        while range_num_vehicles:
+            vehicle_nr = range_num_vehicles.pop(random.randint(0, num_vehicles - attempts - 1))
+
+            if ((not offspring.vehicleOverloaded(offspring.vehicle_routes[vehicle_nr], vehicle_nr, customer.q, self.problem_spec))
+                and (not offspring.routeDurationLimitExceeded(offspring.vehicle_routes[vehicle_nr], vehicle_nr, customer,
+                                                         len(offspring.vehicle_routes[vehicle_nr])))):
+                offspring.vehicle_routes[vehicle_nr].append(customer)
+                random_vehicle_route.pop(random_customer_nr)
+                break
+            attempts += 1
+
+
+
+
+
 
     ######################################################
     # Perform Best Cost Route Crossover on two parents. Produces two offspring
@@ -106,7 +155,10 @@ class GA:
         end = timer()
         print("Time: ", 300*(end - start))
 
-    def survivorSelection(self):
+
+    ######################################################
+    # Returns the parent with the highest fitness from the parents parameter
+    def getSurvivors(self, parents):
         pass
     ######################################################
     # Returns the parent with the highest fitness from the parents parameter
@@ -114,7 +166,7 @@ class GA:
         fitnesses = []
         for parent in parents:
             fitnesses.append(parent.fitness)
-        return parents[fitnesses.index(max(fitnesses))]
+        return copy.deepcopy(parents[fitnesses.index(max(fitnesses))])
 
 
     ######################################################
@@ -156,7 +208,7 @@ class GA:
         self.initializePopulation()
 
         # Start the evolution process
-        for generation in range(0, self.generations):
+        for generation in range(1, self.generations):
             # Evaluate the fitness of all individuals in the population and compute the average
             population_fitness = []
             for individual in self.population:
@@ -170,7 +222,8 @@ class GA:
 
             # Print generation data to terminal
             print("Generation: %d" % generation)
-            print("Best fitness score: %f\n" % best_fitness)
+            print("Best fitness score: %f" % best_fitness)
+            print("Average fitness score: %f\n" % average_fitness)
 
             # Create a new population and directly copy the elites of the previous generation to the new one
             new_population = []
@@ -186,18 +239,26 @@ class GA:
                 event = random.random()
                 if event < self.crossover_prob:
                     # Do crossover and pass offspring to next generation
-                    offspring = self.crossover(parents[0], parents[1])
+                    offsprings = self.crossover(parents[0], parents[1])
 
                 else:
-                    offspring = self.getBestParent(parents)
+                    offsprings = self.getBestParent(parents)
 
-                # Roll dice on what event shall happen (inter-mutation, intra-mutation or no mutation)
-                event = random.random()
-                if event < self.inter_mutation_prob:
-                    offspring = self.interMutation(offspring)
-                elif (self.inter_mutation_prob < event and event < self.inter_mutation_prob + self.intra_mutation_prob):
-                    offspring = self.intraMutation(offspring)
-                new_population += offspring
+                for offspring in offsprings:
+                    # Roll dice on what event shall happen (inter-mutation, intra-mutation or no mutation)
+                    event = random.random()
+                    if event < self.inter_mutation_prob and generation % self.inter_muation_attempt_rate == 0:
+                        self.interMutation(offspring)
+                    elif self.inter_mutation_prob < event and event < self.inter_mutation_prob + self.intra_mutation_prob:
+                        self.intraMutation(offspring, 'inversion')
+
+                    offspring.updateFitness()
+                    new_population += [offspring]
+
+            # Stop population growing in case everything is not even numbers
+            if len(new_population) > (self.population_size):
+                new_population.pop()
+            self.population = new_population
 
 
 
@@ -224,7 +285,12 @@ class Genotype:
         self.vehicle_routes = [ [] for i in range(0, max_vehicles)]
         self.problem_spec = problem_spec
         random.seed()
-        for customer in problem_spec.customers:
+
+        range_num_customers = list(range(0, len(problem_spec.customers)))
+        customers_placed = 0
+        while range_num_customers:
+            customer_nr = range_num_customers.pop(random.randint(0, len(problem_spec.customers) - customers_placed - 1))
+            customer = self.problem_spec.customers[customer_nr]
             # Choose depot based on tournament selection
             random_depots = random.sample(range(0, problem_spec.num_depots), int(math.ceil(problem_spec.num_depots * 0.60)))
             closest_depot_distance = float('Inf')
@@ -249,9 +315,10 @@ class Genotype:
                         break
                 if inserted:
                     break
+            customers_placed += 1
 
 
-        self.fitness = self.duration()
+        self.updateFitness()
 
     def __lt__(self, other):
         return self.fitness < other.fitness
@@ -327,6 +394,9 @@ class Genotype:
             duration += self.routeDuration(route, vehicle_nr)
         return duration
 
+    def updateFitness(self):
+        self.fitness = self.duration()
+
     ######################################################
     # Finds the duration of a single route
     def routeDuration(self, route, vehicle_nr):
@@ -346,14 +416,17 @@ class Genotype:
 
 
 
-ga = GA(fileName = 'p01', population_size = 500, generations = 1000,
-        elite_ratio = 0.02, tournament_ratio = 0.15,
-        crossover_prob = 0.6, intra_mutation_prob = 0.2, inter_mutation_prob = 0.25)
+ga = GA(fileName = 'p01', population_size = 400, generations = 1000,
+        elite_ratio = 0.02, tournament_ratio = 0.07,
+        crossover_prob = 0.6, intra_mutation_prob = 0.2, inter_mutation_prob = 0.25,
+        inter_mutation_attempt_rate = 3)
 
 
 ga.evolutionCycle()
 #ga.initializePopulation()
-#dur = ga.population[0].duration()
+#A = ga.population[0]
+#B = copy.deepcopy(ga.population[0])
+#B.problem_spec = None
 
 #ga.population[0].vizualizeGenes()
 #ga.population[1].vizualizeGenes()
