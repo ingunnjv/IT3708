@@ -64,15 +64,14 @@ class GA:
             material = vehicle_route[min(cutpoints): max(cutpoints) + 1]
             material.reverse()
             vehicle_route[min(cutpoints): max(cutpoints) + 1] = material
-            pass
 
 
     ######################################################
-    # Applies a swapping of customer between two vehicle routes
+    # Applies a swapping of one customer from one vehicle route to another
     def interMutation(self, offspring):
         num_vehicles = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
         random_vehicle_route = None
-        # Acquire a random route which has a non-empty vehicle route
+        # Acquire a non-empty vehicle route
         while not random_vehicle_route:
             random_vehicle_route_nr = random.randint(0, num_vehicles - 1)
             random_vehicle_route = offspring.vehicle_routes[random_vehicle_route_nr]
@@ -81,25 +80,24 @@ class GA:
 
         range_num_vehicles = list(range(0, num_vehicles))
         attempts = 0
+        # Attempt to insert the customer into a random vehicle route
         while range_num_vehicles:
             vehicle_nr = range_num_vehicles.pop(random.randint(0, num_vehicles - attempts - 1))
 
             if ((not offspring.vehicleOverloaded(offspring.vehicle_routes[vehicle_nr], vehicle_nr, customer.q, self.problem_spec))
                 and (not offspring.routeDurationLimitExceeded(offspring.vehicle_routes[vehicle_nr], vehicle_nr, customer,
                                                          len(offspring.vehicle_routes[vehicle_nr])))):
-                offspring.vehicle_routes[vehicle_nr].append(customer)
+                random_placement = random.randint(0, len(offspring.vehicle_routes[vehicle_nr]))
+                offspring.vehicle_routes[vehicle_nr].insert(random_placement, customer)
                 random_vehicle_route.pop(random_customer_nr)
                 break
             attempts += 1
 
 
-
-
-
-
     ######################################################
     # Perform Best Cost Route Crossover on two parents. Produces two offspring
     def crossover(self, parent1, parent2):
+        random.seed()
         start = timer()
 
         # Initialize offspring
@@ -211,7 +209,7 @@ class GA:
         sorted_population = [x for _, x in sorted(zip(fitnesses, population))] #sorts population in descending order based on fitnesses
         elites_num = int(math.ceil(self.population_size * self.elite_ratio))
         elites = sorted_population[0:elites_num]
-        return elites
+        return copy.deepcopy(elites)
 
     ######################################################
     # Return two genotypes from the population based on a tournament selection
@@ -274,7 +272,7 @@ class GA:
                     offsprings = self.crossover(parents[0], parents[1])
 
                 else:
-                    offsprings = parents
+                    offsprings = copy.deepcopy(parents)
 
                 for offspring in offsprings:
                     # Roll dice on what event shall happen (inter-mutation, intra-mutation or no mutation)
@@ -307,15 +305,30 @@ class Genotype:
         max_vehicles = problem_spec.max_vehicles_per_depot * problem_spec.num_depots
         self.vehicle_routes = [ [] for i in range(0, max_vehicles)]
         self.problem_spec = problem_spec
-        random.seed()
 
+        # Initial placement of customers to vehicle routes
+        self.closestDepotInit(problem_spec)
+        self.updateFitness()
+
+    def __lt__(self, other):
+        return self.fitness < other.fitness
+
+    def __gt__(self, other):
+        return self.fitness > other.fitness
+
+    def randomInit(self):
+        pass
+
+    def closestDepotInit(self, problem_spec):
+        random.seed()
         range_num_customers = list(range(0, len(problem_spec.customers)))
         customers_placed = 0
         while range_num_customers:
             customer_nr = range_num_customers.pop(random.randint(0, len(problem_spec.customers) - customers_placed - 1))
             customer = self.problem_spec.customers[customer_nr]
             # Choose depot based on tournament selection
-            random_depots = random.sample(range(0, problem_spec.num_depots), int(math.ceil(problem_spec.num_depots * 0.60)))
+            random_depots = random.sample(range(0, problem_spec.num_depots),
+                                          int(math.ceil(problem_spec.num_depots * 0.60)))
             closest_depot_distance = float('Inf')
             closest_depot = random_depots[0]
             for depot_num in random_depots:
@@ -329,10 +342,13 @@ class Genotype:
                 depot = depot % problem_spec.num_depots
                 vehicle_start_index = depot * problem_spec.max_vehicles_per_depot
                 # Proceed by putting the customer in the first available vehicle
-                for vehicle_nr in range(vehicle_start_index, vehicle_start_index + problem_spec.max_vehicles_per_depot - 1):
+                for vehicle_nr in range(vehicle_start_index,
+                                        vehicle_start_index + problem_spec.max_vehicles_per_depot - 1):
                     # Only append if it doesnt cause vehicle overload :
-                    if ((not self.vehicleOverloaded(self.vehicle_routes[vehicle_nr], vehicle_nr, customer.q, problem_spec))
-                     and (not self.routeDurationLimitExceeded(self.vehicle_routes[vehicle_nr], vehicle_nr, customer, len(self.vehicle_routes[vehicle_nr])))):
+                    if ((not self.vehicleOverloaded(self.vehicle_routes[vehicle_nr], vehicle_nr, customer.q,
+                                                    problem_spec))
+                        and (not self.routeDurationLimitExceeded(self.vehicle_routes[vehicle_nr], vehicle_nr, customer,
+                                                                 len(self.vehicle_routes[vehicle_nr])))):
                         self.vehicle_routes[vehicle_nr].append(customer)
                         inserted = True
                         break
@@ -340,14 +356,6 @@ class Genotype:
                     break
             customers_placed += 1
 
-
-        self.updateFitness()
-
-    def __lt__(self, other):
-        return self.fitness < other.fitness
-
-    def __gt__(self, other):
-        return self.fitness > other.fitness
 
     ######################################################
     # Determine if a vehicle becomes overloaded if its assigned an additional customer, returns True/False
@@ -439,9 +447,9 @@ class Genotype:
 
 
 
-ga = GA(fileName = 'p01', population_size = 400, generations = 1000,
-        elite_ratio = 0.01, tournament_ratio = 0.05,
-        crossover_prob = 0.6, intra_mutation_prob = 0.2, inter_mutation_prob = 0.25,
+ga = GA(fileName = 'p01', population_size = 500, generations = 1000,
+        elite_ratio = 0.01, tournament_ratio = 0.03,
+        crossover_prob = 0.6, intra_mutation_prob = 0.30, inter_mutation_prob = 0.30,
         inter_mutation_attempt_rate = 10)
 
 
