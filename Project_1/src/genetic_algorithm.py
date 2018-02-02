@@ -6,6 +6,7 @@ import numpy as np
 import copy
 from timeit import default_timer as timer
 from operator import itemgetter
+import copy
 
 
 colors = ['crimson', 'green', 'blue',
@@ -100,66 +101,96 @@ class GA:
     # Perform Best Cost Route Crossover on two parents. Produces two offspring
     def crossover(self, parent1, parent2):
         start = timer()
+
+        # Initialize offspring
+        offspring1 = copy.deepcopy(parent1)
+        offspring2 = copy.deepcopy(parent2)
+
         # Randomly select a route from each parent, r1 in p1, r2 in p2
         total_num_vehicles = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
-        route1 = parent1.vehicle_routes[random.randint(0, total_num_vehicles)]
-        route2 = parent2.vehicle_routes[random.randint(0, total_num_vehicles)]
+        route1 = offspring1.vehicle_routes[random.randint(0, total_num_vehicles - 1)]
+        route2 = offspring2.vehicle_routes[random.randint(0, total_num_vehicles - 1)]
 
-        # Remove all customers in r1 from p2 (pop(index))
+        ## What if a route is empty? No change will happen in the other parent... ##
+
+        # Remove all customers in r1 from p2
         for c1 in route1:
-            for vehicle_nr, route in enumerate(parent2.vehicle_routes):
-                parent2.vehicle_routes[vehicle_nr] = [c2 for c2 in route if c1 != c2]
+            for vehicle_nr, route in enumerate(offspring2.vehicle_routes):
+                offspring2.vehicle_routes[vehicle_nr] = [c2 for c2 in route if c1 != c2]
 
         # Remove all customers in r2 from p1
         for c2 in route2:
-            for vehicle_nr, route in enumerate(parent1.vehicle_routes):
-                parent1.vehicle_routes[vehicle_nr] = [c1 for c1 in route if c1 != c2]
+            for vehicle_nr, route in enumerate(offspring1.vehicle_routes):
+                offspring1.vehicle_routes[vehicle_nr] = [c1 for c1 in route if c1 != c2]
 
-        # List of position in p2 (index), insertion cost and feasibility[0,1] of the insertion
+        # Find location and insert customers from route 1 into offspring 2
+        for route1_customer in route1:
+            cost = self.insertionCost(route1_customer, offspring2)
+            offspring2 = self.insertCustomerInRoute(route1_customer, offspring2, cost)
+
+        # Find location and insert customers from route 2 into offspring 1
+        for route2_customer in route2:
+            cost = self.insertionCost(route2_customer, offspring1)
+            offspring1 = self.insertCustomerInRoute(route2_customer,offspring1, cost)
+
+        end = timer()
+        #print("Time: ", 300*(end - start))
+
+        return offspring1, offspring2
+
+    ######################################################
+    # Calculate the cost of adding a new customer to each feasible location in an individual's routes
+    def insertionCost(self, new_customer, individual):
+        # List of position (index) and insertion cost of route_customer into all locations in the individual's routes
         insertion_cost = []
 
-        # For each customer in r1:
-        for route1_customer in route1:
+        # Find insertion cost of the customer at each location in the individual.
+        for vehicle_nr, r in enumerate(individual.vehicle_routes):
+            depot_index = individual.getDepotNumber(vehicle_nr) + individual.problem_spec.num_customers
+            prev_customer_index = depot_index
 
-            # Find insertion cost of the customer at each location in p2.
-            for vehicle_nr, r in enumerate(parent2.vehicle_routes):
-                depot_index = parent2.getDepotNumber(vehicle_nr) + parent2.problem_spec.num_customers
-                prev_customer_index = depot_index
+            for c_i in range(0, len(r) + 1):
+                if c_i < len(r): next_customer_index = r[c_i].i - 1
+                else: next_customer_index = depot_index
 
-                for c_pos in range(0, len(r) + 1):
-                    if c_pos < len(r): next_customer_index = r[c_pos].i - 1
-                    else: next_customer_index = depot_index
+                cost = individual.problem_spec.cost_matrix[prev_customer_index, new_customer.i - 1] \
+                       + individual.problem_spec.cost_matrix[new_customer.i - 1, next_customer_index]
+                prev_customer_index = next_customer_index
 
-                    cost = parent2.problem_spec.cost_matrix[prev_customer_index, route1_customer.i - 1] \
-                           + parent2.problem_spec.cost_matrix[route1_customer.i - 1, next_customer_index]
-                    prev_customer_index = next_customer_index
+                # Feasible?
+                feasible = (not (individual.vehicleOverloaded(r, vehicle_nr, new_customer.q, individual.problem_spec)
+                                 or individual.routeDurationLimitExceeded(r, vehicle_nr, new_customer, c_i)))
+                # Save the position
+                if feasible:
+                    location = (vehicle_nr, c_i)
+                    insertion_cost.append((location, cost))
 
-                    # Feasible?
-                    feasible = (not (parent2.vehicleOverloaded(r, vehicle_nr, route1_customer.q, parent2.problem_spec)
-                                or parent2.routeDurationLimitExceeded(r, vehicle_nr, route1_customer, c_pos)))
-                    # Save the position in p2
-                    pos = (vehicle_nr, c_pos)
-                    insertion_cost.append((pos, cost, feasible))
-
-            # Store in ordered list (increasing cost)
-            insertion_cost = sorted(insertion_cost, key=itemgetter(1))
-        # Random number (0,1)
-        # If k <= 0.8:
-            # choose first feasible insertion location
-            # no such exists:
-                # new route with this as only customer
-        # else:
-            # choose first entry in list
-
-        # Repeat for r2.
-        end = timer()
-        print("Time: ", 300*(end - start))
+        # Store in ordered list (increasing cost)
+        insertion_cost = sorted(insertion_cost, key=itemgetter(1))
+        return insertion_cost
 
 
     ######################################################
-    # Returns the parent with the highest fitness from the parents parameter
-    def getSurvivors(self, parents):
+    # Add a new customer to a location in another individual's routes
+    def insertCustomerInRoute(self, new_customer, individual, insertion_cost):
+        k = random.random()
+
+        # Choose best insertion location
+        if k <= 0.8: insertion_location = insertion_cost[0][0]
+        # Choose random feasible entry in list
+        else: insertion_location = insertion_cost[random.randint(0, len(insertion_cost) - 1)][0]
+
+        # Insert the new customer in the chosen route and position in the individual
+        insertion_vehicle, insertion_customer_pos = insertion_location
+        individual.vehicle_routes[insertion_vehicle].insert(insertion_customer_pos, new_customer)
+
+        return individual
+
+
+
+    def survivorSelection(self):
         pass
+    
     ######################################################
     # Returns the parent with the highest fitness from the parents parameter
     def getBestParent(self, parents):
@@ -259,15 +290,6 @@ class GA:
             if len(new_population) > (self.population_size):
                 new_population.pop()
             self.population = new_population
-
-
-
-
-
-
-
-
-
 
 
 
