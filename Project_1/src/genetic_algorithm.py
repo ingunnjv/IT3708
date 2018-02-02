@@ -176,6 +176,7 @@ class GA:
         k = random.random()
 
         # Choose best insertion location
+        #TODO: Abort when there is no feasible insertions
         if k <= 0.8: insertion_location = insertion_cost[0][0]
         # Choose random feasible entry in list
         else: insertion_location = insertion_cost[random.randint(0, len(insertion_cost) - 1)][0]
