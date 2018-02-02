@@ -102,10 +102,8 @@ class GA:
             prev_customer_index = depot_index
 
             for c_i in range(0, len(r) + 1):
-                if c_i < len(r):
-                    next_customer_index = r[c_i].i - 1
-                else:
-                    next_customer_index = depot_index
+                if c_i < len(r): next_customer_index = r[c_i].i - 1
+                else: next_customer_index = depot_index
 
                 cost = individual.problem_spec.cost_matrix[prev_customer_index, new_customer.i - 1] \
                        + individual.problem_spec.cost_matrix[new_customer.i - 1, next_customer_index]
@@ -131,7 +129,6 @@ class GA:
 
         # Choose best insertion location
         if k <= 0.8: insertion_location = insertion_cost[0][0]
-
         # Choose random feasible entry in list
         else: insertion_location = insertion_cost[random.randint(0, len(insertion_cost) - 1)][0]
 
@@ -145,6 +142,7 @@ class GA:
 
     def survivorSelection(self):
         pass
+    
     ######################################################
     # Returns the parent with the highest fitness from the parents parameter
     def getBestParent(self, parents):
