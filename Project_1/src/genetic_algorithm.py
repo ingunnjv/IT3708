@@ -273,7 +273,7 @@ class GA:
                     offsprings = self.crossover(parents[0], parents[1])
 
                 else:
-                    offsprings = self.getBestParent(parents)
+                    offsprings = parents
 
                 for offspring in offsprings:
                     # Roll dice on what event shall happen (inter-mutation, intra-mutation or no mutation)
@@ -439,9 +439,9 @@ class Genotype:
 
 
 ga = GA(fileName = 'p01', population_size = 400, generations = 1000,
-        elite_ratio = 0.02, tournament_ratio = 0.07,
+        elite_ratio = 0.01, tournament_ratio = 0.05,
         crossover_prob = 0.6, intra_mutation_prob = 0.2, inter_mutation_prob = 0.25,
-        inter_mutation_attempt_rate = 3)
+        inter_mutation_attempt_rate = 10)
 
 
 ga.evolutionCycle()
