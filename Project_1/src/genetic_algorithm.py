@@ -134,6 +134,7 @@ class GA:
         # Initialize offspring
         start = timer()
         offspring1 = copy.deepcopy(parent1)
+        offspring1.vehicle_routes[0].pop(0)
         offspring2 = copy.deepcopy(parent2)
         end = timer()
         self.deep_copy_time += (end-start)
@@ -395,7 +396,7 @@ class Genotype:
         customers_placed = 0
         while range_num_customers:
             customer_nr = range_num_customers.pop(random.randint(0, len(problem_spec.customers) - customers_placed - 1))
-            customer =problem_spec.customers[customer_nr]
+            customer = problem_spec.customers[customer_nr]
             # Choose depot based on tournament selection
             random_depots = random.sample(range(0, problem_spec.num_depots),
                                           int(math.ceil(problem_spec.num_depots * 0.60)))
