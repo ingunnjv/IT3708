@@ -8,11 +8,24 @@ from timeit import default_timer as timer
 from operator import itemgetter
 import copy
 
+import _pickle as cPickle
 
-colors = ['crimson', 'green', 'blue',
-        'gold', 'deeppink', 'aquamarine',  'blueviolet', 'brown',
-        'chartreuse', 'coral',  'darkblue', 'darkcyan',
-        'greenyellow', 'grey', 'aqua', 'olive',  'teal']
+# colors = ['crimson', 'green', 'blue',
+#         'gold', 'deeppink', 'aquamarine',  'blueviolet', 'brown',
+#         'chartreuse', 'coral',  'darkblue', 'darkcyan',
+#         'greenyellow', 'grey', 'aqua', 'olive',  'teal']
+
+depot1_colors = ['crimson', 'coral', 'red', 'tomato']
+depot2_colors = ['azure', 'blue', 'darkblue', 'teal']
+depot3_colors = ['green', 'darkgreen', 'lightgreen', 'lime']
+depot4_colors = ['chartreuse', 'gold', 'yellow', 'olive']
+
+colors = []
+colors.append(depot1_colors)
+colors.append(depot2_colors)
+colors.append(depot3_colors)
+colors.append(depot4_colors)
+
 
 class GA:
     def __init__(self, fileName, population_size, generations, elite_ratio, tournament_ratio, crossover_prob, intra_mutation_prob, inter_mutation_prob,
@@ -34,12 +47,21 @@ class GA:
         self.average_fitness_history = []
         self.best_fitness_history = []
 
+        # Workload timers
+        self.crossover_time = 0
+        self.intra_mutation_time = 0
+        self.inter_mutation_time = 0
+        self.update_fitness_time = 0
+        self.initial_loop_time = 0
+        self.deep_copy_time = 0
+
     ######################################################
     # Create an initial population by creating Genotype()'s and storing them in self.population
     def initializePopulation(self):
         start = timer()
         for _ in range(0, self.population_size):
-            genotype = Genotype(self.problem_spec)
+            genotype = Genotype()
+            genotype.initGenes(self.problem_spec)
             self.population.append(genotype)
         end = timer()
         print("initalizePopulation timer: " + str(end-start))
@@ -48,6 +70,7 @@ class GA:
     ######################################################
     # Applies a change to one random vehicle route (inversion)
     def intraMutation(self, offspring, type):
+        start = timer()
         if type == "inversion":
             num_vehicles = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
             range_num_vehicles = list(range(0, num_vehicles))
@@ -64,11 +87,14 @@ class GA:
             material = vehicle_route[min(cutpoints): max(cutpoints) + 1]
             material.reverse()
             vehicle_route[min(cutpoints): max(cutpoints) + 1] = material
+        end = timer()
+        self.intra_mutation_time += (end - start)
 
 
     ######################################################
     # Applies a swapping of one customer from one vehicle route to another
     def interMutation(self, offspring):
+        start = timer()
         num_vehicles = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
         random_vehicle_route = None
         # Acquire a non-empty vehicle route
@@ -86,12 +112,14 @@ class GA:
 
             if ((not offspring.vehicleOverloaded(offspring.vehicle_routes[vehicle_nr], vehicle_nr, customer.q, self.problem_spec))
                 and (not offspring.routeDurationLimitExceeded(offspring.vehicle_routes[vehicle_nr], vehicle_nr, customer,
-                                                         len(offspring.vehicle_routes[vehicle_nr])))):
+                                                         len(offspring.vehicle_routes[vehicle_nr]), self.problem_spec))):
                 random_placement = random.randint(0, len(offspring.vehicle_routes[vehicle_nr]))
                 offspring.vehicle_routes[vehicle_nr].insert(random_placement, customer)
                 random_vehicle_route.pop(random_customer_nr)
                 break
             attempts += 1
+        end = timer()
+        self.inter_mutation_time += (end - start)
 
 
     ######################################################
@@ -101,8 +129,11 @@ class GA:
         start = timer()
 
         # Initialize offspring
+        start = timer()
         offspring1 = copy.deepcopy(parent1)
         offspring2 = copy.deepcopy(parent2)
+        end = timer()
+        self.deep_copy_time += (end-start)
 
         # Randomly select a route from each parent, r1 in p1, r2 in p2
         total_num_vehicles = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
@@ -132,7 +163,8 @@ class GA:
             offspring1 = self.insertCustomerInRoute(route2_customer,offspring1, cost)
 
         end = timer()
-        #print("Time: ", 300*(end - start))
+        self.crossover_time += (end-start)
+       # print("Time: ",(end - start))
 
         return offspring1, offspring2
 
@@ -144,20 +176,20 @@ class GA:
 
         # Find insertion cost of the customer at each location in the individual.
         for vehicle_nr, r in enumerate(individual.vehicle_routes):
-            depot_index = individual.getDepotNumber(vehicle_nr) + individual.problem_spec.num_customers
+            depot_index = individual.getDepotNumber(vehicle_nr, self.problem_spec) + self.problem_spec.num_customers
             prev_customer_index = depot_index
 
             for c_i in range(0, len(r) + 1):
                 if c_i < len(r): next_customer_index = r[c_i].i - 1
                 else: next_customer_index = depot_index
 
-                cost = individual.problem_spec.cost_matrix[prev_customer_index, new_customer.i - 1] \
-                       + individual.problem_spec.cost_matrix[new_customer.i - 1, next_customer_index]
+                cost = self.problem_spec.cost_matrix[prev_customer_index, new_customer.i - 1] \
+                       + self.problem_spec.cost_matrix[new_customer.i - 1, next_customer_index]
                 prev_customer_index = next_customer_index
 
                 # Feasible?
-                feasible = (not (individual.vehicleOverloaded(r, vehicle_nr, new_customer.q, individual.problem_spec)
-                                 or individual.routeDurationLimitExceeded(r, vehicle_nr, new_customer, c_i)))
+                feasible = (not (individual.vehicleOverloaded(r, vehicle_nr, new_customer.q, self.problem_spec)
+                                 or individual.routeDurationLimitExceeded(r, vehicle_nr, new_customer, c_i, self.problem_spec)))
                 # Save the position
                 if feasible:
                     location = (vehicle_nr, c_i)
@@ -196,7 +228,11 @@ class GA:
         fitnesses = []
         for parent in parents:
             fitnesses.append(parent.fitness)
-        return copy.deepcopy(parents[fitnesses.index(max(fitnesses))])
+        start = timer()
+        best_parent = copy.deepcopy(parents[fitnesses.index(max(fitnesses))])
+        end = timer()
+        self.deep_copy_time += (end-start)
+        return best_parent
 
 
     ######################################################
@@ -209,7 +245,11 @@ class GA:
         sorted_population = [x for _, x in sorted(zip(fitnesses, population))] #sorts population in descending order based on fitnesses
         elites_num = int(math.ceil(self.population_size * self.elite_ratio))
         elites = sorted_population[0:elites_num]
-        return copy.deepcopy(elites)
+        start = timer()
+        elites = copy.deepcopy(elites)
+        end = timer()
+        self.deep_copy_time += (end - start)
+        return elites
 
     ######################################################
     # Return two genotypes from the population based on a tournament selection
@@ -253,7 +293,7 @@ class GA:
             # Print generation data to terminal
             print("Generation: %d" % generation)
             print("Best fitness score: %f" % best_fitness)
-            print("Average fitness score: %f\n" % average_fitness)
+            print("Average fitness score: %f" % average_fitness)
 
             # Create a new population and directly copy the elites of the previous generation to the new one
             new_population = []
@@ -272,7 +312,10 @@ class GA:
                     offsprings = self.crossover(parents[0], parents[1])
 
                 else:
+                    start = timer()
                     offsprings = copy.deepcopy(parents)
+                    end = timer()
+                    self.deep_copy_time += (end - start)
 
                 for offspring in offsprings:
                     # Roll dice on what event shall happen (inter-mutation, intra-mutation or no mutation)
@@ -282,39 +325,62 @@ class GA:
                     elif self.inter_mutation_prob < event and event < self.inter_mutation_prob + self.intra_mutation_prob:
                         self.intraMutation(offspring, 'inversion')
 
-                    offspring.updateFitness()
+                    start = timer()
+                    offspring.updateFitness(self.problem_spec)
+                    end = timer()
+                    self.update_fitness_time += (end-start)
                     new_population += [offspring]
 
             # Stop population growing in case everything is not even numbers
             if len(new_population) > (self.population_size):
                 new_population.pop()
+
             self.population = new_population
 
-
-
-
+            print("Crossover work: %f [s]" % self.crossover_time)
+            print("Intra-mutation work: %f [s]" % self.intra_mutation_time)
+            print("Inter-mutation work: %f [s]" % self.inter_mutation_time)
+            print("Update fitness work: %f [s]" % self.update_fitness_time)
+            print("Deep copy work: %f [s]\n" % self.deep_copy_time)
+            self.crossover_time = 0
+            self.intra_mutation_time = 0
+            self.inter_mutation_time = 0
+            self.update_fitness_time = 0
+            self.deep_copy_time = 0
+        elites[0].visualizeGenes(self.problem_spec)
+        plt.pause(10)
 
 class Genotype:
-    def __init__(self, problem_spec):
+    def __init__(self):
         # Visualization data
         self.ax = None
         self.background = None
         self.fig = None
 
-        # Randomly initialize the chromsome
-        max_vehicles = problem_spec.max_vehicles_per_depot * problem_spec.num_depots
-        self.vehicle_routes = [ [] for i in range(0, max_vehicles)]
-        self.problem_spec = problem_spec
-
-        # Initial placement of customers to vehicle routes
-        self.closestDepotInit(problem_spec)
-        self.updateFitness()
+        self.fitness = float("Inf")
+        self.vehicle_routes = None
+        self.yoooo()
 
     def __lt__(self, other):
         return self.fitness < other.fitness
 
     def __gt__(self, other):
         return self.fitness > other.fitness
+
+    def __deepcopy__(self, memodict={}):
+        return cPickle.loads(cPickle.dumps(self, -1))
+        #copy_object = Genotype()
+        #copy_object.vehicle_routes = copy.deepcopy(self.vehicle_routes)
+        #copy_object.fitness = copy.deepcopy(self.fitness)
+        #return copy_object
+
+    def initGenes(self,  problem_spec):
+        # Initialization of placement of customers to vehicle routes
+        max_vehicles = problem_spec.max_vehicles_per_depot * problem_spec.num_depots
+        self.vehicle_routes = [[] for i in range(0, max_vehicles)]
+
+        self.closestDepotInit(problem_spec)
+        self.updateFitness(problem_spec)
 
     def randomInit(self):
         pass
@@ -325,7 +391,7 @@ class Genotype:
         customers_placed = 0
         while range_num_customers:
             customer_nr = range_num_customers.pop(random.randint(0, len(problem_spec.customers) - customers_placed - 1))
-            customer = self.problem_spec.customers[customer_nr]
+            customer =problem_spec.customers[customer_nr]
             # Choose depot based on tournament selection
             random_depots = random.sample(range(0, problem_spec.num_depots),
                                           int(math.ceil(problem_spec.num_depots * 0.60)))
@@ -348,7 +414,7 @@ class Genotype:
                     if ((not self.vehicleOverloaded(self.vehicle_routes[vehicle_nr], vehicle_nr, customer.q,
                                                     problem_spec))
                         and (not self.routeDurationLimitExceeded(self.vehicle_routes[vehicle_nr], vehicle_nr, customer,
-                                                                 len(self.vehicle_routes[vehicle_nr])))):
+                                                                 len(self.vehicle_routes[vehicle_nr]), problem_spec))):
                         self.vehicle_routes[vehicle_nr].append(customer)
                         inserted = True
                         break
@@ -363,7 +429,7 @@ class Genotype:
         demand_sum = customer_demand
         for customer in vehicle_route:
             demand_sum += customer.q
-        depot_number = self.getDepotNumber(vehicle_nr)
+        depot_number = self.getDepotNumber(vehicle_nr, problem_spec)
         if demand_sum > problem_spec.depots[depot_number].Q:
             return True
         else:
@@ -371,12 +437,12 @@ class Genotype:
 
     ######################################################
     # Determine if a route becomes too long if an additional customer is assigned in a certain position
-    def routeDurationLimitExceeded(self, route, vehicle_nr, new_customer, new_customer_position):
+    def routeDurationLimitExceeded(self, route, vehicle_nr, new_customer, new_customer_position, problem_spec):
         new_route = list(route)
         new_route.insert(new_customer_position, new_customer)
 
-        duration = self.routeDuration(new_route, vehicle_nr)
-        max_route_duration = self.problem_spec.depots[self.getDepotNumber(vehicle_nr)].D
+        duration = self.routeDuration(new_route, vehicle_nr, problem_spec)
+        max_route_duration = problem_spec.depots[self.getDepotNumber(vehicle_nr, problem_spec)].D
         if duration > max_route_duration and max_route_duration != 0:
             return True
         else:
@@ -384,7 +450,7 @@ class Genotype:
 
     ######################################################
     # Plots all the vehicle routes of the chromosome in a single plot
-    def vizualizeGenes(self):
+    def visualizeGenes(self, problem_spec):
         fig, ax = plt.subplots(1, 1)
         ax.set_aspect('equal')
 
@@ -396,15 +462,15 @@ class Genotype:
         for vehicle_nr, route in enumerate(self.vehicle_routes):
             route_x_coords = np.zeros(len(route) + 2)
             route_y_coords = np.zeros(len(route) + 2)
-            depot_nr = self.getDepotNumber(vehicle_nr)
-            route_x_coords[0] = self.problem_spec.depots[depot_nr].x
-            route_y_coords[0] = self.problem_spec.depots[depot_nr].y
+            depot_nr = self.getDepotNumber(vehicle_nr, problem_spec)
+            route_x_coords[0] = problem_spec.depots[depot_nr].x
+            route_y_coords[0] = problem_spec.depots[depot_nr].y
             for customer_num in range(0, len(route)):
                 route_x_coords[customer_num + 1] = route[customer_num].x
                 route_y_coords[customer_num + 1] = route[customer_num].y
             route_x_coords[-1] = route_x_coords[0]
             route_y_coords[-1] = route_y_coords[0]
-            ax.plot(route_x_coords,route_y_coords, 'x-', color=colors[vehicle_nr % self.problem_spec.max_vehicles_per_depot], linewidth=0.8)
+            ax.plot(route_x_coords,route_y_coords, 'x-', color=colors[int(depot_nr)][ vehicle_nr % problem_spec.max_vehicles_per_depot], linewidth=0.8)
 
         plt.pause(1)
         self.background = background
@@ -413,43 +479,43 @@ class Genotype:
 
     ###########################################
     # Get depot number of the specified vehicle
-    def getDepotNumber(self, vehicle_nr):
-        return math.floor(vehicle_nr / self.problem_spec.num_depots)
+    def getDepotNumber(self, vehicle_nr, problem_spec):
+        return math.floor(vehicle_nr / problem_spec.num_depots)
 
     ######################################################
     # Finds the duration (total cost) of a single solution
-    def duration(self):
+    def duration(self, problem_spec):
         duration = 0
         # Go through all routes
         for vehicle_nr, route in enumerate(self.vehicle_routes):
-            duration += self.routeDuration(route, vehicle_nr)
+            duration += self.routeDuration(route, vehicle_nr, problem_spec)
         return duration
 
-    def updateFitness(self):
-        self.fitness = self.duration()
+    def updateFitness(self, problem_spec):
+        self.fitness = self.duration(problem_spec)
 
     ######################################################
     # Finds the duration of a single route
-    def routeDuration(self, route, vehicle_nr):
+    def routeDuration(self, route, vehicle_nr, problem_spec):
         duration = 0
         # The depot is considered the very first "customer"
-        depot_nr = self.getDepotNumber(vehicle_nr)
-        prev_customer_index = depot_nr + self.problem_spec.num_customers
+        depot_nr = self.getDepotNumber(vehicle_nr, problem_spec)
+        prev_customer_index = depot_nr + problem_spec.num_customers
         for customer in route:
             customer_index = customer.i - 1
             # Find distance between the current customer and the previous
-            duration += self.problem_spec.cost_matrix[prev_customer_index, customer_index]
+            duration += problem_spec.cost_matrix[prev_customer_index, customer_index]
             prev_customer_index = customer_index
         # Remember to add the distance from last customer to depot
-        duration += self.problem_spec.cost_matrix[prev_customer_index, depot_nr + self.problem_spec.num_customers]
+        duration += problem_spec.cost_matrix[prev_customer_index, depot_nr + problem_spec.num_customers]
 
         return duration
 
 
 
-ga = GA(fileName = 'p01', population_size = 500, generations = 1000,
-        elite_ratio = 0.01, tournament_ratio = 0.03,
-        crossover_prob = 0.6, intra_mutation_prob = 0.30, inter_mutation_prob = 0.30,
+ga = GA(fileName = 'p01', population_size = 400, generations = 250,
+        elite_ratio = 0.01, tournament_ratio = 0.08,
+        crossover_prob = 0.6, intra_mutation_prob = 0.10, inter_mutation_prob = 0.10,
         inter_mutation_attempt_rate = 10)
 
 
