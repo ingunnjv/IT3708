@@ -151,6 +151,11 @@ class GA:
         for c2 in route2:
             for vehicle_nr, route in enumerate(offspring1.vehicle_routes):
                 offspring1.vehicle_routes[vehicle_nr] = [c1 for c1 in route if c1 != c2]
+        #print("remove customers...")
+        too_many, customers = offspring1.tooManyCustomers(self.problem_spec)
+        if too_many: print("Offspring 1 has ", customers, "customers")
+        too_many, customers = offspring2.tooManyCustomers(self.problem_spec)
+        if too_many: print("Offspring 2 has ", customers, "customers")
 
         # Find location and insert customers from route 1 into offspring 2
         for route1_customer in route1:
@@ -161,6 +166,13 @@ class GA:
         for route2_customer in route2:
             cost = self.insertionCost(route2_customer, offspring1)
             offspring1 = self.insertCustomerInRoute(route2_customer,offspring1, cost)
+        #print("insert customers...")
+
+
+        too_many, customers = offspring1.tooManyCustomers(self.problem_spec)
+        if too_many: print("Offspring 1 has ", customers, "customers")
+        too_many, customers = offspring2.tooManyCustomers(self.problem_spec)
+        if too_many: print("Offspring 2 has ", customers, "customers")
 
         end = timer()
         self.crossover_time += (end-start)
@@ -221,7 +233,7 @@ class GA:
 
     def survivorSelection(self):
         pass
-    
+
     ######################################################
     # Returns the parent with the highest fitness from the parents parameter
     def getBestParent(self, parents):
@@ -336,6 +348,8 @@ class GA:
                 new_population.pop()
 
             self.population = new_population
+
+
 
             print("Crossover work: %f [s]" % self.crossover_time)
             print("Intra-mutation work: %f [s]" % self.intra_mutation_time)
@@ -509,11 +523,22 @@ class Genotype:
 
         return duration
 
+    def tooManyCustomers(self, problem_spec):
+        customers = 0
+        for route in self.vehicle_routes:
+            for _ in route:
+                customers += 1
+        if customers > problem_spec.num_customers:
+            #print("TOO MANY customers: ", customers)
+            return True, customers
+        else:
+            return False, customers
 
 
-ga = GA(fileName = 'p01', population_size = 400, generations = 250,
+
+ga = GA(fileName = 'p01', population_size = 300, generations = 250,
         elite_ratio = 0.01, tournament_ratio = 0.08,
-        crossover_prob = 0.6, intra_mutation_prob = 0.10, inter_mutation_prob = 0.10,
+        crossover_prob = 0.4, intra_mutation_prob = 0.10, inter_mutation_prob = 0.10,
         inter_mutation_attempt_rate = 10)
 
 

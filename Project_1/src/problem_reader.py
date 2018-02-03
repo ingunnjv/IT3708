@@ -71,3 +71,6 @@ class Customer:
     def __eq__(self, other):
         return self.i == other.i
 
+    def __ne__(self, other):
+        return self.i != other.i
+
