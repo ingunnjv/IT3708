@@ -131,6 +131,7 @@ class GA:
         # Initialize offspring
         start = timer()
         offspring1 = copy.deepcopy(parent1)
+        offspring1.vehicle_routes[0].pop(0)
         offspring2 = copy.deepcopy(parent2)
         end = timer()
         self.deep_copy_time += (end-start)
@@ -381,10 +382,7 @@ class Genotype:
         return self.fitness > other.fitness
 
     def __deepcopy__(self, memodict={}):
-        copy = Genotype()
-        copy.vehicle_routes = list(self.vehicle_routes)
-        copy.fitness = cPickle.loads(cPickle.dumps(self.fitness, -1))
-        return copy
+        return cPickle.loads(cPickle.dumps(self, -1))
 
     def initGenes(self,  problem_spec):
         # Initialization of placement of customers to vehicle routes
