@@ -151,7 +151,7 @@ class GA:
         for c2 in route2:
             for vehicle_nr, route in enumerate(offspring1.vehicle_routes):
                 offspring1.vehicle_routes[vehicle_nr] = [c1 for c1 in route if c1 != c2]
-        print("remove customers...")
+        #print("remove customers...")
         too_many, customers = offspring1.tooManyCustomers(self.problem_spec)
         if too_many: print("Offspring 1 has ", customers, "customers")
         too_many, customers = offspring2.tooManyCustomers(self.problem_spec)
@@ -166,7 +166,7 @@ class GA:
         for route2_customer in route2:
             cost = self.insertionCost(route2_customer, offspring1)
             offspring1 = self.insertCustomerInRoute(route2_customer,offspring1, cost)
-        print("insert customers...")
+        #print("insert customers...")
 
 
         too_many, customers = offspring1.tooManyCustomers(self.problem_spec)
