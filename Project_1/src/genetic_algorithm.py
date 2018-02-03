@@ -7,6 +7,7 @@ import copy
 from timeit import default_timer as timer
 from operator import itemgetter
 import copy
+import itertools
 
 import _pickle as cPickle
 
@@ -87,6 +88,7 @@ class GA:
             material = vehicle_route[min(cutpoints): max(cutpoints) + 1]
             material.reverse()
             vehicle_route[min(cutpoints): max(cutpoints) + 1] = material
+        offspring.tooManyCustomers(self.problem_spec)
         end = timer()
         self.intra_mutation_time += (end - start)
 
@@ -118,6 +120,7 @@ class GA:
                 random_vehicle_route.pop(random_customer_nr)
                 break
             attempts += 1
+        offspring.tooManyCustomers(self.problem_spec)
         end = timer()
         self.inter_mutation_time += (end - start)
 
@@ -151,11 +154,6 @@ class GA:
         for c2 in route2:
             for vehicle_nr, route in enumerate(offspring1.vehicle_routes):
                 offspring1.vehicle_routes[vehicle_nr] = [c1 for c1 in route if c1 != c2]
-        #print("remove customers...")
-        too_many, customers = offspring1.tooManyCustomers(self.problem_spec)
-        if too_many: print("Offspring 1 has ", customers, "customers")
-        too_many, customers = offspring2.tooManyCustomers(self.problem_spec)
-        if too_many: print("Offspring 2 has ", customers, "customers")
 
         # Find location and insert customers from route 1 into offspring 2
         for route1_customer in route1:
@@ -166,13 +164,10 @@ class GA:
         for route2_customer in route2:
             cost = self.insertionCost(route2_customer, offspring1)
             offspring1 = self.insertCustomerInRoute(route2_customer,offspring1, cost)
-        #print("insert customers...")
 
 
-        too_many, customers = offspring1.tooManyCustomers(self.problem_spec)
-        if too_many: print("Offspring 1 has ", customers, "customers")
-        too_many, customers = offspring2.tooManyCustomers(self.problem_spec)
-        if too_many: print("Offspring 2 has ", customers, "customers")
+        offspring1.tooManyCustomers(self.problem_spec)
+        offspring2.tooManyCustomers(self.problem_spec)
 
         end = timer()
         self.crossover_time += (end-start)
@@ -521,15 +516,20 @@ class Genotype:
         return duration
 
     def tooManyCustomers(self, problem_spec):
-        customers = 0
-        for route in self.vehicle_routes:
-            for _ in route:
-                customers += 1
+        flattened = list(itertools.chain.from_iterable(self.vehicle_routes))
+
+        for i, c in enumerate(flattened):
+            flattened[i] = c.i
+        customers = len(flattened)
+        unique_customers = np.unique(flattened).size
+
         if customers > problem_spec.num_customers:
-            #print("TOO MANY customers: ", customers)
-            return True, customers
-        else:
-            return False, customers
+            print("\nERROR:\tToo many customers in routes: \t%d customers\n" % customers)
+        elif customers < problem_spec.num_customers:
+            print("\nERROR:\tToo few customers in routes: \t%d customers\n" % customers)
+        if customers > unique_customers:
+            print("\nERROR:\tThere are repeated customers in the routes\n")
+
 
 
 
@@ -537,8 +537,8 @@ ga = GA(fileName = 'p01', population_size = 300, generations = 250,
         elite_ratio = 0.01, tournament_ratio = 0.08,
         crossover_prob = 0.4, intra_mutation_prob = 0.10, inter_mutation_prob = 0.10,
         inter_mutation_attempt_rate = 10)
-
-
+#ga.initializePopulation()
+#ga.population[3].tooManyCustomers(ga.problem_spec)
 ga.evolutionCycle()
 #ga.initializePopulation()
 #A = ga.population[0]
