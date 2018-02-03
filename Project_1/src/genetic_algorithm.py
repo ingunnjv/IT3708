@@ -367,7 +367,10 @@ class Genotype:
         return self.fitness > other.fitness
 
     def __deepcopy__(self, memodict={}):
-        return cPickle.loads(cPickle.dumps(self, -1))
+        copy = Genotype()
+        copy.vehicle_routes = list(self.vehicle_routes)
+        copy.fitness = cPickle.loads(cPickle.dumps(self.fitness, -1))
+        return copy
 
     def initGenes(self,  problem_spec):
         # Initialization of placement of customers to vehicle routes
@@ -386,7 +389,7 @@ class Genotype:
         customers_placed = 0
         while range_num_customers:
             customer_nr = range_num_customers.pop(random.randint(0, len(problem_spec.customers) - customers_placed - 1))
-            customer =problem_spec.customers[customer_nr]
+            customer = problem_spec.customers[customer_nr]
             # Choose depot based on tournament selection
             random_depots = random.sample(range(0, problem_spec.num_depots),
                                           int(math.ceil(problem_spec.num_depots * 0.60)))
