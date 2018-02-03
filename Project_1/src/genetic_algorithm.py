@@ -359,7 +359,6 @@ class Genotype:
 
         self.fitness = float("Inf")
         self.vehicle_routes = None
-        self.yoooo()
 
     def __lt__(self, other):
         return self.fitness < other.fitness
