@@ -368,10 +368,6 @@ class Genotype:
 
     def __deepcopy__(self, memodict={}):
         return cPickle.loads(cPickle.dumps(self, -1))
-        #copy_object = Genotype()
-        #copy_object.vehicle_routes = copy.deepcopy(self.vehicle_routes)
-        #copy_object.fitness = copy.deepcopy(self.fitness)
-        #return copy_object
 
     def initGenes(self,  problem_spec):
         # Initialization of placement of customers to vehicle routes

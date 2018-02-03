@@ -68,3 +68,6 @@ class Customer:
         self.d = d          # necessary service duration
         self.q = q          # demand for customer
 
+    def __eq__(self, other):
+        return self.i == other.i
+
