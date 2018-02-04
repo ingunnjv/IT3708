@@ -48,31 +48,20 @@ class GA:
         self.average_fitness_history = []
         self.best_fitness_history = []
 
-        # Workload timers
-        self.crossover_time = 0
-        self.intra_mutation_time = 0
-        self.inter_mutation_time = 0
-        self.update_fitness_time = 0
-        self.initial_loop_time = 0
-        self.deep_copy_time = 0
 
     ######################################################
     # Create an initial population by creating Genotype()'s and storing them in self.population
     def initializePopulation(self):
-        start = timer()
         for _ in range(0, self.population_size):
             genotype = Genotype()
             genotype.initGenes(self.problem_spec)
             genotype.tooManyCustomers(self.problem_spec)
             self.population.append(genotype)
-        end = timer()
-        print("initalizePopulation timer: " + str(end-start))
 
 
     ######################################################
     # Applies a change to one random vehicle route (inversion)
     def intraMutation(self, offspring, type):
-        start = timer()
         if type == "inversion":
             num_vehicles = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
             range_num_vehicles = list(range(0, num_vehicles))
@@ -100,14 +89,11 @@ class GA:
                     attempts += 1
 
         offspring.tooManyCustomers(self.problem_spec)
-        end = timer()
-        self.intra_mutation_time += (end - start)
 
 
     ######################################################
     # Applies a swapping of one customer from one vehicle route to another
     def interMutation(self, offspring):
-        start = timer()
         num_vehicles = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
         random_vehicle_route = None
         # Acquire a non-empty vehicle route
@@ -132,22 +118,16 @@ class GA:
                 break
             attempts += 1
         offspring.tooManyCustomers(self.problem_spec)
-        end = timer()
-        self.inter_mutation_time += (end - start)
 
 
     ######################################################
     # Perform Best Cost Route Crossover on two parents. Produces two offspring
     def crossover(self, parent1, parent2):
         random.seed()
-        start = timer()
 
         # Initialize offspring
-        start = timer()
         offspring1 = copy.deepcopy(parent1)
         offspring2 = copy.deepcopy(parent2)
-        end = timer()
-        self.deep_copy_time += (end-start)
 
         # Randomly select a route from each parent, r1 in p1, r2 in p2
         total_num_vehicles = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
@@ -180,9 +160,6 @@ class GA:
         offspring1.tooManyCustomers(self.problem_spec)
         offspring2.tooManyCustomers(self.problem_spec)
 
-        end = timer()
-        self.crossover_time += (end-start)
-       # print("Time: ",(end - start))
 
         return offspring1, offspring2
 
@@ -246,37 +223,27 @@ class GA:
         return individual
 
 
-
-    def survivorSelection(self):
-        pass
-
     ######################################################
     # Returns the parent with the highest fitness from the parents parameter
     def getBestParent(self, parents):
         fitnesses = []
         for parent in parents:
             fitnesses.append(parent.fitness)
-        start = timer()
         best_parent = copy.deepcopy(parents[fitnesses.index(max(fitnesses))])
-        end = timer()
-        self.deep_copy_time += (end-start)
         return best_parent
 
 
     ######################################################
     # Return the top self.elites percent of the poplation
     def getPopulationElite(self):
-        population = list(self.population)
+        population = self.population
         fitnesses = []
         for individual in population:
             fitnesses.append(individual.fitness)
         sorted_population = [x for _, x in sorted(zip(fitnesses, population))] #sorts population in descending order based on fitnesses
         elites_num = int(math.ceil(self.population_size * self.elite_ratio))
         elites = sorted_population[0:elites_num]
-        start = timer()
         elites = copy.deepcopy(elites)
-        end = timer()
-        self.deep_copy_time += (end - start)
         return elites
 
     ######################################################
@@ -321,15 +288,19 @@ class GA:
             # Print generation data to terminal
             print("Generation: %d" % generation)
             print("Best fitness score: %f" % best_fitness)
-            print("Average fitness score: %f" % average_fitness)
+            print("Average fitness score: %f\n" % average_fitness)
 
             # Create a new population and directly copy the elites of the previous generation to the new one
             new_population = []
             elites = self.getPopulationElite()
             new_population += elites
 
+            # Check for early stop
+            if elites[0].checkForSatisfyingSolution(self.problem_spec):
+                break
+
             # Populate the new population until it has 200 individuals by doing recombination, mutation and survivors
-            while len(new_population) < (self.population_size):
+            while len(new_population) < self.population_size:
                 # Do tournament selection to choose parents
                 parents = self.parentSelection()
 
@@ -340,10 +311,7 @@ class GA:
                     offsprings = self.crossover(parents[0], parents[1])
 
                 else:
-                    start = timer()
                     offsprings = copy.deepcopy(parents)
-                    end = timer()
-                    self.deep_copy_time += (end - start)
 
                 for offspring in offsprings:
                     # Roll dice on what event shall happen (inter-mutation, intra-mutation or no mutation)
@@ -353,31 +321,15 @@ class GA:
                     elif self.inter_mutation_prob < event and event < self.inter_mutation_prob + self.intra_mutation_prob:
                         self.intraMutation(offspring, 'inversion')
 
-                    start = timer()
                     offspring.updateFitnessVariables(self.problem_spec)
                     offspring.updateFitness(self.problem_spec)
-                    end = timer()
-                    self.update_fitness_time += (end-start)
                     new_population += [offspring]
 
             # Stop population growing in case everything is not even numbers
             if len(new_population) > (self.population_size):
                 new_population.pop()
-
             self.population = new_population
 
-
-
-            print("Crossover work: %f [s]" % self.crossover_time)
-            print("Intra-mutation work: %f [s]" % self.intra_mutation_time)
-            print("Inter-mutation work: %f [s]" % self.inter_mutation_time)
-            print("Update fitness work: %f [s]" % self.update_fitness_time)
-            print("Deep copy work: %f [s]\n" % self.deep_copy_time)
-            self.crossover_time = 0
-            self.intra_mutation_time = 0
-            self.inter_mutation_time = 0
-            self.update_fitness_time = 0
-            self.deep_copy_time = 0
         self.population[0].visualizeGenes(self.problem_spec)
         self.population[0].printSolutionData(self.problem_spec)
 
@@ -545,33 +497,32 @@ class Genotype:
         self.ax = ax
 
     ######################################################
-    #
+    # Print the solution (routes), demand over routes and total durations of all routes
     def printSolutionData(self, problem_spec):
         vehicle_num_from_depot = 1
         prev_depot_nr = 1
+        percent_from_optimal = 100*(self.duration / problem_spec.solution_cost)
+        print('This solution cost: %.2f' % self.duration)
+        print('Optimal solution cost: %.2f' % problem_spec.solution_cost)
+        print('Percent within the optimal solution: %.2f%%\n' % (percent_from_optimal - 100))
         print(self.duration)
         for vehicle_nr, route  in enumerate(self.vehicle_routes):
             depot_nr = self.getDepotNumber(vehicle_nr, problem_spec) + 1
             if depot_nr != prev_depot_nr:
                 vehicle_num_from_depot = 1
-
             if route:
                 route_duration = self.routeDuration(route, vehicle_nr, problem_spec)
                 route_demand = self.routeDemand(route)
-                #customers =
-                print(str(depot_nr) + '\t' + str(vehicle_num_from_depot) + '\t' + str(route_duration) + '\t' + str (route_demand) +'\t' + str([0]+ [c.i for c in route] +[0]))
+                full_route = (['0'] + [str(c.i) for c in route] + ['0'])
+                print('%d\t%d\t%.2f\t%d\t' % (depot_nr, vehicle_num_from_depot, route_duration, route_demand), end='')
+                print(' '.join((full_route)))
                 vehicle_num_from_depot += 1
-
-            prev_depot_nr = self.getDepotNumber(vehicle_nr, problem_spec)
-
-
+            prev_depot_nr = depot_nr
 
     ###########################################
     # Get depot number of the specified vehicle
     def getDepotNumber(self, vehicle_nr, problem_spec):
         return math.floor(vehicle_nr / problem_spec.max_vehicles_per_depot)
-
-
 
     def updateFitness(self, problem_spec):
         self.fitness = self.duration + self.duration_ol + self.demand_ol + problem_spec.max_cost*self.infeasibility_count
@@ -618,12 +569,21 @@ class Genotype:
             print("\nERROR:\tThere are repeated customers in the routes\n")
 
 
+    def checkForSatisfyingSolution(self, problem_spec):
+        percent_from_optimal = (100 * (self.duration / problem_spec.solution_cost)) - 100
+
+        if percent_from_optimal <= 5.0 and not self.infeasibility_count:
+            return True
+        else:
+            return False
 
 
-ga = GA(fileName = 'p01', population_size = 300, generations = 100,
+
+
+ga = GA(fileName = 'p02', population_size = 200, generations = 1000,
         elite_ratio = 0.01, tournament_ratio = 0.08,
         crossover_prob = 0.4, intra_mutation_prob = 0.10, inter_mutation_prob = 0.10,
-        inter_mutation_attempt_rate = 10)
+        inter_mutation_attempt_rate = 5)
 #ga.initializePopulation()
 #ga.population[3].tooManyCustomers(ga.problem_spec)
 ga.evolutionCycle()
