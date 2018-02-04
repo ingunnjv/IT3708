@@ -82,13 +82,22 @@ class GA:
                 vehicle_nr = range_num_vehicles.pop(random.randint(0, num_vehicles - attempts))
                 vehicle_route = offspring.vehicle_routes[vehicle_nr]
                 if len(vehicle_route) >= 2:
-                    break
-                attempts += 1
-            vehicle_route_length = len(vehicle_route)
-            cutpoints = random.sample(range(0, vehicle_route_length), 2)
-            material = vehicle_route[min(cutpoints): max(cutpoints) + 1]
-            material.reverse()
-            vehicle_route[min(cutpoints): max(cutpoints) + 1] = material
+                    vehicle_route_length = len(vehicle_route)
+                    cutpoints = random.sample(range(0, vehicle_route_length), 2)
+                    material = vehicle_route[min(cutpoints): max(cutpoints) + 1]
+                    material.reverse()
+                    vehicle_route[min(cutpoints): max(cutpoints) + 1] = material
+
+                    new_route_duration = offspring.routeDuration(vehicle_route, vehicle_nr, self.problem_spec)
+                    depot_nr = offspring.getDepotNumber(vehicle_nr, self.problem_spec)
+                    if new_route_duration > self.problem_spec.depots[depot_nr].D:
+                        material.reverse()
+                        vehicle_route[min(cutpoints): max(cutpoints) + 1] = material
+                    else:
+                        attempts += 1
+                else:
+                    attempts += 1
+
         offspring.tooManyCustomers(self.problem_spec)
         end = timer()
         self.intra_mutation_time += (end - start)
