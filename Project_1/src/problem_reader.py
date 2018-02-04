@@ -23,6 +23,7 @@ class ProblemSpec:
             for _ in range(0, self.num_depots):
                 depot_data = list(map(int,(f.readline().strip('\n').split())))
                 D, Q = depot_data
+                if D == 0: D = float("Inf")
                 self.depots.append(Depot(D, Q))
             for _ in range(0, self.num_customers):
                 customer_data = list(map(int, (f.readline().strip('\n').split())))
