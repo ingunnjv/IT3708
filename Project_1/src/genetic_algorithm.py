@@ -17,7 +17,7 @@ import _pickle as cPickle
 #         'greenyellow', 'grey', 'aqua', 'olive',  'teal']
 
 depot1_colors = ['crimson', 'coral', 'red', 'tomato']
-depot2_colors = ['azure', 'blue', 'darkblue', 'teal']
+depot2_colors = ['grey', 'blue', 'darkblue', 'teal']
 depot3_colors = ['green', 'darkgreen', 'seagreen', 'lime']
 depot4_colors = ['chartreuse', 'gold', 'yellow', 'olive']
 
@@ -93,8 +93,9 @@ class GA:
                     if new_route_duration > self.problem_spec.depots[depot_nr].D:
                         material.reverse()
                         vehicle_route[min(cutpoints): max(cutpoints) + 1] = material
-                    else:
                         attempts += 1
+                    else:
+                        break
                 else:
                     attempts += 1
 
@@ -375,8 +376,8 @@ class GA:
             self.inter_mutation_time = 0
             self.update_fitness_time = 0
             self.deep_copy_time = 0
-        elites[0].visualizeGenes(self.problem_spec)
-        plt.pause(10)
+        self.population[0].visualizeGenes(self.problem_spec)
+        self.population[0].printSolutionData(self.problem_spec)
 
 class Genotype:
     def __init__(self):
@@ -533,6 +534,28 @@ class Genotype:
         self.fig = fig
         self.ax = ax
 
+    ######################################################
+    #
+    def printSolutionData(self, problem_spec):
+        vehicle_num_from_depot = 1
+        prev_depot_nr = 1
+        print(self.duration)
+        for vehicle_nr, route  in enumerate(self.vehicle_routes):
+            depot_nr = self.getDepotNumber(vehicle_nr, problem_spec) + 1
+            if depot_nr != prev_depot_nr:
+                vehicle_num_from_depot = 1
+
+            if route:
+                route_duration = self.routeDuration(route, vehicle_nr, problem_spec)
+                route_demand = self.routeDemand(route)
+                #customers =
+                print(str(depot_nr) + '\t' + str(vehicle_num_from_depot) + '\t' + str(route_duration) + '\t' + str (route_demand) +'\t' + str([0]+ [c.i for c in route] +[0]))
+                vehicle_num_from_depot += 1
+
+            prev_depot_nr = self.getDepotNumber(vehicle_nr, problem_spec)
+
+
+
     ###########################################
     # Get depot number of the specified vehicle
     def getDepotNumber(self, vehicle_nr, problem_spec):
@@ -587,7 +610,7 @@ class Genotype:
 
 
 
-ga = GA(fileName = 'p01', population_size = 300, generations = 250,
+ga = GA(fileName = 'p01', population_size = 300, generations = 100,
         elite_ratio = 0.01, tournament_ratio = 0.08,
         crossover_prob = 0.4, intra_mutation_prob = 0.10, inter_mutation_prob = 0.10,
         inter_mutation_attempt_rate = 10)
