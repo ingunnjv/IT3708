@@ -1,6 +1,6 @@
 import numpy as np
 import math
-from scipy.spatial import distance
+import itertools
 
 class ProblemSpec:
     def __init__(self, fileName):
@@ -14,7 +14,10 @@ class ProblemSpec:
 
         self.num_stops = self.num_customers + self.num_depots
         self.cost_matrix = np.zeros((self.num_stops, self.num_stops))
+        self.max_cost = 0
+        self.max_load = 0
         self.constructCostMatrix()
+        self.findMaxCostAndLoad()
 
     def readProblemFile(self, fileName):
         with open('../data/Data Files/' + fileName, 'r') as f:
@@ -47,6 +50,10 @@ class ProblemSpec:
                 y_dist = abs(stops[i].y - stops[j].y)
                 self.cost_matrix[i, j] = math.sqrt(math.pow(y_dist, 2) + math.pow(x_dist, 2))
 
+    def findMaxCostAndLoad(self):
+        flattened_cost = list(itertools.chain.from_iterable(self.cost_matrix))
+        self.max_cost = self.cost_matrix.max()
+        self.max_load = max([c.q for c in self.customers])
 
 
 

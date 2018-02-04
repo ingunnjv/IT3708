@@ -232,10 +232,12 @@ class GA:
                     insertion_location = insertion_cost[i][0]
                     inserted = True
                     break
+            # If no locations were feasible, choose a random one
             if not inserted:
                 insertion_location = insertion_cost[random.randint(0, len(insertion_cost) - 1)][0]
-        # Choose random feasible entry in list
-        else: insertion_location = insertion_cost[0][0]
+        # Choose first entry in list regardless of feasibility
+        else:
+            insertion_location = insertion_cost[0][0]
 
         # Insert the new customer in the chosen route and position in the individual
         insertion_vehicle, insertion_customer_pos = insertion_location
@@ -389,9 +391,11 @@ class Genotype:
         self.fitness = float("Inf")
         self.vehicle_routes = None
 
-        self.demand_ol = 0           # demand overload
-        self.duration_ol = 0   #duration_overload
+        self.demand_ol = 0          # demand overload
+        self.duration_ol = 0        # duration_overload
         self.duration = 0
+
+        self.infeasibility_count = 0    # number of infeasible insertions (occur in crossover)
 
     def __lt__(self, other):
         return self.fitness < other.fitness
@@ -467,17 +471,23 @@ class Genotype:
         self.duration_ol = 0
         self.demand_ol = 0
         self.duration = 0
+        self.infeasibility_count = 0
         for vehicle_nr, route in enumerate(self.vehicle_routes):
             depot_num = self.getDepotNumber(vehicle_nr, problem_spec)
+
+            max_duration = problem_spec.depots[depot_num].D
+            max_load = problem_spec.depots[depot_num].Q
+
             route_duration = self.routeDuration(route, vehicle_nr, problem_spec)
+            route_demand = self.routeDemand(route)
+
+            if route_duration > max_duration:
+                self.duration_ol += route_duration - max_duration
+                self.infeasibility_count += 1
+            if route_demand > max_load:
+                self.demand_ol += route_demand - max_load
+                self.infeasibility_count += 1
             self.duration += route_duration
-
-            duration_ol = route_duration - problem_spec.depots[depot_num].D
-            demand_ol = self.routeDemand(route) - problem_spec.depots[depot_num].Q
-
-            if duration_ol > 0: self.duration_ol += duration_ol
-            if demand_ol > 0: self.demand_ol += demand_ol
-
 
 
     ######################################################
@@ -564,7 +574,7 @@ class Genotype:
 
 
     def updateFitness(self, problem_spec):
-        self.fitness = self.duration + self.duration_ol + self.demand_ol
+        self.fitness = self.duration + self.duration_ol + self.demand_ol + problem_spec.max_cost*self.infeasibility_count
 
     ######################################################
     # Finds the duration of a single route
