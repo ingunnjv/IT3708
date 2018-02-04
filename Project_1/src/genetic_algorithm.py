@@ -18,7 +18,7 @@ import _pickle as cPickle
 
 depot1_colors = ['crimson', 'coral', 'red', 'tomato']
 depot2_colors = ['azure', 'blue', 'darkblue', 'teal']
-depot3_colors = ['green', 'darkgreen', 'lightgreen', 'lime']
+depot3_colors = ['green', 'darkgreen', 'seagreen', 'lime']
 depot4_colors = ['chartreuse', 'gold', 'yellow', 'olive']
 
 colors = []
@@ -63,6 +63,7 @@ class GA:
         for _ in range(0, self.population_size):
             genotype = Genotype()
             genotype.initGenes(self.problem_spec)
+            genotype.tooManyCustomers(self.problem_spec)
             self.population.append(genotype)
         end = timer()
         print("initalizePopulation timer: " + str(end-start))
@@ -115,9 +116,9 @@ class GA:
             if ((not offspring.vehicleOverloaded(offspring.vehicle_routes[vehicle_nr], vehicle_nr, customer.q, self.problem_spec))
                 and (not offspring.routeDurationLimitExceeded(offspring.vehicle_routes[vehicle_nr], vehicle_nr, customer,
                                                          len(offspring.vehicle_routes[vehicle_nr]), self.problem_spec))):
+                random_vehicle_route.pop(random_customer_nr)
                 random_placement = random.randint(0, len(offspring.vehicle_routes[vehicle_nr]))
                 offspring.vehicle_routes[vehicle_nr].insert(random_placement, customer)
-                random_vehicle_route.pop(random_customer_nr)
                 break
             attempts += 1
         offspring.tooManyCustomers(self.problem_spec)
@@ -134,7 +135,6 @@ class GA:
         # Initialize offspring
         start = timer()
         offspring1 = copy.deepcopy(parent1)
-        offspring1.vehicle_routes[0].pop(0)
         offspring2 = copy.deepcopy(parent2)
         end = timer()
         self.deep_copy_time += (end-start)
@@ -199,9 +199,9 @@ class GA:
                 feasible = (not (individual.vehicleOverloaded(r, vehicle_nr, new_customer.q, self.problem_spec)
                                  or individual.routeDurationLimitExceeded(r, vehicle_nr, new_customer, c_i, self.problem_spec)))
                 # Save the position
-                if feasible:
-                    location = (vehicle_nr, c_i)
-                    insertion_cost.append((location, cost))
+                #if feasible:
+                location = (vehicle_nr, c_i)
+                insertion_cost.append((location, cost, feasible))
 
         # Store in ordered list (increasing cost)
         insertion_cost = sorted(insertion_cost, key=itemgetter(1))
@@ -214,10 +214,18 @@ class GA:
         k = random.random()
 
         # Choose best insertion location
-        #TODO: Abort when there is no feasible insertions
-        if k <= 0.8: insertion_location = insertion_cost[0][0]
+        #TODO: Handle when there is no feasible insertions
+        if k <= 0.8:
+            inserted = False
+            for i in range(len(insertion_cost)):
+                if insertion_cost[i][2]:
+                    insertion_location = insertion_cost[i][0]
+                    inserted = True
+                    break
+            if not inserted:
+                insertion_location = insertion_cost[random.randint(0, len(insertion_cost) - 1)][0]
         # Choose random feasible entry in list
-        else: insertion_location = insertion_cost[random.randint(0, len(insertion_cost) - 1)][0]
+        else: insertion_location = insertion_cost[0][0]
 
         # Insert the new customer in the chosen route and position in the individual
         insertion_vehicle, insertion_customer_pos = insertion_location
@@ -334,6 +342,7 @@ class GA:
                         self.intraMutation(offspring, 'inversion')
 
                     start = timer()
+                    offspring.updateFitnessVariables(self.problem_spec)
                     offspring.updateFitness(self.problem_spec)
                     end = timer()
                     self.update_fitness_time += (end-start)
@@ -370,6 +379,10 @@ class Genotype:
         self.fitness = float("Inf")
         self.vehicle_routes = None
 
+        self.demand_ol = 0           # demand overload
+        self.duration_ol = 0   #duration_overload
+        self.duration = 0
+
     def __lt__(self, other):
         return self.fitness < other.fitness
 
@@ -385,6 +398,7 @@ class Genotype:
         self.vehicle_routes = [[] for i in range(0, max_vehicles)]
 
         self.closestDepotInit(problem_spec)
+        self.updateFitnessVariables(problem_spec)
         self.updateFitness(problem_spec)
 
     def randomInit(self):
@@ -414,7 +428,7 @@ class Genotype:
                 vehicle_start_index = depot * problem_spec.max_vehicles_per_depot
                 # Proceed by putting the customer in the first available vehicle
                 for vehicle_nr in range(vehicle_start_index,
-                                        vehicle_start_index + problem_spec.max_vehicles_per_depot - 1):
+                                        vehicle_start_index + problem_spec.max_vehicles_per_depot):
                     # Only append if it doesnt cause vehicle overload :
                     if ((not self.vehicleOverloaded(self.vehicle_routes[vehicle_nr], vehicle_nr, customer.q,
                                                     problem_spec))
@@ -425,20 +439,48 @@ class Genotype:
                         break
                 if inserted:
                     break
+            # If no feasible position found, insert in random position
+            if not inserted:
+                random_vehicle_number = random.randint(vehicle_start_index, vehicle_start_index + problem_spec.max_vehicles_per_depot - 1)
+                self.vehicle_routes[random_vehicle_number].append(customer)
+
             customers_placed += 1
+
+
+
+
+    ######################################################
+    # Calculate the amount of overload of a solution.
+    # - Duration longer than max allowed duration of a route
+    # - Load above max allowed load in a route
+    def updateFitnessVariables(self, problem_spec):
+        self.duration_ol = 0
+        self.demand_ol = 0
+        self.duration = 0
+        for vehicle_nr, route in enumerate(self.vehicle_routes):
+            depot_num = self.getDepotNumber(vehicle_nr, problem_spec)
+            route_duration = self.routeDuration(route, vehicle_nr, problem_spec)
+            self.duration += route_duration
+
+            duration_ol = route_duration - problem_spec.depots[depot_num].D
+            demand_ol = self.routeDemand(route) - problem_spec.depots[depot_num].Q
+
+            if duration_ol > 0: self.duration_ol += duration_ol
+            if demand_ol > 0: self.demand_ol += demand_ol
+
 
 
     ######################################################
     # Determine if a vehicle becomes overloaded if its assigned an additional customer, returns True/False
     def vehicleOverloaded(self, vehicle_route, vehicle_nr, customer_demand, problem_spec):
-        demand_sum = customer_demand
-        for customer in vehicle_route:
-            demand_sum += customer.q
+        demand_sum = self.routeDemand(vehicle_route)
+        demand_sum += customer_demand
         depot_number = self.getDepotNumber(vehicle_nr, problem_spec)
         if demand_sum > problem_spec.depots[depot_number].Q:
             return True
         else:
             return False
+
 
     ######################################################
     # Determine if a route becomes too long if an additional customer is assigned in a certain position
@@ -477,7 +519,7 @@ class Genotype:
             route_y_coords[-1] = route_y_coords[0]
             ax.plot(route_x_coords,route_y_coords, 'x-', color=colors[int(depot_nr)][ vehicle_nr % problem_spec.max_vehicles_per_depot], linewidth=0.8)
 
-        plt.pause(1)
+        plt.show(block=True)
         self.background = background
         self.fig = fig
         self.ax = ax
@@ -485,19 +527,12 @@ class Genotype:
     ###########################################
     # Get depot number of the specified vehicle
     def getDepotNumber(self, vehicle_nr, problem_spec):
-        return math.floor(vehicle_nr / problem_spec.num_depots)
+        return math.floor(vehicle_nr / problem_spec.max_vehicles_per_depot)
 
-    ######################################################
-    # Finds the duration (total cost) of a single solution
-    def duration(self, problem_spec):
-        duration = 0
-        # Go through all routes
-        for vehicle_nr, route in enumerate(self.vehicle_routes):
-            duration += self.routeDuration(route, vehicle_nr, problem_spec)
-        return duration
+
 
     def updateFitness(self, problem_spec):
-        self.fitness = self.duration(problem_spec)
+        self.fitness = self.duration + self.duration_ol + self.demand_ol
 
     ######################################################
     # Finds the duration of a single route
@@ -515,6 +550,15 @@ class Genotype:
         duration += problem_spec.cost_matrix[prev_customer_index, depot_nr + problem_spec.num_customers]
 
         return duration
+
+
+    ######################################################
+    # Finds the demand/load of a single route
+    def routeDemand(self, vehicle_route):
+        demand = 0
+        for customer in vehicle_route:
+            demand += customer.q
+        return demand
 
     def tooManyCustomers(self, problem_spec):
         flattened = list(itertools.chain.from_iterable(self.vehicle_routes))
