@@ -330,8 +330,8 @@ class GA:
                 new_population.pop()
             self.population = new_population
 
-        self.population[0].visualizeGenes(self.problem_spec)
-        self.population[0].printSolutionData(self.problem_spec)
+        elites[0].printSolutionData(self.problem_spec)
+        elites[0].visualizeGenes(self.problem_spec)
 
 class Genotype:
     def __init__(self):
@@ -358,19 +358,25 @@ class Genotype:
     def __deepcopy__(self, memodict={}):
         return cPickle.loads(cPickle.dumps(self, -1))
 
+    ######################################################
+    #
     def initGenes(self,  problem_spec):
         # Initialization of placement of customers to vehicle routes
         max_vehicles = problem_spec.max_vehicles_per_depot * problem_spec.num_depots
         self.vehicle_routes = [[] for i in range(0, max_vehicles)]
 
-        self.closestDepotInit(problem_spec)
+        self.assignCustomers(problem_spec)
         self.updateFitnessVariables(problem_spec)
         self.updateFitness(problem_spec)
 
+    ######################################################
+    #
     def randomInit(self):
         pass
 
-    def closestDepotInit(self, problem_spec):
+    ######################################################
+    #
+    def assignCustomers(self, problem_spec):
         random.seed()
         range_num_customers = list(range(0, len(problem_spec.customers)))
         customers_placed = 0
@@ -411,8 +417,6 @@ class Genotype:
                 self.vehicle_routes[random_vehicle_number].append(customer)
 
             customers_placed += 1
-
-
 
 
     ######################################################
@@ -489,7 +493,7 @@ class Genotype:
                 route_y_coords[customer_num + 1] = route[customer_num].y
             route_x_coords[-1] = route_x_coords[0]
             route_y_coords[-1] = route_y_coords[0]
-            ax.plot(route_x_coords,route_y_coords, 'x-', color=colors[int(depot_nr)][ vehicle_nr % problem_spec.max_vehicles_per_depot], linewidth=0.8)
+            ax.plot(route_x_coords,route_y_coords, 'x-', color=colors[int(depot_nr) % 4][ vehicle_nr % problem_spec.max_vehicles_per_depot % 4], linewidth=0.8)
 
         plt.show(block=True)
         self.background = background
@@ -524,6 +528,8 @@ class Genotype:
     def getDepotNumber(self, vehicle_nr, problem_spec):
         return math.floor(vehicle_nr / problem_spec.max_vehicles_per_depot)
 
+    ######################################################
+    #
     def updateFitness(self, problem_spec):
         self.fitness = self.duration + self.duration_ol + self.demand_ol + problem_spec.max_cost*self.infeasibility_count
 
@@ -553,6 +559,8 @@ class Genotype:
             demand += customer.q
         return demand
 
+    ######################################################
+    #
     def tooManyCustomers(self, problem_spec):
         flattened = list(itertools.chain.from_iterable(self.vehicle_routes))
 
@@ -568,7 +576,8 @@ class Genotype:
         if customers > unique_customers:
             print("\nERROR:\tThere are repeated customers in the routes\n")
 
-
+    ######################################################
+    #
     def checkForSatisfyingSolution(self, problem_spec):
         percent_from_optimal = (100 * (self.duration / problem_spec.solution_cost)) - 100
 
@@ -578,22 +587,10 @@ class Genotype:
             return False
 
 
+if __name__ == '__main__':
+    ga = GA(fileName='p08', population_size=100, generations=300,
+            elite_ratio=0.01, tournament_ratio=0.08,
+            crossover_prob=0.8, intra_mutation_prob=0.10, inter_mutation_prob=0.10,
+            inter_mutation_attempt_rate=3)
 
-
-ga = GA(fileName = 'p02', population_size = 200, generations = 1000,
-        elite_ratio = 0.01, tournament_ratio = 0.08,
-        crossover_prob = 0.4, intra_mutation_prob = 0.10, inter_mutation_prob = 0.10,
-        inter_mutation_attempt_rate = 5)
-#ga.initializePopulation()
-#ga.population[3].tooManyCustomers(ga.problem_spec)
-ga.evolutionCycle()
-#ga.initializePopulation()
-#A = ga.population[0]
-#B = copy.deepcopy(ga.population[0])
-#B.problem_spec = None
-
-#ga.population[0].vizualizeGenes()
-#ga.population[1].vizualizeGenes()
-#plt.close("all")
-
-yo = 5
+    ga.evolutionCycle()

@@ -58,8 +58,6 @@ class ProblemSpec:
 
 
 
-
-
 class Depot:
     def __init__(self, D, Q):
         self.x = 0         # x coordinate
