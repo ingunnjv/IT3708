@@ -411,8 +411,9 @@ class Genotype:
                         break
                 if inserted:
                     break
-            # If no feasible position found, insert in random position
+            # If no feasible position found, insert in random route in closest depot
             if not inserted:
+                vehicle_start_index = closest_depot * problem_spec.max_vehicles_per_depot
                 random_vehicle_number = random.randint(vehicle_start_index, vehicle_start_index + problem_spec.max_vehicles_per_depot - 1)
                 self.vehicle_routes[random_vehicle_number].append(customer)
 
@@ -481,7 +482,7 @@ class Genotype:
         ax.grid(which='major', alpha=0.5)
 
         background = fig.canvas.copy_from_bbox(ax.bbox)
-
+        prev_depot_nr = -1
         for vehicle_nr, route in enumerate(self.vehicle_routes):
             route_x_coords = np.zeros(len(route) + 2)
             route_y_coords = np.zeros(len(route) + 2)
@@ -493,8 +494,11 @@ class Genotype:
                 route_y_coords[customer_num + 1] = route[customer_num].y
             route_x_coords[-1] = route_x_coords[0]
             route_y_coords[-1] = route_y_coords[0]
-            ax.plot(route_x_coords,route_y_coords, 'x-', color=colors[int(depot_nr) % 4][ vehicle_nr % problem_spec.max_vehicles_per_depot % 4], linewidth=0.8)
-
+            if depot_nr != prev_depot_nr:
+                ax.plot(route_x_coords[0], route_y_coords[0], 's', color='black', fillstyle='none', markersize=5, linewidth=0.8)
+            ax.plot(route_x_coords[1:-1], route_y_coords[1:-1], 'x', color=colors[int(depot_nr) % 4][ vehicle_nr % problem_spec.max_vehicles_per_depot % 4], linewidth=0.8)
+            ax.plot(route_x_coords,route_y_coords, '-', color=colors[int(depot_nr) % 4][ vehicle_nr % problem_spec.max_vehicles_per_depot % 4], linewidth=0.8)
+            prev_depot_nr = depot_nr
         plt.show(block=True)
         self.background = background
         self.fig = fig
@@ -588,7 +592,7 @@ class Genotype:
 
 
 if __name__ == '__main__':
-    ga = GA(fileName='p08', population_size=100, generations=300,
+    ga = GA(fileName='p07', population_size=100, generations=300,
             elite_ratio=0.01, tournament_ratio=0.08,
             crossover_prob=0.8, intra_mutation_prob=0.10, inter_mutation_prob=0.10,
             inter_mutation_attempt_rate=3)
