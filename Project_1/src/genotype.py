@@ -268,7 +268,7 @@ class Genotype:
     def checkForSatisfyingSolution(self, problem_spec):
         percent_from_optimal = (100 * (self.duration / problem_spec.solution_cost)) - 100
 
-        if percent_from_optimal <= 1.0 and not self.infeasibility_count:
+        if percent_from_optimal <= 5.0 and not self.infeasibility_count:
             return True
         else:
             return False
