@@ -12,7 +12,7 @@ import numpy as np
 
 
 class GA:
-    def __init__(self, fileName, population_size, generation_size, generations, elite_ratio, tournament_ratio, crossover_prob, intra_mutation_prob, inter_mutation_prob,
+    def __init__(self, fileName, population_size, generation_size, generations, elite_ratio, tournament_ratio, div_bound, crossover_prob, intra_mutation_prob, inter_mutation_prob,
                  inter_mutation_attempt_rate):
         self.problem_spec = pr.ProblemSpec(fileName)
         self.early_stopping_percents = [30, 20, 10, 5]
@@ -23,6 +23,7 @@ class GA:
         self.generations = generations
         self.elite_ratio = elite_ratio
         self.tournament_ratio = tournament_ratio
+        self.div_bound = div_bound
         self.crossover_prob = crossover_prob
         self.intra_mutation_prob = intra_mutation_prob
         self.inter_mutation_prob = inter_mutation_prob
@@ -227,7 +228,8 @@ class GA:
                 insertion_location = insertion_cost[random.randint(0, len(insertion_cost) - 1)][0]
         # Choose first entry in list regardless of feasibility
         else:
-            insertion_location = insertion_cost[0][0]
+            randomy_list_entry = random.randint(0, len(insertion_cost) - 1)
+            insertion_location = insertion_cost[randomy_list_entry][0]
 
         # Insert the new customer in the chosen route and position in the individual
         insertion_vehicle, insertion_customer_pos = insertion_location
@@ -275,7 +277,7 @@ class GA:
     ######################################################
     # Successively eliminates clones, then bad individuals, until the population size is at minimum
     def survivorSelection(self):
-        for i in range(0, self.generation_size - self.min_population_size):
+        for i in range(0, len(self.population) - self.min_population_size):
             clones = self.findAllClonesInPopulation()
             if clones:
                 # Remove individual in clones with worst fitness
@@ -346,7 +348,7 @@ class GA:
         self.initializePopulation()
         prev_best = None
         it_div = 0
-        it_div_bound = 200
+
         # Start the evolution process
         for generation in range(1, self.generations + 1):
             # Evaluate the fitness of all individuals in the population and compute the average
@@ -368,8 +370,8 @@ class GA:
 
             # Print generation data to terminal
             print("Generation: %d" % generation)
-            print("Best fitness score: %f (infeasibility_count: %d)" % (best_fitness, elites[0].infeasibility_count))
             print("Best duration: %f " % self.population[int(best)].duration)
+            print("Best fitness score: %f (infeasibility_count: %d)" % (best_fitness, elites[0].infeasibility_count))
             print("Average fitness score: %f\n" % average_fitness)
 
             # Check for early stop
@@ -392,13 +394,13 @@ class GA:
                     it_div += 1
                 else:
                     it_div = 0
-            if it_div > it_div_bound:   # no improvement in best solution for it_div_bound iterations
+            if it_div >= self.div_bound:   # no improvement in best solution for it_div_bound iterations
                 # Populate the new population through diversification
                 new_population = self.diversify(fitnesses=population_fitness)
                 it_div = 0
 
             else:
-                # Populate the new population until it has 200 individuals by doing recombination, mutation and survivors
+                # Populate the new population by doing recombination, mutation and survivors
                 while len(new_population) < self.generation_size:
                     # Do tournament selection to choose parents
                     parents = self.parentSelection()
@@ -444,8 +446,8 @@ class GA:
 
 
 if __name__ == '__main__':
-    ga = GA(fileName='p01', population_size=25, generation_size=70, generations=10000,
-            elite_ratio=0.4, tournament_ratio=0.08,
+    ga = GA(fileName='p01', population_size=25, generation_size=25, generations=10000,
+            elite_ratio=0.4, tournament_ratio=0.25, div_bound=200,
             crossover_prob=0.6, intra_mutation_prob=0.2, inter_mutation_prob=0.25,
             inter_mutation_attempt_rate=10)
 
