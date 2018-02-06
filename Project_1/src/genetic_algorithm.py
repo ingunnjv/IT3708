@@ -275,7 +275,7 @@ class GA:
     ######################################################
     # Successively eliminates clones, then bad individuals, until the population size is at minimum
     def survivorSelection(self):
-        for i in range(0, self.generation_size - self.min_population_size):
+        while(len(self.population) > self.min_population_size):
             clones = self.findAllClonesInPopulation()
             if clones:
                 # Remove individual in clones with worst fitness
@@ -346,7 +346,7 @@ class GA:
         self.initializePopulation()
         prev_best = None
         it_div = 0
-        it_div_bound = 200
+        it_div_bound = 100
         # Start the evolution process
         for generation in range(1, self.generations + 1):
             # Evaluate the fitness of all individuals in the population and compute the average
