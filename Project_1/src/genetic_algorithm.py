@@ -277,7 +277,7 @@ class GA:
     ######################################################
     # Successively eliminates clones, then bad individuals, until the population size is at minimum
     def survivorSelection(self):
-        for i in range(0, len(self.population) - self.min_population_size):
+        while(len(self.population) > self.min_population_size):
             clones = self.findAllClonesInPopulation()
             if clones:
                 # Remove individual in clones with worst fitness
