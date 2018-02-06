@@ -277,34 +277,34 @@ class GA:
     ######################################################
     # Successively eliminates clones, then bad individuals, until the population size is at minimum
     def survivorSelection(self):
+        start_s_time = timer()
         while(len(self.population) > self.min_population_size):
             clones = self.findAllClonesInPopulation()
             if clones:
                 # Remove individual in clones with worst fitness
-                fitnesses = []
-                for i, _ in clones:
-                    fitnesses.append(i.fitness)
-                sorted_clones = [x for _, x in sorted(zip(fitnesses, clones))]
-                self.population.pop(sorted_clones[-1][1])
+                max_clone_index = max(clones, key=itemgetter(0))[1]
+                self.population.pop(max_clone_index)
             else:
                 # Remove individual in whole population with worst fitness
-                sorted_population = sorted(self.population, key=attrgetter('fitness'))
-                sorted_population.pop()
-                self.population = sorted_population
+                max_index = max(range(len(self.population)), key=self.population.__getitem__)
+                self.population.pop(max_index)
+        end_s_time = timer()
+        print("Survivor selection time: %f" % (end_s_time - start_s_time))
 
     def findAllClonesInPopulation(self):
         clones = []
-        clone_indices = []
+        clone_indices = set()
         for i, individual1 in enumerate(self.population):
             if i in clone_indices:
                 continue
             for j, individual2 in enumerate(self.population):
                 if j in clone_indices:
                     continue
-                elif individual1.isClone(individual2, self.problem_spec) and i != j:
-                    clones.append((individual1, i))
-                    clones.append((individual2, j))
-                    clone_indices += [i, j]
+                elif i != j:
+                    if individual1.isClone(individual2, self.problem_spec) and i != j:
+                        clones.append((individual1.fitness, i))
+                        clones.append((individual2.fitness, j))
+                        clone_indices.update([i, j])
         return clones
 
 
