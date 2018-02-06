@@ -34,7 +34,14 @@ class Genotype:
         return self.fitness > other.fitness
 
     def __deepcopy__(self, memodict={}):
-        return cPickle.loads(cPickle.dumps(self, -1))
+        copy = Genotype()
+        copy.vehicle_routes = list(self.vehicle_routes)
+        copy.fitness = self.fitness
+        copy.infeasibility_count = self.infeasibility_count
+        copy.demand_ol = self.demand_ol
+        copy.duration_ol = self.duration_ol
+        copy.duration = self.duration
+        return copy
 
     ######################################################
     #
