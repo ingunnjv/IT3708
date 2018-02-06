@@ -4,6 +4,7 @@ import math
 import itertools
 import numpy as np
 import matplotlib.pyplot as plt
+from operator import attrgetter
 
 depot1_colors = ['crimson', 'coral', 'red', 'tomato']
 depot2_colors = ['grey', 'blue', 'darkblue', 'teal']
@@ -34,7 +35,7 @@ class Genotype:
         return self.fitness > other.fitness
 
     def __eq__(self, other):
-        return self.fitness == other.fitness
+        return (self.fitness == other.fitness)
 
     def __deepcopy__(self, memodict={}):
         copy = Genotype()
@@ -47,23 +48,10 @@ class Genotype:
         return copy
 
     ######################################################
-    # A clone of an individual has either the same cost or the same depot assignments or both
+    # A clone of an individual has the same cost and the same depot assignments
     def isClone(self, other, problem_spec):
-        if self.fitness == other.fitness:
-            # sort each route in vehicle_routes for both genotypes (don't care about sequence, only depot assignments)
-            self_vehicle_routes = [[] for _ in range(problem_spec.num_depots)]
-            other_vehicle_routes = [[] for _ in range(problem_spec.num_depots)]
-            for vehicle_nr in range(0, problem_spec.max_vehicles_per_depot * problem_spec.num_depots):
-                current_depot = self.getDepotNumber(vehicle_nr, problem_spec)
-                self_vehicle_routes[current_depot] += [c.i for c in self.vehicle_routes[vehicle_nr]]
-                other_vehicle_routes[current_depot] += [c.i for c in other.vehicle_routes[vehicle_nr]]
-
-            self_vehicle_routes = [sorted(self_vehicle_routes[d]) for d in range(problem_spec.num_depots)]
-            other_vehicle_routes = [sorted(other_vehicle_routes[d]) for d in range(problem_spec.num_depots)]
-            if self_vehicle_routes == other_vehicle_routes:
-                return True
-            else:
-                return False
+        if self.fitness == other.fitness and self.infeasibility_count == other.infeasibility_count:
+            return True
         else:
             return False
 

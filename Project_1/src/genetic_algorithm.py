@@ -275,34 +275,34 @@ class GA:
     ######################################################
     # Successively eliminates clones, then bad individuals, until the population size is at minimum
     def survivorSelection(self):
+        start_s_time = timer()
         while(len(self.population) > self.min_population_size):
             clones = self.findAllClonesInPopulation()
             if clones:
                 # Remove individual in clones with worst fitness
-                fitnesses = []
-                for i, _ in clones:
-                    fitnesses.append(i.fitness)
-                sorted_clones = [x for _, x in sorted(zip(fitnesses, clones))]
-                self.population.pop(sorted_clones[-1][1])
+                max_clone_index = max(clones, key=itemgetter(0))[1]
+                self.population.pop(max_clone_index)
             else:
                 # Remove individual in whole population with worst fitness
-                sorted_population = sorted(self.population, key=attrgetter('fitness'))
-                sorted_population.pop()
-                self.population = sorted_population
+                max_index = max(range(len(self.population)), key=self.population.__getitem__)
+                self.population.pop(max_index)
+        end_s_time = timer()
+        print("Survivor selection time: %f" % (end_s_time - start_s_time))
 
     def findAllClonesInPopulation(self):
         clones = []
-        clone_indices = []
+        clone_indices = set()
         for i, individual1 in enumerate(self.population):
             if i in clone_indices:
                 continue
             for j, individual2 in enumerate(self.population):
                 if j in clone_indices:
                     continue
-                elif individual1.isClone(individual2, self.problem_spec) and i != j:
-                    clones.append((individual1, i))
-                    clones.append((individual2, j))
-                    clone_indices += [i, j]
+                elif i != j:
+                    if individual1.isClone(individual2, self.problem_spec) and i != j:
+                        clones.append((individual1.fitness, i))
+                        clones.append((individual2.fitness, j))
+                        clone_indices.update([i, j])
         return clones
 
 
@@ -346,7 +346,7 @@ class GA:
         self.initializePopulation()
         prev_best = None
         it_div = 0
-        it_div_bound = 100
+        it_div_bound = 50
         # Start the evolution process
         for generation in range(1, self.generations + 1):
             # Evaluate the fitness of all individuals in the population and compute the average
@@ -444,7 +444,7 @@ class GA:
 
 
 if __name__ == '__main__':
-    ga = GA(fileName='p01', population_size=25, generation_size=70, generations=10000,
+    ga = GA(fileName='p07', population_size=25, generation_size=100, generations=10000,
             elite_ratio=0.4, tournament_ratio=0.08,
             crossover_prob=0.6, intra_mutation_prob=0.2, inter_mutation_prob=0.25,
             inter_mutation_attempt_rate=10)
