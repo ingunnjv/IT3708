@@ -19,7 +19,7 @@ colors.append(depot4_colors)
 class Genotype:
     def __init__(self):
         self.fitness = float("Inf")
-        self.vehicle_routes = None
+        self.vehicle_routes = []
 
         self.demand_ol = 0          # demand overload
         self.duration_ol = 0        # duration_overload
@@ -35,13 +35,15 @@ class Genotype:
 
     def __deepcopy__(self, memodict={}):
         copy = Genotype()
-        copy.vehicle_routes = list(self.vehicle_routes)
+        copy.vehicle_routes = [list(r) for r in self.vehicle_routes]
         copy.fitness = self.fitness
         copy.infeasibility_count = self.infeasibility_count
         copy.demand_ol = self.demand_ol
         copy.duration_ol = self.duration_ol
         copy.duration = self.duration
         return copy
+
+
 
     ######################################################
     #
@@ -261,6 +263,8 @@ class Genotype:
             print("\nERROR:\tToo few customers in routes: \t%d customers\n" % customers)
         if customers > unique_customers:
             print("\nERROR:\tThere are repeated customers in the routes\n")
+        elif customers < unique_customers:
+            print("\nERROR:\tThere are unique customers missing in the routes\n")
 
     ######################################################
     #
