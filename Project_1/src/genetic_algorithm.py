@@ -3,21 +3,23 @@ from genotype import *
 import random
 import math
 from timeit import default_timer as timer
-from operator import itemgetter
+from operator import itemgetter, attrgetter
 import copy
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 
 
 class GA:
-    def __init__(self, fileName, population_size, generations, elite_ratio, tournament_ratio, crossover_prob, intra_mutation_prob, inter_mutation_prob,
+    def __init__(self, fileName, population_size, generation_size, generations, elite_ratio, tournament_ratio, crossover_prob, intra_mutation_prob, inter_mutation_prob,
                  inter_mutation_attempt_rate):
         self.problem_spec = pr.ProblemSpec(fileName)
         self.early_stopping_percents = [30, 20, 10, 5]
 
         # Parameters
-        self.population_size = population_size
+        self.min_population_size = population_size
+        self.generation_size = generation_size      # > population size
         self.generations = generations
         self.elite_ratio = elite_ratio
         self.tournament_ratio = tournament_ratio
@@ -35,7 +37,7 @@ class GA:
     ######################################################
     # Create an initial population by creating Genotype()'s and storing them in self.population
     def initializePopulation(self):
-        for _ in range(0, self.population_size):
+        for _ in range(0, self.min_population_size):
             genotype = Genotype()
             genotype.initGenes(self.problem_spec)
             genotype.tooManyCustomers(self.problem_spec)
@@ -247,7 +249,7 @@ class GA:
     def getPopulationElite(self, fitnesses):
         population = self.population
         sorted_population = [x for _, x in sorted(zip(fitnesses, population))] #sorts population in descending order based on fitnesses
-        elites_num = int(math.ceil(self.population_size * self.elite_ratio))
+        elites_num = int(math.ceil(self.min_population_size * self.elite_ratio))
         elites = sorted_population[0:elites_num]
         elites = copy.deepcopy(elites)
         return elites
@@ -255,11 +257,11 @@ class GA:
     ######################################################
     # Return two genotypes from the population based on a tournament selection
     def parentSelection(self):
-        num_individuals = int(math.ceil(self.tournament_ratio * self.population_size))
+        num_individuals = int(math.ceil(self.tournament_ratio * len(self.population)))
         if num_individuals < 2:
             num_individuals = 2
 
-        selected = random.sample(range(0, self.population_size), num_individuals)
+        selected = random.sample(range(0, self.min_population_size), num_individuals)
         tournament_population = []
         for i in selected:
             tournament_population.append(self.population[i])
@@ -271,10 +273,44 @@ class GA:
         return sorted_tournament_population[0:2]
 
     ######################################################
+    # Successively eliminates clones, then bad individuals, until the population size is at minimum
+    def survivorSelection(self):
+        for i in range(0, self.generation_size - self.min_population_size):
+            clones = self.findAllClonesInPopulation()
+            if clones:
+                # Remove individual in clones with worst fitness
+                fitnesses = []
+                for i, _ in clones:
+                    fitnesses.append(i.fitness)
+                sorted_clones = [x for _, x in sorted(zip(fitnesses, clones))]
+                self.population.pop(sorted_clones[-1][1])
+            else:
+                # Remove individual in whole population with worst fitness
+                sorted_population = sorted(self.population, key=attrgetter('fitness'))
+                sorted_population.pop()
+                self.population = sorted_population
+
+    def findAllClonesInPopulation(self):
+        clones = []
+        clone_indices = []
+        for i, individual1 in enumerate(self.population):
+            if i in clone_indices:
+                continue
+            for j, individual2 in enumerate(self.population):
+                if j in clone_indices:
+                    continue
+                elif individual1.isClone(individual2, self.problem_spec) and i != j:
+                    clones.append((individual1, i))
+                    clones.append((individual2, j))
+                    clone_indices += [i, j]
+        return clones
+
+
+    ######################################################
     # Eliminates all but the 1/3 best individuals, and creates new ones as in the initialization phase
     def diversify(self, fitnesses):
         population = self.population
-        sorted_population = [x for _, x in sorted(zip(fitnesses, population))]  # sorts population in descending order based on fitnesses
+        sorted_population = [x for _, x in sorted(zip(fitnesses, population))]  # sorts population in ascending order based on fitnesses
 
         # Save the best individuals
         diversification_num = int(math.ceil(len(population) / 3))
@@ -319,8 +355,9 @@ class GA:
                 population_fitness.append(individual.fitness)
 
             # Store fitness data
-            average_fitness = sum(population_fitness) / self.population_size
+            average_fitness = sum(population_fitness) / self.min_population_size
             best_fitness = min(population_fitness)
+            best = np.argmin(population_fitness)
             self.average_fitness_history.append(average_fitness)
             self.best_fitness_history.append(best_fitness)
 
@@ -332,6 +369,7 @@ class GA:
             # Print generation data to terminal
             print("Generation: %d" % generation)
             print("Best fitness score: %f (infeasibility_count: %d)" % (best_fitness, elites[0].infeasibility_count))
+            print("Best duration: %f " % self.population[int(best)].duration)
             print("Average fitness score: %f\n" % average_fitness)
 
             # Check for early stop
@@ -358,11 +396,10 @@ class GA:
                 # Populate the new population through diversification
                 new_population = self.diversify(fitnesses=population_fitness)
                 it_div = 0
-                print("Diversification performed")
 
             else:
                 # Populate the new population until it has 200 individuals by doing recombination, mutation and survivors
-                while len(new_population) < self.population_size:
+                while len(new_population) < self.generation_size:
                     # Do tournament selection to choose parents
                     parents = self.parentSelection()
 
@@ -389,9 +426,12 @@ class GA:
             prev_best = current_best
 
             # Stop population growing in case everything is not even numbers
-            if len(new_population) > (self.population_size):
+            if len(new_population) > (self.generation_size):
                 new_population.pop()
+
             self.population = new_population
+            self.survivorSelection()
+
         end_evolution_time = timer()
         print("Algorithm terminated - elapsed time: %f" % (end_evolution_time-start_evolution_time))
         bestGenotype = elites[0]
@@ -404,9 +444,10 @@ class GA:
 
 
 if __name__ == '__main__':
-    ga = GA(fileName='p01', population_size=70, generations=10000,
-            elite_ratio=0.05, tournament_ratio=0.08,
+    ga = GA(fileName='p01', population_size=25, generation_size=70, generations=10000,
+            elite_ratio=0.4, tournament_ratio=0.08,
             crossover_prob=0.6, intra_mutation_prob=0.2, inter_mutation_prob=0.25,
             inter_mutation_attempt_rate=10)
 
     ga.evolutionCycle()
+    y = 0

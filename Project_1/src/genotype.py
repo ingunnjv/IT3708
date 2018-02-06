@@ -46,7 +46,26 @@ class Genotype:
         copy.duration = self.duration
         return copy
 
+    ######################################################
+    # A clone of an individual has either the same cost or the same depot assignments or both
+    def isClone(self, other, problem_spec):
+        if self.fitness == other.fitness:
+            # sort each route in vehicle_routes for both genotypes (don't care about sequence, only depot assignments)
+            self_vehicle_routes = [[] for _ in range(problem_spec.num_depots)]
+            other_vehicle_routes = [[] for _ in range(problem_spec.num_depots)]
+            for vehicle_nr in range(0, problem_spec.max_vehicles_per_depot * problem_spec.num_depots):
+                current_depot = self.getDepotNumber(vehicle_nr, problem_spec)
+                self_vehicle_routes[current_depot] += [c.i for c in self.vehicle_routes[vehicle_nr]]
+                other_vehicle_routes[current_depot] += [c.i for c in other.vehicle_routes[vehicle_nr]]
 
+            self_vehicle_routes = [sorted(self_vehicle_routes[d]) for d in range(problem_spec.num_depots)]
+            other_vehicle_routes = [sorted(other_vehicle_routes[d]) for d in range(problem_spec.num_depots)]
+            if self_vehicle_routes == other_vehicle_routes:
+                return True
+            else:
+                return False
+        else:
+            return False
 
     ######################################################
     #
@@ -217,7 +236,7 @@ class Genotype:
     ###########################################
     # Get depot number of the specified vehicle
     def getDepotNumber(self, vehicle_nr, problem_spec):
-        return math.floor(vehicle_nr / problem_spec.max_vehicles_per_depot)
+        return int(math.floor(vehicle_nr / problem_spec.max_vehicles_per_depot))
 
     ######################################################
     #
