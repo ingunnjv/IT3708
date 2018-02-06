@@ -18,11 +18,6 @@ colors.append(depot4_colors)
 
 class Genotype:
     def __init__(self):
-        # Visualization data
-        self.ax = None
-        self.background = None
-        self.fig = None
-
         self.fitness = float("Inf")
         self.vehicle_routes = None
 
@@ -178,18 +173,15 @@ class Genotype:
             route_x_coords[-1] = route_x_coords[0]
             route_y_coords[-1] = route_y_coords[0]
             if depot_nr != prev_depot_nr:
-                ax.plot(route_x_coords[0], route_y_coords[0], 's', color='black', fillstyle='none', markersize=5, linewidth=0.8)
-            ax.plot(route_x_coords[1:-1], route_y_coords[1:-1], 'x', color=colors[int(depot_nr) % 4][ vehicle_nr % problem_spec.max_vehicles_per_depot % 4], linewidth=0.8)
-            ax.plot(route_x_coords,route_y_coords, '-', color=colors[int(depot_nr) % 4][ vehicle_nr % problem_spec.max_vehicles_per_depot % 4], linewidth=0.8)
+                ax.plot(route_x_coords[0], route_y_coords[0], 's', color='black', fillstyle='none', markersize=7, linewidth=1)
+            ax.plot(route_x_coords[1:-1], route_y_coords[1:-1], 'x', color=colors[int(depot_nr) % 4][ vehicle_nr % problem_spec.max_vehicles_per_depot % 4], linewidth=1)
+            ax.plot(route_x_coords,route_y_coords, '-', color=colors[int(depot_nr) % 4][ vehicle_nr % problem_spec.max_vehicles_per_depot % 4], linewidth=2)
             prev_depot_nr = depot_nr
         plt.show(block=True)
-        self.background = background
-        self.fig = fig
-        self.ax = ax
 
     ######################################################
     # Print the solution (routes), demand over routes and total durations of all routes
-    def printSolutionData(self, problem_spec):
+    def printGenotypeData(self, problem_spec):
         vehicle_num_from_depot = 1
         prev_depot_nr = 1
         percent_from_optimal = 100*(self.duration / problem_spec.solution_cost)
@@ -265,10 +257,10 @@ class Genotype:
 
     ######################################################
     #
-    def checkForSatisfyingSolution(self, problem_spec):
+    def checkForSatisfyingSolution(self, problem_spec, percent):
         percent_from_optimal = (100 * (self.duration / problem_spec.solution_cost)) - 100
 
-        if percent_from_optimal <= 5.0 and not self.infeasibility_count:
+        if percent_from_optimal <= percent and not self.infeasibility_count:
             return True
         else:
             return False

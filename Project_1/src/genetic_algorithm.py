@@ -5,6 +5,8 @@ import math
 from timeit import default_timer as timer
 from operator import itemgetter
 import copy
+import matplotlib.pyplot as plt
+
 
 
 
@@ -12,6 +14,7 @@ class GA:
     def __init__(self, fileName, population_size, generations, elite_ratio, tournament_ratio, crossover_prob, intra_mutation_prob, inter_mutation_prob,
                  inter_mutation_attempt_rate):
         self.problem_spec = pr.ProblemSpec(fileName)
+        self.early_stopping_percents = [30, 20, 10, 5]
 
         # Parameters
         self.population_size = population_size
@@ -40,9 +43,11 @@ class GA:
 
 
     ######################################################
-    # Applies a change to one random vehicle route (inversion)
-    def intraMutation(self, offspring, type):
-        if type == "inversion":
+    # Applies a change to one random vehicle route (inversion, single customer re-routing, swapping)
+    def intraMutation(self, offspring):
+        random.seed()
+        type = random.randint(1,3)
+        if type == 1: # inversion with one vehicle route
             num_vehicles = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
             range_num_vehicles = list(range(0, num_vehicles))
             vehicle_route = None
@@ -67,37 +72,63 @@ class GA:
                         break
                 else:
                     attempts += 1
+        if type == 2: # single customer re-route from one route to another within the entire chromosome
+            num_vehicles = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
+            random_vehicle_route = None
+            # Acquire a non-empty vehicle route
+            while not random_vehicle_route:
+                random_vehicle_route_nr = random.randint(0, num_vehicles - 1)
+                random_vehicle_route = offspring.vehicle_routes[random_vehicle_route_nr]
+            random_customer_nr = random.randint(0, len(random_vehicle_route) - 1)
+            customer = random_vehicle_route[random_customer_nr]
+            random_vehicle_route.pop(random_customer_nr)
 
+            # Find the best feasible location and insert it into the route
+            cost = self.insertionCost(customer, offspring)
+            self.insertCustomerInRoute(customer, offspring, cost, 1)
+
+        if type == 3: # swapping of two random customers within one particular depot
+            depot_nr = random.randint(0, self.problem_spec.num_depots - 1)
+            vehicle_start_index = depot_nr * self.problem_spec.max_vehicles_per_depot
+            max_num_vehicles_per_depot = self.problem_spec.max_vehicles_per_depot
+
+            customers_nrs_to_swap = []
+            routes = []
+            for _ in range (0,2):
+                route = None
+                # Acquire a random, non-empty vehicle route
+                while not route:
+                    route_nr = random.randint(vehicle_start_index, vehicle_start_index + max_num_vehicles_per_depot - 1)
+                    route = offspring.vehicle_routes[route_nr]
+                customer_nr = random.randint(0, len(route) - 1)
+                # Acquire a random customer from said route
+                customers_nrs_to_swap.append(customer_nr)
+                routes.append(route)
+            temp_customer = routes[0][customers_nrs_to_swap[0]]
+            routes[0][customers_nrs_to_swap[0]] = routes[1][customers_nrs_to_swap[1]]
+            routes[1][customers_nrs_to_swap[1]] = temp_customer
         offspring.tooManyCustomers(self.problem_spec)
 
 
     ######################################################
-    # Applies a swapping of one customer from one vehicle route to another
+    # Applies a swapping of two random customers within the entire chromosome
     def interMutation(self, offspring):
-        num_vehicles = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
-        random_vehicle_route = None
-        # Acquire a non-empty vehicle route
-        while not random_vehicle_route:
-            random_vehicle_route_nr = random.randint(0, num_vehicles - 1)
-            random_vehicle_route = offspring.vehicle_routes[random_vehicle_route_nr]
-        random_customer_nr = random.randint(0, len(random_vehicle_route) - 1)
-        customer = random_vehicle_route[random_customer_nr]
-
-        range_num_vehicles = list(range(0, num_vehicles))
-        attempts = 0
-        # Attempt to insert the customer into a random vehicle route
-        while range_num_vehicles:
-            vehicle_nr = range_num_vehicles.pop(random.randint(0, num_vehicles - attempts - 1))
-
-            if ((not offspring.vehicleOverloaded(offspring.vehicle_routes[vehicle_nr], vehicle_nr, customer.q, self.problem_spec))
-                and (not offspring.routeDurationLimitExceeded(offspring.vehicle_routes[vehicle_nr], vehicle_nr, customer,
-                                                         len(offspring.vehicle_routes[vehicle_nr]), self.problem_spec))):
-                random_vehicle_route.pop(random_customer_nr)
-                random_placement = random.randint(0, len(offspring.vehicle_routes[vehicle_nr]))
-                offspring.vehicle_routes[vehicle_nr].insert(random_placement, customer)
-                break
-            attempts += 1
-        offspring.tooManyCustomers(self.problem_spec)
+        total_num_vehicle_routes = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
+        customers_nrs_to_swap = []
+        routes = []
+        for _ in range(0, 2):
+            route = None
+            # Acquire a random, non-empty vehicle route
+            while not route:
+                route_nr = random.randint(0, total_num_vehicle_routes - 1)
+                route = offspring.vehicle_routes[route_nr]
+            customer_nr = random.randint(0, len(route) - 1)
+            # Acquire a random customer from said route
+            customers_nrs_to_swap.append(customer_nr)
+            routes.append(route)
+        temp_customer = routes[0][customers_nrs_to_swap[0]]
+        routes[0][customers_nrs_to_swap[0]] = routes[1][customers_nrs_to_swap[1]]
+        routes[1][customers_nrs_to_swap[1]] = temp_customer
 
 
     ######################################################
@@ -129,12 +160,12 @@ class GA:
         # Find location and insert customers from route 1 into offspring 2
         for route1_customer in route1:
             cost = self.insertionCost(route1_customer, offspring2)
-            offspring2 = self.insertCustomerInRoute(route1_customer, offspring2, cost)
+            self.insertCustomerInRoute(route1_customer, offspring2, cost, 0.8)
 
         # Find location and insert customers from route 2 into offspring 1
         for route2_customer in route2:
             cost = self.insertionCost(route2_customer, offspring1)
-            offspring1 = self.insertCustomerInRoute(route2_customer,offspring1, cost)
+            self.insertCustomerInRoute(route2_customer, offspring1, cost, 0.8)
 
 
         offspring1.tooManyCustomers(self.problem_spec)
@@ -177,12 +208,12 @@ class GA:
 
     ######################################################
     # Add a new customer to a location in another individual's routes
-    def insertCustomerInRoute(self, new_customer, individual, insertion_cost):
+    def insertCustomerInRoute(self, new_customer, individual, insertion_cost, p_best_loc):
         k = random.random()
 
         # Choose best insertion location
         #TODO: Handle when there is no feasible insertions
-        if k <= 0.8:
+        if k < p_best_loc:
             inserted = False
             for i in range(len(insertion_cost)):
                 if insertion_cost[i][2]:
@@ -199,8 +230,6 @@ class GA:
         # Insert the new customer in the chosen route and position in the individual
         insertion_vehicle, insertion_customer_pos = insertion_location
         individual.vehicle_routes[insertion_vehicle].insert(insertion_customer_pos, new_customer)
-
-        return individual
 
 
     ######################################################
@@ -244,16 +273,26 @@ class GA:
 
         return sorted_tournament_population[0:2]
 
+    def plotHistoryGraph(self, yvals, xvals=None, xtitle='X', ytitle='Y', title='Y = F(X)', label=''):
+        xvals = xvals if xvals is not None else list(range(len(yvals)))
+        plt.plot(xvals, yvals, label=label)
+        plt.pause(0.01)
+        plt.xlabel(xtitle); plt.ylabel(ytitle); plt.title(title)
+        plt.legend()
+        plt.draw()
+        plt.pause(.001)
+
     ######################################################
     # Evolves an initial population by means of mutation and recombinations over a given number of generations
     def evolutionCycle(self):
+        start_evolution_time = timer()
         random.seed(None)
 
         # Generate the initial population
         self.initializePopulation()
 
         # Start the evolution process
-        for generation in range(1, self.generations):
+        for generation in range(1, self.generations + 1):
             # Evaluate the fitness of all individuals in the population and compute the average
             population_fitness = []
             for individual in self.population:
@@ -265,18 +304,27 @@ class GA:
             self.average_fitness_history.append(average_fitness)
             self.best_fitness_history.append(best_fitness)
 
-            # Print generation data to terminal
-            print("Generation: %d" % generation)
-            print("Best fitness score: %f" % best_fitness)
-            print("Average fitness score: %f\n" % average_fitness)
-
             # Create a new population and directly copy the elites of the previous generation to the new one
             new_population = []
             elites = self.getPopulationElite()
             new_population += elites
 
+            # Print generation data to terminal
+            print("Generation: %d" % generation)
+            print("Best fitness score: %f (infeasibility_count: %d)" % (best_fitness, elites[0].infeasibility_count))
+            print("Average fitness score: %f\n" % average_fitness)
+
             # Check for early stop
-            if elites[0].checkForSatisfyingSolution(self.problem_spec):
+            for index, percent in enumerate(self.early_stopping_percents):
+                if elites[0].checkForSatisfyingSolution(self.problem_spec, percent):
+                    self.early_stopping_percents.pop(index)
+                    ask_user_to_continue =  input("Feasible solution found within "+str(percent)+"% from optimal solution. "
+                                                  "Continue? [y/n]: ")
+                    break
+                else:
+                    ask_user_to_continue = 'y'
+                    break
+            if ask_user_to_continue == 'n':
                 break
 
             # Populate the new population until it has 200 individuals by doing recombination, mutation and survivors
@@ -287,7 +335,6 @@ class GA:
                 # Roll dice on what event shall happen (recombination or survivors)
                 event = random.random()
                 if event < self.crossover_prob:
-                    # Do crossover and pass offspring to next generation
                     offsprings = self.crossover(parents[0], parents[1])
 
                 else:
@@ -298,8 +345,9 @@ class GA:
                     event = random.random()
                     if event < self.inter_mutation_prob and generation % self.inter_muation_attempt_rate == 0:
                         self.interMutation(offspring)
-                    elif self.inter_mutation_prob < event and event < self.inter_mutation_prob + self.intra_mutation_prob:
-                        self.intraMutation(offspring, 'inversion')
+                    elif self.inter_mutation_prob < event and event < self.inter_mutation_prob + self.intra_mutation_prob \
+                            and not generation % self.inter_muation_attempt_rate == 0:
+                        self.intraMutation(offspring)
 
                     offspring.updateFitnessVariables(self.problem_spec)
                     offspring.updateFitness(self.problem_spec)
@@ -309,17 +357,21 @@ class GA:
             if len(new_population) > (self.population_size):
                 new_population.pop()
             self.population = new_population
-
-        elites[0].printSolutionData(self.problem_spec)
-        elites[0].visualizeGenes(self.problem_spec)
+        end_evolution_time = timer()
+        print("Algorithm terminated - elapsed time: %f" % (end_evolution_time-start_evolution_time))
+        bestGenotype = elites[0]
+        self.plotHistoryGraph(yvals = self.best_fitness_history, xtitle = "Generations", ytitle = "Fitness",
+                              title = "Best individual fitness history")
+        bestGenotype.printGenotypeData(self.problem_spec)
+        bestGenotype.visualizeGenes(self.problem_spec)
 
 
 
 
 if __name__ == '__main__':
-    ga = GA(fileName='p23', population_size=100, generations=7000,
-            elite_ratio=0.01, tournament_ratio=0.05,
-            crossover_prob=0.3, intra_mutation_prob=0.1, inter_mutation_prob=0.1,
-            inter_mutation_attempt_rate=1)
+    ga = GA(fileName='p03', population_size=25, generations=10000,
+            elite_ratio=0.40, tournament_ratio=0.08,
+            crossover_prob=0.6, intra_mutation_prob=0.2, inter_mutation_prob=0.25,
+            inter_mutation_attempt_rate=10)
 
     ga.evolutionCycle()
