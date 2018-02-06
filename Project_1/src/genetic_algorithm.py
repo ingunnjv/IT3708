@@ -213,7 +213,7 @@ class GA:
 
         # Choose best insertion location
         #TODO: Handle when there is no feasible insertions
-        if k < p_best_loc:
+        if k <= p_best_loc:
             inserted = False
             for i in range(len(insertion_cost)):
                 if insertion_cost[i][2]:
@@ -243,12 +243,9 @@ class GA:
 
 
     ######################################################
-    # Return the top self.elites percent of the poplation
-    def getPopulationElite(self):
+    # Return the top self.elites percent of the population
+    def getPopulationElite(self, fitnesses):
         population = self.population
-        fitnesses = []
-        for individual in population:
-            fitnesses.append(individual.fitness)
         sorted_population = [x for _, x in sorted(zip(fitnesses, population))] #sorts population in descending order based on fitnesses
         elites_num = int(math.ceil(self.population_size * self.elite_ratio))
         elites = sorted_population[0:elites_num]
@@ -273,6 +270,27 @@ class GA:
 
         return sorted_tournament_population[0:2]
 
+    ######################################################
+    # Eliminates all but the 1/3 best individuals, and creates new ones as in the initialization phase
+    def diversify(self, fitnesses):
+        population = self.population
+        sorted_population = [x for _, x in sorted(zip(fitnesses, population))]  # sorts population in descending order based on fitnesses
+
+        # Save the best individuals
+        diversification_num = int(math.ceil(len(population) / 3))
+        best_individuals = sorted_population[:diversification_num]
+        new_generation = copy.deepcopy(best_individuals)
+
+        # Generate new individuals: 2/3
+        generation_num = len(population) - diversification_num
+        for _ in range(0, generation_num):
+            genotype = Genotype()
+            genotype.initGenes(self.problem_spec)
+            genotype.tooManyCustomers(self.problem_spec)
+            new_generation.append(genotype)
+        return new_generation
+
+
     def plotHistoryGraph(self, yvals, xvals=None, xtitle='X', ytitle='Y', title='Y = F(X)', label=''):
         xvals = xvals if xvals is not None else list(range(len(yvals)))
         plt.plot(xvals, yvals, label=label)
@@ -290,7 +308,9 @@ class GA:
 
         # Generate the initial population
         self.initializePopulation()
-
+        prev_best = None
+        it_div = 0
+        it_div_bound = 200
         # Start the evolution process
         for generation in range(1, self.generations + 1):
             # Evaluate the fitness of all individuals in the population and compute the average
@@ -306,7 +326,7 @@ class GA:
 
             # Create a new population and directly copy the elites of the previous generation to the new one
             new_population = []
-            elites = self.getPopulationElite()
+            elites = self.getPopulationElite(population_fitness)
             new_population += elites
 
             # Print generation data to terminal
@@ -327,31 +347,46 @@ class GA:
             if ask_user_to_continue == 'n':
                 break
 
-            # Populate the new population until it has 200 individuals by doing recombination, mutation and survivors
-            while len(new_population) < self.population_size:
-                # Do tournament selection to choose parents
-                parents = self.parentSelection()
-
-                # Roll dice on what event shall happen (recombination or survivors)
-                event = random.random()
-                if event < self.crossover_prob:
-                    offsprings = self.crossover(parents[0], parents[1])
-
+            # Diversification process
+            current_best = elites[0]
+            if prev_best:
+                if current_best.fitness == prev_best.fitness: # no improvement in best solution
+                    it_div += 1
                 else:
-                    offsprings = copy.deepcopy(parents)
+                    it_div = 0
+            if it_div > it_div_bound:   # no improvement in best solution for it_div_bound iterations
+                # Populate the new population through diversification
+                new_population = self.diversify(fitnesses=population_fitness)
+                it_div = 0
+                print("Diversification performed")
 
-                for offspring in offsprings:
-                    # Roll dice on what event shall happen (inter-mutation, intra-mutation or no mutation)
+            else:
+                # Populate the new population until it has 200 individuals by doing recombination, mutation and survivors
+                while len(new_population) < self.population_size:
+                    # Do tournament selection to choose parents
+                    parents = self.parentSelection()
+
+                    # Roll dice on what event shall happen (recombination or survivors)
                     event = random.random()
-                    if event < self.inter_mutation_prob and generation % self.inter_muation_attempt_rate == 0:
-                        self.interMutation(offspring)
-                    elif self.inter_mutation_prob < event and event < self.inter_mutation_prob + self.intra_mutation_prob \
-                            and not generation % self.inter_muation_attempt_rate == 0:
-                        self.intraMutation(offspring)
+                    if event < self.crossover_prob:
+                        offsprings = self.crossover(parents[0], parents[1])
 
-                    offspring.updateFitnessVariables(self.problem_spec)
-                    offspring.updateFitness(self.problem_spec)
-                    new_population += [offspring]
+                    else:
+                        offsprings = copy.deepcopy(parents)
+
+                    for offspring in offsprings:
+                        # Roll dice on what event shall happen (inter-mutation, intra-mutation or no mutation)
+                        event = random.random()
+                        if event < self.inter_mutation_prob and generation % self.inter_muation_attempt_rate == 0:
+                            self.interMutation(offspring)
+                        elif self.inter_mutation_prob < event and event < self.inter_mutation_prob + self.intra_mutation_prob \
+                                and not generation % self.inter_muation_attempt_rate == 0:
+                            self.intraMutation(offspring)
+
+                        offspring.updateFitnessVariables(self.problem_spec)
+                        offspring.updateFitness(self.problem_spec)
+                        new_population += [offspring]
+            prev_best = current_best
 
             # Stop population growing in case everything is not even numbers
             if len(new_population) > (self.population_size):
@@ -369,8 +404,8 @@ class GA:
 
 
 if __name__ == '__main__':
-    ga = GA(fileName='p03', population_size=25, generations=10000,
-            elite_ratio=0.40, tournament_ratio=0.08,
+    ga = GA(fileName='p01', population_size=70, generations=10000,
+            elite_ratio=0.05, tournament_ratio=0.08,
             crossover_prob=0.6, intra_mutation_prob=0.2, inter_mutation_prob=0.25,
             inter_mutation_attempt_rate=10)
 

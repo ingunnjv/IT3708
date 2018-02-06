@@ -25,13 +25,16 @@ class Genotype:
         self.duration_ol = 0        # duration_overload
         self.duration = 0
 
-        self.infeasibility_count = 0    # number of infeasible insertions (occur in crossover)
+        self.infeasibility_count = 0    # number of infeasible insertions (occur in crossover and init)
 
     def __lt__(self, other):
         return self.fitness < other.fitness
 
     def __gt__(self, other):
         return self.fitness > other.fitness
+
+    def __eq__(self, other):
+        return self.fitness == other.fitness
 
     def __deepcopy__(self, memodict={}):
         copy = Genotype()
