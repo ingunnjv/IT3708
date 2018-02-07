@@ -77,44 +77,43 @@ class Genotype:
         random.seed()
         range_num_customers = list(range(0, len(problem_spec.customers)))
         customers_placed = 0
-        while range_num_customers:
-            customer_nr = range_num_customers.pop(random.randint(0, len(problem_spec.customers) - customers_placed - 1))
-            customer = problem_spec.customers[customer_nr]
-            # Choose depot based on tournament selection
-            random_depots = random.sample(range(0, problem_spec.num_depots),
-                                          int(math.ceil(problem_spec.num_depots * 0.60)))
-            closest_depot_distance = float('Inf')
-            closest_depot = random_depots[0]
-            for depot_num in random_depots:
-                if problem_spec.cost_matrix[customer.i - 1, depot_num] < closest_depot_distance:
-                    closest_depot_distance = problem_spec.cost_matrix[customer.i - 1, depot_num]
-                    closest_depot = depot_num
 
+        while range_num_customers:
+            customers_left = len(problem_spec.customers) - customers_placed - 1
+            customer_nr = range_num_customers.pop(random.randint(0, customers_left))
+            customer = problem_spec.customers[customer_nr]
+
+
+            # Choose depot based on tournament selection
+            depots = random.sample(range(0, problem_spec.num_depots), int(math.ceil(problem_spec.num_depots * 1)))
+            distance_to_depots = []
+
+            for depot_num in depots:
+                customer_to_depot_cost = problem_spec.cost_matrix[customer.i - 1, depot_num + problem_spec.num_customers]
+                distance_to_depots.append(customer_to_depot_cost)
+
+            sorted_depots = [x for _, x in sorted(zip(distance_to_depots, depots))]
+
+            depot = sorted_depots[0]
+            vehicle_start_index = depot * problem_spec.max_vehicles_per_depot
             inserted = False
-            # Attempt to put the customer in the next depot if the selected one fails
-            for depot in range(closest_depot, closest_depot + problem_spec.num_depots):
-                depot = depot % problem_spec.num_depots
-                vehicle_start_index = depot * problem_spec.max_vehicles_per_depot
-                # Proceed by putting the customer in the first available vehicle
-                for vehicle_nr in range(vehicle_start_index,
-                                        vehicle_start_index + problem_spec.max_vehicles_per_depot):
-                    # Only append if it doesnt cause vehicle overload :
-                    if ((not self.vehicleOverloaded(self.vehicle_routes[vehicle_nr], vehicle_nr, customer.q,
-                                                    problem_spec))
-                        and (not self.routeDurationLimitExceeded(self.vehicle_routes[vehicle_nr], vehicle_nr, customer,
-                                                                 len(self.vehicle_routes[vehicle_nr]), problem_spec))):
-                        self.vehicle_routes[vehicle_nr].append(customer)
-                        inserted = True
-                        break
-                if inserted:
+            # Proceed by putting the customer in the first available vehicle
+            for vehicle_nr in range(vehicle_start_index, vehicle_start_index + problem_spec.max_vehicles_per_depot):
+                # Only append if it doesnt cause vehicle overload :
+                if ((not self.vehicleOverloaded(self.vehicle_routes[vehicle_nr], vehicle_nr, customer.q, problem_spec))
+                    and (not self.routeDurationLimitExceeded(self.vehicle_routes[vehicle_nr], vehicle_nr, customer,
+                                                             len(self.vehicle_routes[vehicle_nr]), problem_spec))):
+                    self.vehicle_routes[vehicle_nr].append(customer)
+                    inserted = True
                     break
+
             # If no feasible position found, insert in random route in closest depot
             if not inserted:
-                vehicle_start_index = closest_depot * problem_spec.max_vehicles_per_depot
+                vehicle_start_index = sorted_depots[0] * problem_spec.max_vehicles_per_depot
                 random_vehicle_number = random.randint(vehicle_start_index, vehicle_start_index + problem_spec.max_vehicles_per_depot - 1)
                 self.vehicle_routes[random_vehicle_number].append(customer)
-
             customers_placed += 1
+
 
 
     ######################################################

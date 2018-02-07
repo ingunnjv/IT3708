@@ -12,10 +12,12 @@ import numpy as np
 
 
 class GA:
-    def __init__(self, fileName, population_size, generation_size, generations, elite_ratio, tournament_ratio, div_bound, crossover_prob, intra_mutation_prob, inter_mutation_prob,
-                 inter_mutation_attempt_rate):
+    def __init__(self, fileName, population_size, generation_size, generations, elite_ratio,
+                 tournament_ratio, div_bound, crossover_prob, intra_mutation_prob, inter_mutation_prob,
+                 inter_mutation_attempt_rate, crossover_decay, time_limit):
         self.problem_spec = pr.ProblemSpec(fileName)
         self.early_stopping_percents = [30, 20, 10, 5]
+        self.time_limit = time_limit
 
         # Parameters
         self.min_population_size = population_size
@@ -24,7 +26,9 @@ class GA:
         self.elite_ratio = elite_ratio
         self.tournament_ratio = tournament_ratio
         self.div_bound = div_bound
+        self.crossover_init_prob = crossover_prob
         self.crossover_prob = crossover_prob
+        self.crossover_decay = crossover_decay
         self.intra_mutation_prob = intra_mutation_prob
         self.inter_mutation_prob = inter_mutation_prob
         self.inter_muation_attempt_rate = inter_mutation_attempt_rate
@@ -43,6 +47,11 @@ class GA:
             genotype.initGenes(self.problem_spec)
             genotype.tooManyCustomers(self.problem_spec)
             self.population.append(genotype)
+
+    ######################################################
+    # Periodically decays the crossover prob
+    def updateCrossoverProb(self, generation):
+        self.crossover_prob = self.crossover_init_prob*math.exp(-(generation/self.crossover_decay))
 
 
     ######################################################
@@ -278,12 +287,15 @@ class GA:
     # Successively eliminates clones, then bad individuals, until the population size is at minimum
     def survivorSelection(self):
         start_s_time = timer()
+        clones = self.findAllClonesInPopulation()
         while(len(self.population) > self.min_population_size):
-            clones = self.findAllClonesInPopulation()
             if clones:
-                # Remove individual in clones with worst fitness
                 max_clone_index = max(clones, key=itemgetter(0))[1]
                 self.population.pop(max_clone_index)
+                clones = [c for c in clones if c[1] != max_clone_index]
+                for i in range(0, len(clones)):
+                    if clones[i][1] > max_clone_index:
+                        clones[i][1] -= 1
             else:
                 # Remove individual in whole population with worst fitness
                 max_index = max(range(len(self.population)), key=self.population.__getitem__)
@@ -293,7 +305,7 @@ class GA:
 
     def findAllClonesInPopulation(self):
         clones = []
-        clone_indices = set()
+        clone_indices = []
         for i, individual1 in enumerate(self.population):
             if i in clone_indices:
                 continue
@@ -301,10 +313,11 @@ class GA:
                 if j in clone_indices:
                     continue
                 elif i != j:
-                    if individual1.isClone(individual2, self.problem_spec) and i != j:
-                        clones.append((individual1.fitness, i))
-                        clones.append((individual2.fitness, j))
-                        clone_indices.update([i, j])
+                    if individual1.isClone(individual2, self.problem_spec):
+                        clones.append([individual1.fitness, i])
+                        clone_indices.append(i)
+                        break
+
         return clones
 
 
@@ -351,6 +364,9 @@ class GA:
 
         # Start the evolution process
         for generation in range(1, self.generations + 1):
+            # Update crossover rates
+            #self.updateCrossoverProb(generation)
+
             # Evaluate the fitness of all individuals in the population and compute the average
             population_fitness = []
             for individual in self.population:
@@ -374,7 +390,10 @@ class GA:
             print("Best fitness score: %f (infeasibility_count: %d)" % (best_fitness, elites[0].infeasibility_count))
             print("Average fitness score: %f\n" % average_fitness)
 
-            # Check for early stop
+            # Check for early stop based on time limit for computing
+            if (timer() - start_evolution_time)/60 > self.time_limit:
+                break
+            # Check for early stop based on solution quality
             for index, percent in enumerate(self.early_stopping_percents):
                 if elites[0].checkForSatisfyingSolution(self.problem_spec, percent):
                     self.early_stopping_percents.pop(index)
@@ -418,14 +437,12 @@ class GA:
                         event = random.random()
                         if event < self.inter_mutation_prob and generation % self.inter_muation_attempt_rate == 0:
                             self.interMutation(offspring)
-                        elif self.inter_mutation_prob < event and event < self.inter_mutation_prob + self.intra_mutation_prob \
-                                and not generation % self.inter_muation_attempt_rate == 0:
+                        elif self.inter_mutation_prob < event and event < self.inter_mutation_prob + self.intra_mutation_prob:
                             self.intraMutation(offspring)
 
                         offspring.updateFitnessVariables(self.problem_spec)
                         offspring.updateFitness(self.problem_spec)
                         new_population += [offspring]
-            prev_best = current_best
 
             # Stop population growing in case everything is not even numbers
             if len(new_population) > (self.generation_size):
@@ -433,9 +450,10 @@ class GA:
 
             self.population = new_population
             self.survivorSelection()
+            prev_best = current_best
 
         end_evolution_time = timer()
-        print("Algorithm terminated - elapsed time: %f" % (end_evolution_time-start_evolution_time))
+        print("Algorithm terminated - elapsed time: %f [s]" % (end_evolution_time-start_evolution_time))
         bestGenotype = elites[0]
         self.plotHistoryGraph(yvals = self.best_fitness_history, xtitle = "Generations", ytitle = "Fitness",
                               title = "Best individual fitness history")
@@ -446,10 +464,11 @@ class GA:
 
 
 if __name__ == '__main__':
-    ga = GA(fileName='p01', population_size=25, generation_size=25, generations=10000,
-            elite_ratio=0.4, tournament_ratio=0.25, div_bound=200,
+    ga = GA(fileName='p08', population_size=100, generation_size=110, generations=50000,
+            elite_ratio=0.2, tournament_ratio=0.08, div_bound=1000, time_limit = 5,
             crossover_prob=0.6, intra_mutation_prob=0.2, inter_mutation_prob=0.25,
+            crossover_decay = 10000000,
             inter_mutation_attempt_rate=10)
 
     ga.evolutionCycle()
-    y = 0
+
