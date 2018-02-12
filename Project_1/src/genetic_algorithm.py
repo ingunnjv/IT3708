@@ -84,7 +84,8 @@ class GA:
             random_vehicle_route.pop(random_customer_nr)
 
             # Find the best feasible location and insert it into the route
-            cost = self.insertionCost(customer, offspring)
+            depot_nr = offspring.getDepotNumber(random_vehicle_route_nr, self.problem_spec)
+            cost = self.insertionCost(customer, offspring, depot_nr)
             self.insertCustomerInRoute(customer, offspring, cost, 1)
 
         if type == 3: # swapping of two random customers within one particular depot
@@ -196,13 +197,16 @@ class GA:
         offspring1 = copy.deepcopy(parent1)
         offspring2 = copy.deepcopy(parent2)
 
-        # Randomly select a route from each parent, r1 in p1, r2 in p2
-        total_num_vehicles = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
-        route1 = offspring1.vehicle_routes[random.randint(0, total_num_vehicles - 1)]
-        route2 = offspring2.vehicle_routes[random.randint(0, total_num_vehicles - 1)]
+        # Randomly select a depot to perform crossover
+        random_depot_nr = random.randint(0, self.problem_spec.num_depots - 1)
+
+        # Randomly select a route from the depot in each parent, r1 in p1, r2 in p2
+        vehicle_start_index = random_depot_nr * self.problem_spec.max_vehicles_per_depot
+        vehicle_end_index = vehicle_start_index + self.problem_spec.max_vehicles_per_depot
+        route1 = offspring1.vehicle_routes[random.randint(vehicle_start_index, vehicle_end_index - 1)]
+        route2 = offspring2.vehicle_routes[random.randint(vehicle_start_index, vehicle_end_index - 1)]
 
         ## What if a route is empty? No change will happen in the other parent... ##
-
         # Remove all customers in r1 from p2
         for c1 in route1:
             for vehicle_nr, route in enumerate(offspring2.vehicle_routes):
@@ -215,12 +219,12 @@ class GA:
 
         # Find location and insert customers from route 1 into offspring 2
         for route1_customer in route1:
-            cost = self.insertionCost(route1_customer, offspring2)
+            cost = self.insertionCost(route1_customer, offspring2, random_depot_nr)
             self.insertCustomerInRoute(route1_customer, offspring2, cost, 0.8)
 
         # Find location and insert customers from route 2 into offspring 1
         for route2_customer in route2:
-            cost = self.insertionCost(route2_customer, offspring1)
+            cost = self.insertionCost(route2_customer, offspring1, random_depot_nr)
             self.insertCustomerInRoute(route2_customer, offspring1, cost, 0.8)
 
 
@@ -231,19 +235,20 @@ class GA:
         return offspring1, offspring2
 
     ######################################################
-    # Calculate the cost of adding a new customer to each feasible location in an individual's routes
-    def insertionCost(self, new_customer, individual):
+    # Calculate the cost of adding a new customer to each location  in an individual's routes in a certain depot
+    def insertionCost(self, new_customer, individual, depot_nr):
         # List of position (index) and insertion cost of route_customer into all locations in the individual's routes
         insertion_cost = []
 
-        # Find insertion cost of the customer at each location in the individual.
-        for vehicle_nr, r in enumerate(individual.vehicle_routes):
-            depot_index = individual.getDepotNumber(vehicle_nr, self.problem_spec) + self.problem_spec.num_customers
-            prev_customer_index = depot_index
+        # Find insertion cost of the customer at each location in the chosen depot in the individual.
+        vehicle_start_index = depot_nr * self.problem_spec.max_vehicles_per_depot
+        for vehicle_nr in range(vehicle_start_index, vehicle_start_index + self.problem_spec.max_vehicles_per_depot):
+            prev_customer_index = depot_nr + self.problem_spec.num_customers
 
+            r = individual.vehicle_routes[vehicle_nr]
             for c_i in range(0, len(r) + 1):
                 if c_i < len(r): next_customer_index = r[c_i].i - 1
-                else: next_customer_index = depot_index
+                else: next_customer_index = depot_nr + self.problem_spec.num_customers
 
                 cost = self.problem_spec.cost_matrix[prev_customer_index, new_customer.i - 1] \
                        + self.problem_spec.cost_matrix[new_customer.i - 1, next_customer_index]
@@ -253,7 +258,6 @@ class GA:
                 feasible = (not (individual.vehicleOverloaded(r, vehicle_nr, new_customer.q, self.problem_spec)
                                  or individual.routeDurationLimitExceeded(r, vehicle_nr, new_customer, c_i, self.problem_spec)))
                 # Save the position
-                #if feasible:
                 location = (vehicle_nr, c_i)
                 insertion_cost.append((location, cost, feasible))
 
@@ -280,8 +284,8 @@ class GA:
                 insertion_location = insertion_cost[random.randint(0, len(insertion_cost) - 1)][0]
         # Choose first entry in list regardless of feasibility
         else:
-            randomy_list_entry = random.randint(0, len(insertion_cost) - 1)
-            insertion_location = insertion_cost[randomy_list_entry][0]
+            #random_list_entry = random.randint(0, len(insertion_cost) - 1)
+            insertion_location = insertion_cost[0][0]
 
         # Insert the new customer in the chosen route and position in the individual
         insertion_vehicle, insertion_customer_pos = insertion_location
