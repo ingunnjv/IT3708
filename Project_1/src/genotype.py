@@ -83,18 +83,7 @@ class Genotype:
             customer_nr = range_num_customers.pop(random.randint(0, customers_left))
             customer = problem_spec.customers[customer_nr]
 
-
-            # Choose depot based on tournament selection
-            depots = random.sample(range(0, problem_spec.num_depots), int(math.ceil(problem_spec.num_depots * 1)))
-            distance_to_depots = []
-
-            for depot_num in depots:
-                customer_to_depot_cost = problem_spec.cost_matrix[customer.i - 1, depot_num + problem_spec.num_customers]
-                distance_to_depots.append(customer_to_depot_cost)
-
-            sorted_depots = [x for _, x in sorted(zip(distance_to_depots, depots))]
-
-            depot = sorted_depots[0]
+            depot = customer.candidate_list[0]
             vehicle_start_index = depot * problem_spec.max_vehicles_per_depot
             inserted = False
             # Proceed by putting the customer in the first available vehicle
@@ -106,10 +95,9 @@ class Genotype:
                     self.vehicle_routes[vehicle_nr].append(customer)
                     inserted = True
                     break
-
             # If no feasible position found, insert in random route in closest depot
             if not inserted:
-                vehicle_start_index = sorted_depots[0] * problem_spec.max_vehicles_per_depot
+                vehicle_start_index = depot * problem_spec.max_vehicles_per_depot
                 random_vehicle_number = random.randint(vehicle_start_index, vehicle_start_index + problem_spec.max_vehicles_per_depot - 1)
                 self.vehicle_routes[random_vehicle_number].append(customer)
             customers_placed += 1
@@ -136,10 +124,10 @@ class Genotype:
 
             if route_duration > max_duration:
                 self.duration_ol += route_duration - max_duration
-                self.infeasibility_count += 1
+                self.infeasibility_count += (route_duration) / max_duration
             if route_demand > max_load:
                 self.demand_ol += route_demand - max_load
-                self.infeasibility_count += 1
+                self.infeasibility_count += (route_demand) / max_load
             self.duration += route_duration
 
 
