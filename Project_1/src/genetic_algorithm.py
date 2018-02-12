@@ -73,15 +73,6 @@ class GA:
                     material = vehicle_route[min(cutpoints): max(cutpoints) + 1]
                     material.reverse()
                     vehicle_route[min(cutpoints): max(cutpoints) + 1] = material
-
-                    new_route_duration = offspring.routeDuration(vehicle_route, vehicle_nr, self.problem_spec)
-                    depot_nr = offspring.getDepotNumber(vehicle_nr, self.problem_spec)
-                    if new_route_duration > self.problem_spec.depots[depot_nr].D:
-                        material.reverse()
-                        vehicle_route[min(cutpoints): max(cutpoints) + 1] = material
-                        attempts += 1
-                    else:
-                        break
                 else:
                     attempts += 1
         if type == 2: # single customer re-route from one route to another within the entire chromosome
@@ -124,23 +115,78 @@ class GA:
 
     ######################################################
     # Applies a swapping of two random customers within the entire chromosome
-    def interMutation(self, offspring):
-        total_num_vehicle_routes = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
+    def interMutation(self, offspring, problem_spec):
         customers_nrs_to_swap = []
         routes = []
-        for _ in range(0, 2):
-            route = None
-            # Acquire a random, non-empty vehicle route
-            while not route:
-                route_nr = random.randint(0, total_num_vehicle_routes - 1)
-                route = offspring.vehicle_routes[route_nr]
-            customer_nr = random.randint(0, len(route) - 1)
-            # Acquire a random customer from said route
-            customers_nrs_to_swap.append(customer_nr)
-            routes.append(route)
+        route1 = []
+        route2 = []
+
+        routes_range = list(range(0, len(offspring.vehicle_routes)))
+
+        # Acquire a random, non-empty vehicle route
+        while not route1 and routes_range:
+            route1_nr = random.randint(0, len(routes_range) - 1)
+            route1_depot_nr = offspring.getDepotNumber(route1_nr, self.problem_spec)
+            routes_range.pop(route1_nr)
+            route1 = offspring.vehicle_routes[route1_nr]
+            customer1_index, customer1 = self.getRandomSwappableCustomer(route1, self.problem_spec)
+            if customer1 == None:
+                route1 = []
+                continue
+            routes.append(route1)
+            customers_nrs_to_swap.append(customer1)
+
+        # Acquire a random, non-empty vehicle route, not the same as route1
+        while not route2 and routes_range:
+            route2_nr = random.randint(0, len(routes_range) - 1)
+            route2_depot_nr = offspring.getDepotNumber(route2_nr, self.problem_spec)
+            routes_range.pop(route2_nr)
+            if route2_depot_nr != route1_depot_nr:
+                route2 = offspring.vehicle_routes[route2_nr]
+            customer2_index, customer2 = self.getRandomCustomerToSwapWithOther(route2, route1_depot_nr, self.problem_spec)
+            if customer2 == None:
+                route2 = []
+                continue
+            routes.append(route2)
+            customers_nrs_to_swap.append(customer2)
+
+        if len(routes) != 2 or len(customers_nrs_to_swap) != 2:
+            return
+
         temp_customer = routes[0][customers_nrs_to_swap[0]]
         routes[0][customers_nrs_to_swap[0]] = routes[1][customers_nrs_to_swap[1]]
         routes[1][customers_nrs_to_swap[1]] = temp_customer
+
+
+    #####################################################
+    # Acquire a random customer (index) in the route which exists in the swappable customers list and is swappable with
+    # other_customer
+    def getRandomCustomerToSwapWithOther(self, route, other_customer_depot_index, problem_spec):
+        range_num_customers = list(range(0, route))
+        while not range_num_customers:
+            customer_index = random.randint(0, len(range_num_customers) - 1)
+            customer = route[customer_index]
+            range_num_customers.pop(customer_index)
+            if customer in problem_spec.swappable_customers and len(customer.candiate_list) > 2:
+                for candidate in customer.candidate_list:
+                    if candidate == other_customer_depot_index:
+                        return customer_index, customer
+        return None
+
+    #####################################################
+    # Acquire a random customer (index) in the route which exists in the swappable customers list and is swappable with
+    # other_customer
+    def getRandomSwappableCustomer(self, route, problem_spec):
+        range_num_customers = list(range(0, route))
+        while not range_num_customers:
+            customer_index = random.randint(0, len(range_num_customers) - 1)
+            customer = route[customer_index]
+            range_num_customers.pop(customer_index)
+            if customer in problem_spec.swappable_customers:
+                return customer_index, customer
+        return None
+
+
 
 
     ######################################################
@@ -224,7 +270,6 @@ class GA:
         k = random.random()
 
         # Choose best insertion location
-        #TODO: Handle when there is no feasible insertions
         if k <= p_best_loc:
             inserted = False
             for i in range(len(insertion_cost)):
@@ -303,6 +348,8 @@ class GA:
         end_s_time = timer()
         print("Survivor selection time: %f" % (end_s_time - start_s_time))
 
+    ######################################################
+    #
     def findAllClonesInPopulation(self):
         clones = []
         clone_indices = []
@@ -444,9 +491,6 @@ class GA:
                         offspring.updateFitness(self.problem_spec)
                         new_population += [offspring]
 
-            # Stop population growing in case everything is not even numbers
-            if len(new_population) > (self.generation_size):
-                new_population.pop()
 
             self.population = new_population
             self.survivorSelection()
@@ -464,11 +508,10 @@ class GA:
 
 
 if __name__ == '__main__':
-    ga = GA(fileName='p08', population_size=100, generation_size=110, generations=50000,
-            elite_ratio=0.2, tournament_ratio=0.08, div_bound=1000, time_limit = 5,
-            crossover_prob=0.6, intra_mutation_prob=0.2, inter_mutation_prob=0.25,
-            crossover_decay = 10000000,
-            inter_mutation_attempt_rate=10)
+    ga = GA(fileName='p23', population_size=25, generation_size=25, generations=50000,
+            elite_ratio=0.35, tournament_ratio=0.08, div_bound=1000, time_limit = 5,
+            crossover_prob=0.55, intra_mutation_prob=0.2, inter_mutation_prob=0.25,
+            crossover_decay = 10000000, inter_mutation_attempt_rate=10)
 
     ga.evolutionCycle()
 
