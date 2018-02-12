@@ -19,6 +19,10 @@ class ProblemSpec:
         self.constructCostMatrix()
         self.findMaxCostAndLoad()
 
+        self.swappable_customers = []
+        self.constructCandidateListsAndSwappableCustomersList()
+
+
     def readProblemFile(self, fileName):
         with open('../data/Data Files/' + fileName, 'r') as f:
             main_data = list(map(int,(f.readline().strip('\n').split())))
@@ -51,10 +55,31 @@ class ProblemSpec:
                 self.cost_matrix[i, j] = math.sqrt(math.pow(y_dist, 2) + math.pow(x_dist, 2))
 
     def findMaxCostAndLoad(self):
-        flattened_cost = list(itertools.chain.from_iterable(self.cost_matrix))
         self.max_cost = self.cost_matrix.max()
         self.max_load = max([c.q for c in self.customers])
 
+    def constructCandidateListsAndSwappableCustomersList(self):
+        for c in self.customers:
+            depots = list(range(0, self.num_depots))
+            distances_to_depots = []
+
+            # Find distance to each depot
+            for depot_num in depots:
+                customer_to_depot_cost = self.cost_matrix[c.i - 1, depot_num + self.num_customers]
+                distances_to_depots.append(customer_to_depot_cost)
+            sorted_depots = [x for _, x in sorted(zip(distances_to_depots, depots))]
+            sorted_distances = sorted(distances_to_depots)
+
+            # Add closest depot(s) to candidate list
+            for i, depot in enumerate(sorted_depots):
+                if sorted_distances[i] / sorted_distances[0] <= 3:
+                    c.candidate_list.append(depot)
+                else:
+                    break
+
+            # Add to swappable customers if swappable
+            if len(c.candidate_list) > 1:
+                self.swappable_customers.append(c)
 
 
 
@@ -73,6 +98,7 @@ class Customer:
         self.y = y          # y coordinate
         self.d = d          # necessary service duration
         self.q = q          # demand for customer
+        self.candidate_list = []    # list containing the nearest depot and any other depot close enough
 
     def __eq__(self, other):
         return self.i == other.i
@@ -80,3 +106,7 @@ class Customer:
     def __ne__(self, other):
         return self.i != other.i
 
+
+
+if __name__ == "__main__":
+    pr = problemSpec('p23')
