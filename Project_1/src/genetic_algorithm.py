@@ -63,9 +63,8 @@ class GA:
             num_vehicles = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
             range_num_vehicles = list(range(0, num_vehicles))
             vehicle_route = None
-            attempts = 1
             while range_num_vehicles:
-                vehicle_nr = range_num_vehicles.pop(random.randint(0, num_vehicles - attempts))
+                vehicle_nr = range_num_vehicles.pop(random.randint(0, len(range_num_vehicles) - 1))
                 vehicle_route = offspring.vehicle_routes[vehicle_nr]
                 if len(vehicle_route) >= 2:
                     vehicle_route_length = len(vehicle_route)
@@ -73,8 +72,6 @@ class GA:
                     material = vehicle_route[min(cutpoints): max(cutpoints) + 1]
                     material.reverse()
                     vehicle_route[min(cutpoints): max(cutpoints) + 1] = material
-                else:
-                    attempts += 1
         if type == 2: # single customer re-route from one route to another within the entire chromosome
             num_vehicles = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
             random_vehicle_route = None
@@ -124,31 +121,34 @@ class GA:
         routes_range = list(range(0, len(offspring.vehicle_routes)))
 
         # Acquire a random, non-empty vehicle route
-        while not route1 and routes_range:
+        while routes_range:
             route1_nr = random.randint(0, len(routes_range) - 1)
             route1_depot_nr = offspring.getDepotNumber(route1_nr, self.problem_spec)
             routes_range.pop(route1_nr)
             route1 = offspring.vehicle_routes[route1_nr]
-            customer1_index, customer1 = self.getRandomSwappableCustomer(route1, self.problem_spec)
-            if customer1 == None:
-                route1 = []
+            if route1:
+                customer1_index, customer1 = self.getRandomSwappableCustomer(route1, self.problem_spec)
+            else: continue
+            if not customer1:
                 continue
             routes.append(route1)
-            customers_nrs_to_swap.append(customer1)
+            customers_nrs_to_swap.append(customer1_index)
+            break
 
         # Acquire a random, non-empty vehicle route, not the same as route1
-        while not route2 and routes_range:
+        while routes_range:
             route2_nr = random.randint(0, len(routes_range) - 1)
             route2_depot_nr = offspring.getDepotNumber(route2_nr, self.problem_spec)
             routes_range.pop(route2_nr)
-            if route2_depot_nr != route1_depot_nr:
-                route2 = offspring.vehicle_routes[route2_nr]
-            customer2_index, customer2 = self.getRandomCustomerToSwapWithOther(route2, route1_depot_nr, self.problem_spec)
-            if customer2 == None:
-                route2 = []
+            route2 = offspring.vehicle_routes[route2_nr]
+            if route2_depot_nr != route1_depot_nr and route2:
+                customer2_index, customer2 = self.getRandomCustomerToSwapWithOther(route2, route1_depot_nr, self.problem_spec)
+            else: continue
+            if not customer2:
                 continue
             routes.append(route2)
-            customers_nrs_to_swap.append(customer2)
+            customers_nrs_to_swap.append(customer2_index)
+            break
 
         if len(routes) != 2 or len(customers_nrs_to_swap) != 2:
             return
@@ -162,31 +162,29 @@ class GA:
     # Acquire a random customer (index) in the route which exists in the swappable customers list and is swappable with
     # other_customer
     def getRandomCustomerToSwapWithOther(self, route, other_customer_depot_index, problem_spec):
-        range_num_customers = list(range(0, route))
-        while not range_num_customers:
+        range_num_customers = list(range(0, len(route)))
+        while range_num_customers:
             customer_index = random.randint(0, len(range_num_customers) - 1)
             customer = route[customer_index]
             range_num_customers.pop(customer_index)
-            if customer in problem_spec.swappable_customers and len(customer.candiate_list) > 2:
+            if customer in problem_spec.swappable_customers:
                 for candidate in customer.candidate_list:
                     if candidate == other_customer_depot_index:
                         return customer_index, customer
-        return None
+        return -1, None
 
     #####################################################
     # Acquire a random customer (index) in the route which exists in the swappable customers list and is swappable with
     # other_customer
     def getRandomSwappableCustomer(self, route, problem_spec):
-        range_num_customers = list(range(0, route))
-        while not range_num_customers:
+        range_num_customers = list(range(0, len(route)))
+        while range_num_customers:
             customer_index = random.randint(0, len(range_num_customers) - 1)
             customer = route[customer_index]
             range_num_customers.pop(customer_index)
-            if customer in problem_spec.swappable_customers:
+            if customer in problem_spec.swappable_customers and len(customer.candidate_list) > 2:
                 return customer_index, customer
-        return None
-
-
+        return -1, None
 
 
     ######################################################
@@ -483,8 +481,9 @@ class GA:
                         # Roll dice on what event shall happen (inter-mutation, intra-mutation or no mutation)
                         event = random.random()
                         if event < self.inter_mutation_prob and generation % self.inter_muation_attempt_rate == 0:
-                            self.interMutation(offspring)
-                        elif self.inter_mutation_prob < event and event < self.inter_mutation_prob + self.intra_mutation_prob:
+                            self.interMutation(offspring, self.problem_spec)
+                        elif self.inter_mutation_prob < event and event < self.inter_mutation_prob + self.intra_mutation_prob\
+                                and self.inter_muation_attempt_rate != 0:
                             self.intraMutation(offspring)
 
                         offspring.updateFitnessVariables(self.problem_spec)
@@ -508,8 +507,8 @@ class GA:
 
 
 if __name__ == '__main__':
-    ga = GA(fileName='p23', population_size=25, generation_size=25, generations=50000,
-            elite_ratio=0.35, tournament_ratio=0.08, div_bound=1000, time_limit = 5,
+    ga = GA(fileName='p02', population_size=25, generation_size=35, generations=50000,
+            elite_ratio=0.4, tournament_ratio=0.08, div_bound=1000, time_limit = 2,
             crossover_prob=0.55, intra_mutation_prob=0.2, inter_mutation_prob=0.25,
             crossover_decay = 10000000, inter_mutation_attempt_rate=10)
 

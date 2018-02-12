@@ -108,5 +108,5 @@ class Customer:
 
 
 
-if __name__ == "__main__":
-    pr = problemSpec('p23')
+#if __name__ == "__main__":
+#    pr = problemSpec('p23')

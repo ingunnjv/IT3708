@@ -124,10 +124,10 @@ class Genotype:
 
             if route_duration > max_duration:
                 self.duration_ol += route_duration - max_duration
-                self.infeasibility_count += 1
+                self.infeasibility_count += (route_duration) / max_duration
             if route_demand > max_load:
                 self.demand_ol += route_demand - max_load
-                self.infeasibility_count += 1
+                self.infeasibility_count += (route_demand) / max_load
             self.duration += route_duration
 
 
