@@ -6,10 +6,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from operator import attrgetter
 
-depot1_colors = ['crimson', 'coral', 'red', 'tomato']
-depot2_colors = ['grey', 'blue', 'darkblue', 'teal']
-depot3_colors = ['green', 'darkgreen', 'seagreen', 'lime']
-depot4_colors = ['chartreuse', 'gold', 'yellow', 'olive']
+depot1_colors = ['crimson', 'coral', 'red', 'tomato', 'brown', 'darkred', 'deeppink']
+depot2_colors = ['grey', 'blue', 'darkblue', 'teal', 'black', 'royalblue', 'indigo']
+depot3_colors = ['green', 'darkgreen', 'seagreen', 'lime', 'yellowgreen', 'olivedrab', 'darkslategrey']
+depot4_colors = ['chartreuse', 'gold', 'yellow', 'olive', 'darkorange', 'orange', 'yellowgreen']
 
 colors = []
 colors.append(depot1_colors)
