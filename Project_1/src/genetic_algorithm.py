@@ -486,8 +486,8 @@ class GA:
                         event = random.random()
                         if event < self.inter_mutation_prob and generation % self.inter_muation_attempt_rate == 0:
                             self.interMutation(offspring, self.problem_spec)
-                        elif self.inter_mutation_prob < event and event < self.inter_mutation_prob + self.intra_mutation_prob\
                                 and self.inter_muation_attempt_rate != 0:
+                        elif self.inter_mutation_prob < event and event < self.inter_mutation_prob + self.intra_mutation_prob:
                             self.intraMutation(offspring)
 
                         offspring.updateFitnessVariables(self.problem_spec)
