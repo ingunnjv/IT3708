@@ -96,8 +96,11 @@ class GA:
             random_vehicle_route.pop(random_customer_nr)
 
             # Find the best feasible location and insert it into the route
-            depot_nr = offspring.getDepotNumber(random_vehicle_route_nr, self.problem_spec)
-            cost = self.insertionCost(customer, offspring, depot_nr)
+            cost = []
+            for depot_nr in range(self.problem_spec.num_depots):
+                cost += self.insertionCost(customer, offspring, depot_nr)
+            cost = sorted(cost, key=itemgetter(1))
+
             self.insertCustomerInRoute(customer, offspring, cost, 1)
 
         if type == 3: # swapping of two random customers within one particular depot
@@ -156,13 +159,18 @@ class GA:
         # Randomly select a depot to perform crossover
         random_depot_nr = random.randint(0, self.problem_spec.num_depots - 1)
 
-        # Randomly select a route from the depot in each parent, r1 in p1, r2 in p2
+        # Randomly select a non-empty route from the depot in each parent, r1 in p1, r2 in p2
         vehicle_start_index = random_depot_nr * self.problem_spec.max_vehicles_per_depot
         vehicle_end_index = vehicle_start_index + self.problem_spec.max_vehicles_per_depot
-        route1 = offspring1.vehicle_routes[random.randint(vehicle_start_index, vehicle_end_index - 1)]
-        route2 = offspring2.vehicle_routes[random.randint(vehicle_start_index, vehicle_end_index - 1)]
+        route1 = None
+        route2 = None
+        while not route1:
+            route_nr = random.randint(vehicle_start_index, vehicle_end_index - 1)
+            route1 = offspring1.vehicle_routes[route_nr]
+        while not route2:
+            route_nr = random.randint(vehicle_start_index, vehicle_end_index - 1)
+            route2 = offspring2.vehicle_routes[route_nr]
 
-        ## What if a route is empty? No change will happen in the other parent... ##
         # Remove all customers in r1 from p2
         for c1 in route1:
             for vehicle_nr, route in enumerate(offspring2.vehicle_routes):
@@ -467,8 +475,8 @@ class GA:
 
 
 if __name__ == '__main__':
-    ga = GA(fileName='p08', population_size=100, generation_size=110, generations=50000,
-            elite_ratio=0.2, tournament_ratio=0.08, div_bound=1000, time_limit = 5,
+    ga = GA(fileName='p01', population_size=30, generation_size=100, generations=50000,
+            elite_ratio=0.2, tournament_ratio=0.08, div_bound=1000, time_limit = 2,
             crossover_prob=0.6, intra_mutation_prob=0.2, inter_mutation_prob=0.25,
             crossover_decay = 10000000,
             inter_mutation_attempt_rate=10)
