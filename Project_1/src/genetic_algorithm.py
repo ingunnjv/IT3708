@@ -62,7 +62,6 @@ class GA:
         if type == 1: # inversion in one vehicle route
             num_vehicles = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
             range_num_vehicles = list(range(0, num_vehicles))
-            vehicle_route = None
             while range_num_vehicles:
                 vehicle_nr = random.choice(range_num_vehicles)
                 range_num_vehicles.remove(vehicle_nr)
@@ -97,9 +96,8 @@ class GA:
             vehicle_start_index = depot_nr * self.problem_spec.max_vehicles_per_depot
             max_num_vehicles_per_depot = self.problem_spec.max_vehicles_per_depot
 
-            #customers_nrs_to_swap = []
-            customers = []
-            #routes = []
+            customers_nrs_to_swap = []
+            routes = []
             for _ in range (0,2):
                 route = None
                 # Acquire a random, non-empty vehicle route
@@ -108,29 +106,15 @@ class GA:
                     route = offspring.vehicle_routes[route_nr]
                 customer_nr = random.randint(0, len(route) - 1)
                 # Acquire a random customer from said route
-                #customers_nrs_to_swap.append(customer_nr)
-                #routes.append(route)
-                customers.append(route[customer_nr])
-                route.pop(customer_nr)
+                customers_nrs_to_swap.append(customer_nr)
+                routes.append(route)
 
-
-
-            #customer1 = routes[0][customers_nrs_to_swap[0]]
-            #customer2 = routes[1][customers_nrs_to_swap[1]]
-            #routes[0].pop(customers_nrs_to_swap[0])
-            ##routes[1].pop(customers_nrs_to_swap[1])
-
-            cost = self.insertionCost(customers[0], offspring, depot_nr)
-            self.insertCustomerInRoute(customers[0], offspring, cost, 0.8)
-
-            cost = self.insertionCost(customers[1], offspring, depot_nr)
-            self.insertCustomerInRoute(customers[1], offspring, cost, 0.8)
-
-            # temp_customer = routes[0][customers_nrs_to_swap[0]]
-            # routes[0][customers_nrs_to_swap[0]] = routes[1][customers_nrs_to_swap[1]]
-            # routes[1][customers_nrs_to_swap[1]] = temp_customer
+            temp_customer = routes[0][customers_nrs_to_swap[0]]
+            routes[0][customers_nrs_to_swap[0]] = routes[1][customers_nrs_to_swap[1]]
+            routes[1][customers_nrs_to_swap[1]] = temp_customer
+        offspring.updateFitnessVariables(self.problem_spec)
+        offspring.updateFitness(self.problem_spec)
         offspring.tooManyCustomers(self.problem_spec)
-
 
     ######################################################
     # Applies a swapping of two random customers within the entire chromosome
@@ -183,6 +167,9 @@ class GA:
         cost = self.insertionCost(customer2, offspring, route1_depot_nr)
         self.insertCustomerInRoute(customer2, offspring, cost, 0.8)
 
+        offspring.updateFitnessVariables(self.problem_spec)
+        offspring.updateFitness(self.problem_spec)
+
         #temp_customer = routes[0][customers_nrs_to_swap[0]]
         #routes[0][customers_nrs_to_swap[0]] = routes[1][customers_nrs_to_swap[1]]
         #routes[1][customers_nrs_to_swap[1]] = temp_customer
@@ -198,7 +185,11 @@ class GA:
             customer = route[customer_index]
             range_num_customers.pop(customer_index)
             if customer in problem_spec.swappable_customers:
-                for candidate in customer.candidate_list:
+                range_num_candidates = list(range(0, len(customer.candidate_list)))
+                while range_num_candidates:
+                    candidate_index = random.randint(0, len(range_num_candidates) - 1)
+                    candidate = customer.candidate_list[candidate_index]
+                    range_num_candidates.pop(candidate_index)
                     if candidate == other_customer_depot_index:
                         return customer_index, customer
         return -1, None
@@ -273,6 +264,11 @@ class GA:
         offspring1.tooManyCustomers(self.problem_spec)
         offspring2.tooManyCustomers(self.problem_spec)
 
+        offspring1.updateFitnessVariables(self.problem_spec)
+        offspring1.updateFitness(self.problem_spec)
+
+        offspring2.updateFitnessVariables(self.problem_spec)
+        offspring2.updateFitness(self.problem_spec)
 
         return offspring1, offspring2
 
@@ -332,16 +328,6 @@ class GA:
         # Insert the new customer in the chosen route and position in the individual
         insertion_vehicle, insertion_customer_pos = insertion_location
         individual.vehicle_routes[insertion_vehicle].insert(insertion_customer_pos, new_customer)
-
-
-    ######################################################
-    # Returns the parent with the highest fitness from the parents parameter
-    def getBestParent(self, parents):
-        fitnesses = []
-        for parent in parents:
-            fitnesses.append(parent.fitness)
-        best_parent = copy.deepcopy(parents[fitnesses.index(max(fitnesses))])
-        return best_parent
 
 
     ######################################################
@@ -516,8 +502,8 @@ class GA:
                     parents = self.parentSelection()
 
                     # Roll dice on what event shall happen (recombination or survivors)
-                    event = random.random()
-                    if event < self.crossover_prob:
+                    recomb_event = random.random()
+                    if recomb_event < self.crossover_prob:
                         offsprings = self.crossover(parents[0], parents[1])
 
                     else:
@@ -525,14 +511,12 @@ class GA:
 
                     for offspring in offsprings:
                         # Roll dice on what event shall happen (inter-mutation, intra-mutation or no mutation)
-                        event = random.random()
-                        if event < self.inter_mutation_prob and generation % self.inter_muation_attempt_rate == 0:
+                        mutation_event = random.random()
+                        if mutation_event < self.inter_mutation_prob and generation % self.inter_muation_attempt_rate == 0:
                             self.interMutation(offspring, self.problem_spec)
-                        elif self.inter_mutation_prob < event and event < self.inter_mutation_prob + self.intra_mutation_prob:
+                        elif self.inter_mutation_prob < mutation_event and mutation_event < self.inter_mutation_prob + self.intra_mutation_prob\
+                                and generation % self.inter_muation_attempt_rate != 0:
                             self.intraMutation(offspring)
-
-                        offspring.updateFitnessVariables(self.problem_spec)
-                        offspring.updateFitness(self.problem_spec)
                         new_population += [offspring]
 
 
@@ -552,10 +536,10 @@ class GA:
 
 
 if __name__ == '__main__':
-    ga = GA(fileName='p01', population_size=25, generation_size=100, generations=50000,
-            elite_ratio=0.3, tournament_ratio=0.19, div_bound=200, time_limit = 1,
+    ga = GA(fileName='p01', population_size=25, generation_size=50, generations=50000,
+            elite_ratio=0.3, tournament_ratio=0.19, div_bound=200000, time_limit = 0.25,
             crossover_prob=0.6, intra_mutation_prob=0.2, inter_mutation_prob=0.25,
-            crossover_decay = 6000, inter_mutation_attempt_rate=10)
+            crossover_decay = 6000, inter_mutation_attempt_rate=4)
 
     ga.evolutionCycle()
 
