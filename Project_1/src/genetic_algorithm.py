@@ -96,8 +96,9 @@ class GA:
             vehicle_start_index = depot_nr * self.problem_spec.max_vehicles_per_depot
             max_num_vehicles_per_depot = self.problem_spec.max_vehicles_per_depot
 
-            customers_nrs_to_swap = []
-            routes = []
+            #customers_nrs_to_swap = []
+            customers = []
+            #routes = []
             for _ in range (0,2):
                 route = None
                 # Acquire a random, non-empty vehicle route
@@ -106,11 +107,27 @@ class GA:
                     route = offspring.vehicle_routes[route_nr]
                 customer_nr = random.randint(0, len(route) - 1)
                 # Acquire a random customer from said route
-                customers_nrs_to_swap.append(customer_nr)
-                routes.append(route)
-            temp_customer = routes[0][customers_nrs_to_swap[0]]
-            routes[0][customers_nrs_to_swap[0]] = routes[1][customers_nrs_to_swap[1]]
-            routes[1][customers_nrs_to_swap[1]] = temp_customer
+                #customers_nrs_to_swap.append(customer_nr)
+                #routes.append(route)
+                customers.append(route[customer_nr])
+                route.pop(customer_nr)
+
+
+
+            #customer1 = routes[0][customers_nrs_to_swap[0]]
+            #customer2 = routes[1][customers_nrs_to_swap[1]]
+            #routes[0].pop(customers_nrs_to_swap[0])
+            ##routes[1].pop(customers_nrs_to_swap[1])
+
+            cost = self.insertionCost(customers[0], offspring, depot_nr)
+            self.insertCustomerInRoute(customers[0], offspring, cost, 0.8)
+
+            cost = self.insertionCost(customers[1], offspring, depot_nr)
+            self.insertCustomerInRoute(customers[1], offspring, cost, 0.8)
+
+            # temp_customer = routes[0][customers_nrs_to_swap[0]]
+            # routes[0][customers_nrs_to_swap[0]] = routes[1][customers_nrs_to_swap[1]]
+            # routes[1][customers_nrs_to_swap[1]] = temp_customer
         offspring.tooManyCustomers(self.problem_spec)
 
 
@@ -119,8 +136,6 @@ class GA:
     def interMutation(self, offspring, problem_spec):
         customers_nrs_to_swap = []
         routes = []
-        route1 = []
-        route2 = []
 
         routes_range = list(range(0, len(offspring.vehicle_routes)))
 
@@ -157,9 +172,19 @@ class GA:
         if len(routes) != 2 or len(customers_nrs_to_swap) != 2:
             return
 
-        temp_customer = routes[0][customers_nrs_to_swap[0]]
-        routes[0][customers_nrs_to_swap[0]] = routes[1][customers_nrs_to_swap[1]]
-        routes[1][customers_nrs_to_swap[1]] = temp_customer
+
+        route2.pop(customer2_index)
+        route1.pop(customer1_index)
+
+        cost = self.insertionCost(customer1, offspring, route2_depot_nr)
+        self.insertCustomerInRoute(customer1, offspring, cost, 0.8)
+
+        cost = self.insertionCost(customer2, offspring, route1_depot_nr)
+        self.insertCustomerInRoute(customer2, offspring, cost, 0.8)
+
+        #temp_customer = routes[0][customers_nrs_to_swap[0]]
+        #routes[0][customers_nrs_to_swap[0]] = routes[1][customers_nrs_to_swap[1]]
+        #routes[1][customers_nrs_to_swap[1]] = temp_customer
 
 
     #####################################################
@@ -494,7 +519,6 @@ class GA:
                         event = random.random()
                         if event < self.inter_mutation_prob and generation % self.inter_muation_attempt_rate == 0:
                             self.interMutation(offspring, self.problem_spec)
-                                and self.inter_muation_attempt_rate != 0:
                         elif self.inter_mutation_prob < event and event < self.inter_mutation_prob + self.intra_mutation_prob:
                             self.intraMutation(offspring)
 
@@ -519,10 +543,10 @@ class GA:
 
 
 if __name__ == '__main__':
-    ga = GA(fileName='p02', population_size=25, generation_size=35, generations=50000,
-            elite_ratio=0.4, tournament_ratio=0.08, div_bound=1000, time_limit = 2,
-            crossover_prob=0.55, intra_mutation_prob=0.2, inter_mutation_prob=0.25,
-            crossover_decay = 10000000, inter_mutation_attempt_rate=10)
+    ga = GA(fileName='p23', population_size=25, generation_size=35, generations=50000,
+            elite_ratio=0.25, tournament_ratio=0.08, div_bound=200, time_limit = 10,
+            crossover_prob=0.6, intra_mutation_prob=0.2, inter_mutation_prob=0.25,
+            crossover_decay = 6000, inter_mutation_attempt_rate=10)
 
     ga.evolutionCycle()
 
