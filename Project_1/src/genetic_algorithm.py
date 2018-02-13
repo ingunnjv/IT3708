@@ -126,9 +126,9 @@ class GA:
 
         # Acquire a random, non-empty vehicle route
         while routes_range:
-            route1_nr = random.randint(0, len(routes_range) - 1)
+            route1_nr = random.choice(routes_range)
             route1_depot_nr = problem_spec.vehicle_to_depot_dict[route1_nr]
-            routes_range.pop(route1_nr)
+            routes_range.remove(route1_nr)
             route1 = offspring.vehicle_routes[route1_nr]
             if route1:
                 customer1_index, customer1 = self.getRandomSwappableCustomer(route1, self.problem_spec)
@@ -141,9 +141,9 @@ class GA:
 
         # Acquire a random, non-empty vehicle route, not the same as route1
         while routes_range:
-            route2_nr = random.randint(0, len(routes_range) - 1)
+            route2_nr = random.choice(routes_range)
             route2_depot_nr = problem_spec.vehicle_to_depot_dict[route2_nr]
-            routes_range.pop(route2_nr)
+            routes_range.remove(route2_nr)
             route2 = offspring.vehicle_routes[route2_nr]
             if route2_depot_nr != route1_depot_nr and route2:
                 customer2_index, customer2 = self.getRandomCustomerToSwapWithOther(route2, route1_depot_nr, self.problem_spec)
@@ -181,15 +181,15 @@ class GA:
     def getRandomCustomerToSwapWithOther(self, route, other_customer_depot_index, problem_spec):
         range_num_customers = list(range(0, len(route)))
         while range_num_customers:
-            customer_index = random.randint(0, len(range_num_customers) - 1)
+            customer_index = random.choice(range_num_customers)
             customer = route[customer_index]
-            range_num_customers.pop(customer_index)
+            range_num_customers.remove(customer_index)
             if customer in problem_spec.swappable_customers:
                 range_num_candidates = list(range(0, len(customer.candidate_list)))
                 while range_num_candidates:
-                    candidate_index = random.randint(0, len(range_num_candidates) - 1)
+                    candidate_index = random.choice(range_num_candidates)
                     candidate = customer.candidate_list[candidate_index]
-                    range_num_candidates.pop(candidate_index)
+                    range_num_candidates.remove(candidate_index)
                     if candidate == other_customer_depot_index:
                         return customer_index, customer
         return -1, None
@@ -200,10 +200,10 @@ class GA:
     def getRandomSwappableCustomer(self, route, problem_spec):
         range_num_customers = list(range(0, len(route)))
         while range_num_customers:
-            customer_index = random.randint(0, len(range_num_customers) - 1)
+            customer_index = random.choice(range_num_customers)
             customer = route[customer_index]
-            range_num_customers.pop(customer_index)
-            if customer in problem_spec.swappable_customers and len(customer.candidate_list) > 2:
+            range_num_customers.remove(customer_index)
+            if customer in problem_spec.swappable_customers and len(customer.candidate_list) >= 2:
                 return customer_index, customer
         return -1, None
 
@@ -536,10 +536,10 @@ class GA:
 
 
 if __name__ == '__main__':
-    ga = GA(fileName='p01', population_size=25, generation_size=50, generations=50000,
-            elite_ratio=0.3, tournament_ratio=0.19, div_bound=200000, time_limit = 0.25,
-            crossover_prob=0.6, intra_mutation_prob=0.2, inter_mutation_prob=0.25,
-            crossover_decay = 6000, inter_mutation_attempt_rate=4)
+    ga = GA(fileName='p01', population_size=30, generation_size=50, generations=50000,
+            elite_ratio=0.1, tournament_ratio=0.10, div_bound=400, time_limit = 5,
+            crossover_prob=0.6, intra_mutation_prob=0.9, inter_mutation_prob=0.6,
+            crossover_decay = 100000000, inter_mutation_attempt_rate=10)
 
     ga.evolutionCycle()
 
