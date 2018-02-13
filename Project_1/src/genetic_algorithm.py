@@ -59,12 +59,13 @@ class GA:
     def intraMutation(self, offspring):
         random.seed()
         type = random.randint(1,3)
-        if type == 1: # inversion with one vehicle route
+        if type == 1: # inversion in one vehicle route
             num_vehicles = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
             range_num_vehicles = list(range(0, num_vehicles))
             vehicle_route = None
             while range_num_vehicles:
-                vehicle_nr = range_num_vehicles.pop(random.randint(0, len(range_num_vehicles) - 1))
+                vehicle_nr = random.choice(range_num_vehicles)
+                range_num_vehicles.remove(vehicle_nr)
                 vehicle_route = offspring.vehicle_routes[vehicle_nr]
                 if len(vehicle_route) >= 2:
                     vehicle_route_length = len(vehicle_route)
@@ -233,12 +234,20 @@ class GA:
         vehicle_end_index = vehicle_start_index + self.problem_spec.max_vehicles_per_depot
         route1 = None
         route2 = None
-        while not route1:
-            route_nr = random.randint(vehicle_start_index, vehicle_end_index - 1)
+
+        route_range = list(range(vehicle_start_index, vehicle_end_index))
+        while not route1 and route_range:
+            route_nr = random.choice(route_range)
+            route_range.remove(route_nr)
             route1 = offspring1.vehicle_routes[route_nr]
-        while not route2:
-            route_nr = random.randint(vehicle_start_index, vehicle_end_index - 1)
+        route_range = list(range(vehicle_start_index, vehicle_end_index))
+        while not route2 and route_range:
+            route_nr = random.choice(route_range)
+            route_range.remove(route_nr)
             route2 = offspring2.vehicle_routes[route_nr]
+
+        if not route1 or not route2:
+            return parent1, parent2
 
         # Remove all customers in r1 from p2
         for c1 in route1:
@@ -543,8 +552,8 @@ class GA:
 
 
 if __name__ == '__main__':
-    ga = GA(fileName='p23', population_size=25, generation_size=35, generations=50000,
-            elite_ratio=0.25, tournament_ratio=0.08, div_bound=200, time_limit = 10,
+    ga = GA(fileName='p01', population_size=25, generation_size=100, generations=50000,
+            elite_ratio=0.3, tournament_ratio=0.19, div_bound=200, time_limit = 1,
             crossover_prob=0.6, intra_mutation_prob=0.2, inter_mutation_prob=0.25,
             crossover_decay = 6000, inter_mutation_attempt_rate=10)
 
