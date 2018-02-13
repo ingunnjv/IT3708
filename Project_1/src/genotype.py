@@ -114,7 +114,8 @@ class Genotype:
         self.duration = 0
         self.infeasibility_count = 0
         for vehicle_nr, route in enumerate(self.vehicle_routes):
-            depot_num = self.getDepotNumber(vehicle_nr, problem_spec)
+
+            depot_num = problem_spec.vehicle_to_depot_dict[vehicle_nr]
 
             max_duration = problem_spec.depots[depot_num].D
             max_load = problem_spec.depots[depot_num].Q
@@ -136,7 +137,7 @@ class Genotype:
     def vehicleOverloaded(self, vehicle_route, vehicle_nr, customer_demand, problem_spec):
         demand_sum = self.routeDemand(vehicle_route)
         demand_sum += customer_demand
-        depot_number = self.getDepotNumber(vehicle_nr, problem_spec)
+        depot_number = problem_spec.vehicle_to_depot_dict[vehicle_nr]
         if demand_sum > problem_spec.depots[depot_number].Q:
             return True
         else:
@@ -150,7 +151,7 @@ class Genotype:
         new_route.insert(new_customer_position, new_customer)
 
         duration = self.routeDuration(new_route, vehicle_nr, problem_spec)
-        max_route_duration = problem_spec.depots[self.getDepotNumber(vehicle_nr, problem_spec)].D
+        max_route_duration = problem_spec.depots[problem_spec.vehicle_to_depot_dict[vehicle_nr]].D
         if duration > max_route_duration and max_route_duration != 0:
             return True
         else:
@@ -170,7 +171,7 @@ class Genotype:
         for vehicle_nr, route in enumerate(self.vehicle_routes):
             route_x_coords = np.zeros(len(route) + 2)
             route_y_coords = np.zeros(len(route) + 2)
-            depot_nr = self.getDepotNumber(vehicle_nr, problem_spec)
+            depot_nr = problem_spec.vehicle_to_depot_dict[vehicle_nr]
             route_x_coords[0] = problem_spec.depots[depot_nr].x
             route_y_coords[0] = problem_spec.depots[depot_nr].y
             for customer_num in range(0, len(route)):
@@ -196,7 +197,7 @@ class Genotype:
         print('Percent within the optimal solution: %.2f%%\n' % (percent_from_optimal - 100))
         print(self.duration)
         for vehicle_nr, route  in enumerate(self.vehicle_routes):
-            depot_nr = self.getDepotNumber(vehicle_nr, problem_spec) + 1
+            depot_nr = problem_spec.vehicle_to_depot_dict[vehicle_nr]
             if depot_nr != prev_depot_nr:
                 vehicle_num_from_depot = 1
             if route:
@@ -223,7 +224,7 @@ class Genotype:
     def routeDuration(self, route, vehicle_nr, problem_spec):
         duration = 0
         # The depot is considered the very first "customer"
-        depot_nr = self.getDepotNumber(vehicle_nr, problem_spec)
+        depot_nr = problem_spec.vehicle_to_depot_dict[vehicle_nr]
         prev_customer_index = depot_nr + problem_spec.num_customers
         for customer in route:
             customer_index = customer.i - 1

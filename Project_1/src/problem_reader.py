@@ -22,6 +22,9 @@ class ProblemSpec:
         self.swappable_customers = []
         self.constructCandidateListsAndSwappableCustomersList()
 
+        self.vehicle_to_depot_dict = {}
+        self.constructVehicleToDepotDict()
+
 
     def readProblemFile(self, fileName):
         with open('../data/Data Files/' + fileName, 'r') as f:
@@ -53,6 +56,10 @@ class ProblemSpec:
                 x_dist = abs(stops[i].x - stops[j].x)
                 y_dist = abs(stops[i].y - stops[j].y)
                 self.cost_matrix[i, j] = math.sqrt(math.pow(y_dist, 2) + math.pow(x_dist, 2))
+
+    def constructVehicleToDepotDict(self):
+        for vehicle in range(0, self.max_vehicles_per_depot * self.num_depots):
+            self.vehicle_to_depot_dict[vehicle] = math.floor(vehicle / self.max_vehicles_per_depot)
 
     def findMaxCostAndLoad(self):
         self.max_cost = self.cost_matrix.max()
