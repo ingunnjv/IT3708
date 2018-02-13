@@ -142,7 +142,7 @@ class GA:
         # Acquire a random, non-empty vehicle route
         while routes_range:
             route1_nr = random.randint(0, len(routes_range) - 1)
-            route1_depot_nr = offspring.getDepotNumber(route1_nr, self.problem_spec)
+            route1_depot_nr = problem_spec.vehicle_to_depot_dict[route1_nr]
             routes_range.pop(route1_nr)
             route1 = offspring.vehicle_routes[route1_nr]
             if route1:
@@ -157,7 +157,7 @@ class GA:
         # Acquire a random, non-empty vehicle route, not the same as route1
         while routes_range:
             route2_nr = random.randint(0, len(routes_range) - 1)
-            route2_depot_nr = offspring.getDepotNumber(route2_nr, self.problem_spec)
+            route2_depot_nr = problem_spec.vehicle_to_depot_dict[route2_nr]
             routes_range.pop(route2_nr)
             route2 = offspring.vehicle_routes[route2_nr]
             if route2_depot_nr != route1_depot_nr and route2:
