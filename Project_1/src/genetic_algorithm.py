@@ -115,12 +115,16 @@ class GA:
                             route_1[j1] = customer_1
                             route_2[j2] = customer_2
 
-            offspring.fitness = original_fitness
-            offspring.duration = original_duration
+
             if super_routes != None:
                 temp_customer = super_routes[0][super_customers_index[0]]
                 super_routes[0][super_customers_index[0]] = super_routes[1][super_customers_index[1]]
                 super_routes[1][super_customers_index[1]] = temp_customer
+                offspring.updateFitnessVariables(self.problem_spec)
+                offspring.updateFitness(self.problem_spec)
+            else:
+                offspring.fitness = original_fitness
+                offspring.duration = original_duration
 
         return
 
@@ -143,24 +147,6 @@ class GA:
                     material.reverse()
                     vehicle_route[min(cutpoints): max(cutpoints) + 1] = material
         if type == 2: # single customer re-route from one route to another within the entire chromosome
-            #num_vehicles = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
-            #random_vehicle_route = None
-            # Acquire a non-empty vehicle route
-            #while not random_vehicle_route:
-            #    random_vehicle_route_nr = random.randint(0, num_vehicles - 1)
-            #    random_vehicle_route = offspring.vehicle_routes[random_vehicle_route_nr]
-            #random_customer_nr = random.randint(0, len(random_vehicle_route) - 1)
-            #customer = random_vehicle_route[random_customer_nr]
-            #random_vehicle_route.pop(random_customer_nr)
-
-            # Find the best feasible location and insert it into the route
-            #cost = []
-            #for depot_nr in range(self.problem_spec.num_depots):
-            #    cost += self.insertionCost(customer, offspring, depot_nr)
-            #cost = sorted(cost, key=itemgetter(1))
-
-            #self.insertCustomerInRoute(customer, offspring, cost, 1)
-
             routes_range = list(range(0, len(offspring.vehicle_routes)))
             # Acquire a random, non-empty vehicle route
             while routes_range:
@@ -497,7 +483,7 @@ class GA:
 
         # Save the best individuals
         #diversification_num = int(math.ceil(len(population) / 3))
-        diversification_num = 1
+        diversification_num = 0
         best_individuals = sorted_population[:diversification_num]
         new_generation = copy.deepcopy(best_individuals)
 
@@ -555,7 +541,7 @@ class GA:
             # Print generation data to terminal
             print("Generation: %d" % generation)
             print("Best duration: %f " % self.population[int(best)].duration)
-            print("Best fitness score: %f (infeasibility_count: %d)" % (best_fitness, elites[0].infeasibility_count))
+            print("Best fitness score: %f (Infeasibility penalty factor: %.2f)" % (best_fitness, elites[0].infeasibility_count))
             print("Average fitness score: %f\n" % average_fitness)
 
             # Super mutate event
@@ -628,8 +614,8 @@ class GA:
 
 
 if __name__ == '__main__':
-    ga = GA(fileName='p01', population_size=25, generation_size=35, generations=50000,
-            elite_ratio=0.4, tournament_ratio=0.10, div_bound=400, time_limit = 10,
+    ga = GA(fileName='p23', population_size=25, generation_size=35, generations=50000,
+            elite_ratio=0.05, tournament_ratio=0.10, div_bound=2000, time_limit = 10,
             crossover_prob=0.6, intra_mutation_prob=0.2, inter_mutation_prob=0.25,
             inter_mutation_attempt_rate=10)
 

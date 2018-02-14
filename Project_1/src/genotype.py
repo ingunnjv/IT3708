@@ -66,11 +66,6 @@ class Genotype:
 
     ######################################################
     #
-    def randomInit(self):
-        pass
-
-    ######################################################
-    #
     def assignCustomers(self, problem_spec):
         random.seed()
         range_num_customers = list(range(0, len(problem_spec.customers)))
@@ -215,7 +210,7 @@ class Genotype:
     ######################################################
     #
     def updateFitness(self, problem_spec):
-        self.fitness = self.duration + self.duration_ol + self.demand_ol + problem_spec.max_cost*self.infeasibility_count*2
+        self.fitness = self.duration + self.duration_ol + self.demand_ol + 2*problem_spec.max_cost*(self.infeasibility_count)
 
     ######################################################
     # Finds the duration of a single route
