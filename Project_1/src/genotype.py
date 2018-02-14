@@ -80,7 +80,7 @@ class Genotype:
 
         while range_num_customers:
             customer_nr = random.choice(range_num_customers)#.pop(random.randint(0, customers_left))
-            range_num_customers.pop(customer_nr)
+            range_num_customers.remove(customer_nr)
             customer = problem_spec.customers[customer_nr]
 
             depot = customer.candidate_list[0]

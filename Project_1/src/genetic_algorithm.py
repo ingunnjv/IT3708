@@ -73,24 +73,50 @@ class GA:
                     material.reverse()
                     vehicle_route[min(cutpoints): max(cutpoints) + 1] = material
         if type == 2: # single customer re-route from one route to another within the entire chromosome
-            num_vehicles = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
-            random_vehicle_route = None
+            #num_vehicles = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
+            #random_vehicle_route = None
             # Acquire a non-empty vehicle route
-            while not random_vehicle_route:
-                random_vehicle_route_nr = random.randint(0, num_vehicles - 1)
-                random_vehicle_route = offspring.vehicle_routes[random_vehicle_route_nr]
-            random_customer_nr = random.randint(0, len(random_vehicle_route) - 1)
-            customer = random_vehicle_route[random_customer_nr]
-            random_vehicle_route.pop(random_customer_nr)
+            #while not random_vehicle_route:
+            #    random_vehicle_route_nr = random.randint(0, num_vehicles - 1)
+            #    random_vehicle_route = offspring.vehicle_routes[random_vehicle_route_nr]
+            #random_customer_nr = random.randint(0, len(random_vehicle_route) - 1)
+            #customer = random_vehicle_route[random_customer_nr]
+            #random_vehicle_route.pop(random_customer_nr)
 
             # Find the best feasible location and insert it into the route
-            cost = []
-            for depot_nr in range(self.problem_spec.num_depots):
-                cost += self.insertionCost(customer, offspring, depot_nr)
-            cost = sorted(cost, key=itemgetter(1))
+            #cost = []
+            #for depot_nr in range(self.problem_spec.num_depots):
+            #    cost += self.insertionCost(customer, offspring, depot_nr)
+            #cost = sorted(cost, key=itemgetter(1))
 
-            self.insertCustomerInRoute(customer, offspring, cost, 1)
+            #self.insertCustomerInRoute(customer, offspring, cost, 1)
 
+            routes_range = list(range(0, len(offspring.vehicle_routes)))
+            # Acquire a random, non-empty vehicle route
+            while routes_range:
+                route_nr = random.choice(routes_range)
+                route_depot_nr = self.problem_spec.vehicle_to_depot_dict[route_nr]
+                routes_range.remove(route_nr)
+                route = offspring.vehicle_routes[route_nr]
+                if route:
+                    customer_index, customer = self.getRandomSwappableCustomer(route, self.problem_spec)
+                else:
+                    continue
+                if not customer:
+                    continue
+                break
+
+            if not customer:
+                return
+            else:
+                offspring.vehicle_routes[route_nr].pop(customer_index)
+                # Check the candidate list
+                cost = []
+                for candidate_depot in customer.candidate_list:
+                    if candidate_depot != route_depot_nr:
+                        cost += self.insertionCost(customer, offspring, candidate_depot)
+                cost = sorted(cost, key=itemgetter(1))
+                self.insertCustomerInRoute(customer, offspring, cost, 1)
         if type == 3: # swapping of two random customers within one particular depot
             depot_nr = random.randint(0, self.problem_spec.num_depots - 1)
             vehicle_start_index = depot_nr * self.problem_spec.max_vehicles_per_depot
@@ -119,16 +145,15 @@ class GA:
     ######################################################
     # Applies a swapping of two random customers within the entire chromosome
     def interMutation(self, offspring, problem_spec):
-        customers_nrs_to_swap = []
-        routes = []
-
         routes_range = list(range(0, len(offspring.vehicle_routes)))
 
+        customers_nrs_to_swap = []
+        routes = []
         # Acquire a random, non-empty vehicle route
         while routes_range:
-            route1_nr = random.randint(0, len(routes_range) - 1)
+            route1_nr = random.choice(routes_range)
             route1_depot_nr = problem_spec.vehicle_to_depot_dict[route1_nr]
-            routes_range.pop(route1_nr)
+            routes_range.remove(route1_nr)
             route1 = offspring.vehicle_routes[route1_nr]
             if route1:
                 customer1_index, customer1 = self.getRandomSwappableCustomer(route1, self.problem_spec)
@@ -141,9 +166,9 @@ class GA:
 
         # Acquire a random, non-empty vehicle route, not the same as route1
         while routes_range:
-            route2_nr = random.randint(0, len(routes_range) - 1)
+            route2_nr = random.choice(routes_range)
             route2_depot_nr = problem_spec.vehicle_to_depot_dict[route2_nr]
-            routes_range.pop(route2_nr)
+            routes_range.remove(route2_nr)
             route2 = offspring.vehicle_routes[route2_nr]
             if route2_depot_nr != route1_depot_nr and route2:
                 customer2_index, customer2 = self.getRandomCustomerToSwapWithOther(route2, route1_depot_nr, self.problem_spec)
@@ -156,7 +181,6 @@ class GA:
 
         if len(routes) != 2 or len(customers_nrs_to_swap) != 2:
             return
-
 
         route2.pop(customer2_index)
         route1.pop(customer1_index)
@@ -181,15 +205,15 @@ class GA:
     def getRandomCustomerToSwapWithOther(self, route, other_customer_depot_index, problem_spec):
         range_num_customers = list(range(0, len(route)))
         while range_num_customers:
-            customer_index = random.randint(0, len(range_num_customers) - 1)
+            customer_index = random.choice(range_num_customers)
             customer = route[customer_index]
-            range_num_customers.pop(customer_index)
+            range_num_customers.remove(customer_index)
             if customer in problem_spec.swappable_customers:
                 range_num_candidates = list(range(0, len(customer.candidate_list)))
                 while range_num_candidates:
-                    candidate_index = random.randint(0, len(range_num_candidates) - 1)
+                    candidate_index = random.choice(range_num_candidates)
                     candidate = customer.candidate_list[candidate_index]
-                    range_num_candidates.pop(candidate_index)
+                    range_num_candidates.remove(candidate_index)
                     if candidate == other_customer_depot_index:
                         return customer_index, customer
         return -1, None
@@ -200,10 +224,10 @@ class GA:
     def getRandomSwappableCustomer(self, route, problem_spec):
         range_num_customers = list(range(0, len(route)))
         while range_num_customers:
-            customer_index = random.randint(0, len(range_num_customers) - 1)
+            customer_index = random.choice(range_num_customers)
             customer = route[customer_index]
-            range_num_customers.pop(customer_index)
-            if customer in problem_spec.swappable_customers and len(customer.candidate_list) > 2:
+            range_num_customers.remove(customer_index)
+            if customer in problem_spec.swappable_customers and len(customer.candidate_list) >= 2:
                 return customer_index, customer
         return -1, None
 
@@ -405,7 +429,8 @@ class GA:
         sorted_population = [x for _, x in sorted(zip(fitnesses, population))]  # sorts population in ascending order based on fitnesses
 
         # Save the best individuals
-        diversification_num = int(math.ceil(len(population) / 3))
+        #diversification_num = int(math.ceil(len(population) / 3))
+        diversification_num = 1
         best_individuals = sorted_population[:diversification_num]
         new_generation = copy.deepcopy(best_individuals)
 
@@ -486,7 +511,7 @@ class GA:
             # Diversification process
             current_best = elites[0]
             if prev_best:
-                if current_best.fitness == prev_best.fitness: # no improvement in best solution
+                if abs(current_best.fitness - prev_best.fitness) < 0.1: # no improvement in best solution
                     it_div += 1
                 else:
                     it_div = 0
@@ -536,10 +561,10 @@ class GA:
 
 
 if __name__ == '__main__':
-    ga = GA(fileName='p01', population_size=25, generation_size=50, generations=50000,
-            elite_ratio=0.3, tournament_ratio=0.19, div_bound=200000, time_limit = 0.25,
-            crossover_prob=0.6, intra_mutation_prob=0.2, inter_mutation_prob=0.25,
-            crossover_decay = 6000, inter_mutation_attempt_rate=4)
+    ga = GA(fileName='p01', population_size=30, generation_size=100, generations=50000,
+            elite_ratio=0.3, tournament_ratio=0.19, div_bound=100, time_limit = 5,
+            crossover_prob=0.7, intra_mutation_prob=0.3, inter_mutation_prob=0.3,
+            crossover_decay = 6000, inter_mutation_attempt_rate=10)
 
     ga.evolutionCycle()
 
