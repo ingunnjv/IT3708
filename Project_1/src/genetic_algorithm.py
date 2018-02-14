@@ -14,7 +14,7 @@ import numpy as np
 class GA:
     def __init__(self, fileName, population_size, generation_size, generations, elite_ratio,
                  tournament_ratio, div_bound, crossover_prob, intra_mutation_prob, inter_mutation_prob,
-                 inter_mutation_attempt_rate, crossover_decay, time_limit):
+                 inter_mutation_attempt_rate, time_limit):
         self.problem_spec = pr.ProblemSpec(fileName)
         self.early_stopping_percents = [30, 20, 10, 5]
         self.time_limit = time_limit
@@ -28,7 +28,6 @@ class GA:
         self.div_bound = div_bound
         self.crossover_init_prob = crossover_prob
         self.crossover_prob = crossover_prob
-        self.crossover_decay = crossover_decay
         self.intra_mutation_prob = intra_mutation_prob
         self.inter_mutation_prob = inter_mutation_prob
         self.inter_muation_attempt_rate = inter_mutation_attempt_rate
@@ -55,9 +54,54 @@ class GA:
 
 
     ######################################################
+    # Periodically decays the crossover prob
+    def superMutate(self, offspring):
+        type = random.randint(1, 1)
+        if type == 1:
+            original_fitness = offspring.fitness
+            best_fitness = original_fitness
+            super_material = None
+            super_segment_length = None
+            super_route = None
+            super_index = None
+
+            for route in offspring.vehicle_routes:
+                if len(route) < 3:
+                    continue
+                for segment_length in range(2, len(route) - 1):
+                    for route_index in range(0, len(route)):
+
+                        material = route[route_index: route_index + segment_length]
+                        material.reverse()
+                        route[route_index: route_index + segment_length] = material
+
+                        offspring.updateFitnessVariables(self.problem_spec)
+                        offspring.updateFitness(self.problem_spec)
+                        new_fitness = offspring.fitness
+                        if new_fitness < best_fitness:
+                            best_fitness = new_fitness
+                            super_material = material
+                            super_segment_length = segment_length
+                            super_index = route_index
+                            super_route = route
+                        material.reverse()
+                        route[route_index: route_index + segment_length] = material
+                        offspring.fitness = original_fitness
+            if super_material != None:
+                material = super_route[super_index: super_index + super_segment_length]
+                material.reverse()
+                super_route[super_index: super_index + super_segment_length] = material
+
+                offspring.updateFitnessVariables(self.problem_spec)
+                offspring.updateFitness(self.problem_spec)
+
+        return
+
+
+
+    ######################################################
     # Applies a change to one random vehicle route (inversion, single customer re-routing, swapping)
     def intraMutation(self, offspring):
-        random.seed()
         type = random.randint(1,3)
         if type == 1: # inversion in one vehicle route
             num_vehicles = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
@@ -385,7 +429,6 @@ class GA:
     ######################################################
     # Successively eliminates clones, then bad individuals, until the population size is at minimum
     def survivorSelection(self):
-        start_s_time = timer()
         clones = self.findAllClonesInPopulation()
         while(len(self.population) > self.min_population_size):
             if clones:
@@ -399,8 +442,6 @@ class GA:
                 # Remove individual in whole population with worst fitness
                 max_index = max(range(len(self.population)), key=self.population.__getitem__)
                 self.population.pop(max_index)
-        end_s_time = timer()
-        print("Survivor selection time: %f" % (end_s_time - start_s_time))
 
     ######################################################
     #
@@ -444,6 +485,8 @@ class GA:
         return new_generation
 
 
+    ######################################################
+    #
     def plotHistoryGraph(self, yvals, xvals=None, xtitle='X', ytitle='Y', title='Y = F(X)', label=''):
         xvals = xvals if xvals is not None else list(range(len(yvals)))
         plt.plot(xvals, yvals, label=label)
@@ -466,9 +509,6 @@ class GA:
 
         # Start the evolution process
         for generation in range(1, self.generations + 1):
-            # Update crossover rates
-            #self.updateCrossoverProb(generation)
-
             # Evaluate the fitness of all individuals in the population and compute the average
             population_fitness = []
             for individual in self.population:
@@ -491,6 +531,10 @@ class GA:
             print("Best duration: %f " % self.population[int(best)].duration)
             print("Best fitness score: %f (infeasibility_count: %d)" % (best_fitness, elites[0].infeasibility_count))
             print("Average fitness score: %f\n" % average_fitness)
+
+            # Super mutate event
+            if generation % 100 == 0:
+                self.superMutate(new_population[0])
 
             # Check for early stop based on time limit for computing
             if (timer() - start_evolution_time)/60 > self.time_limit:
@@ -558,13 +602,10 @@ class GA:
         bestGenotype.visualizeGenes(self.problem_spec)
 
 
-
-
 if __name__ == '__main__':
-    ga = GA(fileName='p01', population_size=30, generation_size=100, generations=50000,
-            elite_ratio=0.3, tournament_ratio=0.19, div_bound=100, time_limit = 5,
-            crossover_prob=0.7, intra_mutation_prob=0.3, inter_mutation_prob=0.3,
-            crossover_decay = 6000, inter_mutation_attempt_rate=10)
+    ga = GA(fileName='p23', population_size=25, generation_size=35, generations=50000,
+            elite_ratio=0.4, tournament_ratio=0.10, div_bound=400, time_limit = 10,
+            crossover_prob=0.6, intra_mutation_prob=0.2, inter_mutation_prob=0.25,
+            inter_mutation_attempt_rate=10)
 
     ga.evolutionCycle()
-
