@@ -1,10 +1,9 @@
 import random
-import math
 import itertools
 import numpy as np
 import matplotlib.pyplot as plt
 
-depot1_colors = ['crimson', 'coral', 'red', 'tomato', 'brown', 'darkred', 'deeppink']
+depot1_colors = ['crimson', 'brown', 'coral', 'red', 'deeppink', 'tomato', 'darkred']
 depot2_colors = ['grey', 'blue', 'darkblue', 'teal', 'black', 'royalblue', 'indigo']
 depot3_colors = ['green', 'darkgreen', 'seagreen', 'lime', 'yellowgreen', 'olivedrab', 'darkslategrey']
 depot4_colors = ['chartreuse', 'gold', 'yellow', 'olive', 'darkorange', 'orange', 'yellowgreen']
@@ -66,11 +65,6 @@ class Genotype:
 
     ######################################################
     #
-    def randomInit(self):
-        pass
-
-    ######################################################
-    #
     def assignCustomers(self, problem_spec):
         random.seed()
         range_num_customers = list(range(0, len(problem_spec.customers)))
@@ -100,8 +94,6 @@ class Genotype:
                 self.vehicle_routes[random_vehicle_number].append(customer)
             customers_placed += 1
 
-
-
     ######################################################
     # Calculate the amount of overload of a solution.
     # - Duration longer than max allowed duration of a route
@@ -112,12 +104,10 @@ class Genotype:
         self.duration = 0
         self.infeasibility_count = 0
         for vehicle_nr, route in enumerate(self.vehicle_routes):
-
             depot_num = problem_spec.vehicle_to_depot_dict[vehicle_nr]
 
             max_duration = problem_spec.depots[depot_num].D
             max_load = problem_spec.depots[depot_num].Q
-
             route_duration = self.routeDuration(route, vehicle_nr, problem_spec)
             route_demand = self.routeDemand(route)
 
@@ -207,11 +197,6 @@ class Genotype:
                 vehicle_num_from_depot += 1
             prev_depot_nr = depot_nr
 
-    ###########################################
-    # Get depot number of the specified vehicle
-    def getDepotNumber(self, vehicle_nr, problem_spec):
-        return int(math.floor(vehicle_nr / problem_spec.max_vehicles_per_depot))
-
     ######################################################
     #
     def updateFitness(self, problem_spec):
@@ -228,6 +213,7 @@ class Genotype:
             customer_index = customer.i - 1
             # Find distance between the current customer and the previous
             duration += problem_spec.cost_matrix[prev_customer_index, customer_index]
+            duration += customer.d
             prev_customer_index = customer_index
         # Remember to add the distance from last customer to depot
         duration += problem_spec.cost_matrix[prev_customer_index, depot_nr + problem_spec.num_customers]

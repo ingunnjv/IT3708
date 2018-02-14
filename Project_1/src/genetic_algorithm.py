@@ -3,12 +3,10 @@ from genotype import *
 import random
 import math
 from timeit import default_timer as timer
-from operator import itemgetter, attrgetter
+from operator import itemgetter
 import copy
 import matplotlib.pyplot as plt
 import numpy as np
-
-
 
 
 class GA:
@@ -29,7 +27,7 @@ class GA:
         self.crossover_prob = crossover_prob
         self.intra_mutation_prob = intra_mutation_prob
         self.inter_mutation_prob = inter_mutation_prob
-        self.inter_muation_attempt_rate = inter_mutation_attempt_rate
+        self.inter_mutation_attempt_rate = inter_mutation_attempt_rate
 
         # Data storage
         self.population = []
@@ -143,24 +141,6 @@ class GA:
                     material.reverse()
                     vehicle_route[min(cutpoints): max(cutpoints) + 1] = material
         if type == 2: # single customer re-route from one route to another within the entire chromosome
-            #num_vehicles = self.problem_spec.max_vehicles_per_depot * self.problem_spec.num_depots
-            #random_vehicle_route = None
-            # Acquire a non-empty vehicle route
-            #while not random_vehicle_route:
-            #    random_vehicle_route_nr = random.randint(0, num_vehicles - 1)
-            #    random_vehicle_route = offspring.vehicle_routes[random_vehicle_route_nr]
-            #random_customer_nr = random.randint(0, len(random_vehicle_route) - 1)
-            #customer = random_vehicle_route[random_customer_nr]
-            #random_vehicle_route.pop(random_customer_nr)
-
-            # Find the best feasible location and insert it into the route
-            #cost = []
-            #for depot_nr in range(self.problem_spec.num_depots):
-            #    cost += self.insertionCost(customer, offspring, depot_nr)
-            #cost = sorted(cost, key=itemgetter(1))
-
-            #self.insertCustomerInRoute(customer, offspring, cost, 1)
-
             routes_range = list(range(0, len(offspring.vehicle_routes)))
             # Acquire a random, non-empty vehicle route
             while routes_range:
@@ -216,7 +196,6 @@ class GA:
     # Applies a swapping of two random customers within the entire chromosome
     def interMutation(self, offspring, problem_spec):
         routes_range = list(range(0, len(offspring.vehicle_routes)))
-
         customers_nrs_to_swap = []
         routes = []
         # Acquire a random, non-empty vehicle route
@@ -263,11 +242,6 @@ class GA:
 
         offspring.updateFitnessVariables(self.problem_spec)
         offspring.updateFitness(self.problem_spec)
-
-        #temp_customer = routes[0][customers_nrs_to_swap[0]]
-        #routes[0][customers_nrs_to_swap[0]] = routes[1][customers_nrs_to_swap[1]]
-        #routes[1][customers_nrs_to_swap[1]] = temp_customer
-
 
     #####################################################
     # Acquire a random customer (index) in the route which exists in the swappable customers list and is swappable with
@@ -416,7 +390,6 @@ class GA:
                 insertion_location = insertion_cost[random.randint(0, len(insertion_cost) - 1)][0]
         # Choose first entry in list regardless of feasibility
         else:
-            #random_list_entry = random.randint(0, len(insertion_cost) - 1)
             insertion_location = insertion_cost[0][0]
 
         # Insert the new customer in the chosen route and position in the individual
@@ -448,7 +421,7 @@ class GA:
         fitnesses = []
         for i in tournament_population:
             fitnesses.append(i.fitness)
-        sorted_tournament_population = [x for _, x in sorted(zip(fitnesses, tournament_population))]  # sorts population in descending order based on fitnesses
+        sorted_tournament_population = [x for _, x in sorted(zip(fitnesses, tournament_population))]  # sorts population in descending order based on fitness
 
         return sorted_tournament_population[0:2]
 
@@ -485,9 +458,7 @@ class GA:
                         clones.append([individual1.fitness, i])
                         clone_indices.append(i)
                         break
-
         return clones
-
 
     ######################################################
     # Eliminates all but the 1/3 best individuals, and creates new ones as in the initialization phase
@@ -606,10 +577,10 @@ class GA:
                     for offspring in offsprings:
                         # Roll dice on what event shall happen (inter-mutation, intra-mutation or no mutation)
                         mutation_event = random.random()
-                        if mutation_event < self.inter_mutation_prob and generation % self.inter_muation_attempt_rate == 0:
+                        if mutation_event < self.inter_mutation_prob and generation % self.inter_mutation_attempt_rate == 0:
                             self.interMutation(offspring, self.problem_spec)
                         elif self.inter_mutation_prob < mutation_event and mutation_event < self.inter_mutation_prob + self.intra_mutation_prob\
-                                and generation % self.inter_muation_attempt_rate != 0:
+                                and generation % self.inter_mutation_attempt_rate != 0:
                             self.intraMutation(offspring)
                         new_population += [offspring]
 
@@ -628,8 +599,8 @@ class GA:
 
 
 if __name__ == '__main__':
-    ga = GA(fileName='p01', population_size=25, generation_size=35, generations=50000,
-            elite_ratio=0.4, tournament_ratio=0.10, div_bound=400, time_limit = 10,
+    ga = GA(fileName='p23', population_size=25, generation_size=50, generations=50000,
+            elite_ratio=0.4, tournament_ratio=0.10, div_bound=200, time_limit = 20,
             crossover_prob=0.6, intra_mutation_prob=0.2, inter_mutation_prob=0.25,
             inter_mutation_attempt_rate=10)
 
