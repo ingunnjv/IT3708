@@ -1,10 +1,8 @@
 import random
-import _pickle as cPickle
 import math
 import itertools
 import numpy as np
 import matplotlib.pyplot as plt
-from operator import attrgetter
 
 depot1_colors = ['crimson', 'coral', 'red', 'tomato', 'brown', 'darkred', 'deeppink']
 depot2_colors = ['grey', 'blue', 'darkblue', 'teal', 'black', 'royalblue', 'indigo']
@@ -166,7 +164,7 @@ class Genotype:
         ax.grid(which='minor', alpha=0.2)
         ax.grid(which='major', alpha=0.5)
 
-        background = fig.canvas.copy_from_bbox(ax.bbox)
+        #background = fig.canvas.copy_from_bbox(ax.bbox)
         prev_depot_nr = -1
         for vehicle_nr, route in enumerate(self.vehicle_routes):
             route_x_coords = np.zeros(len(route) + 2)
@@ -197,7 +195,7 @@ class Genotype:
         print('Percent within the optimal solution: %.2f%%\n' % (percent_from_optimal - 100))
         print(self.duration)
         for vehicle_nr, route  in enumerate(self.vehicle_routes):
-            depot_nr = problem_spec.vehicle_to_depot_dict[vehicle_nr]
+            depot_nr = problem_spec.vehicle_to_depot_dict[vehicle_nr] + 1
             if depot_nr != prev_depot_nr:
                 vehicle_num_from_depot = 1
             if route:
@@ -217,7 +215,7 @@ class Genotype:
     ######################################################
     #
     def updateFitness(self, problem_spec):
-        self.fitness = self.duration + self.duration_ol + self.demand_ol + problem_spec.max_cost*self.infeasibility_count
+        self.fitness = self.duration + self.duration_ol + self.demand_ol + problem_spec.max_cost*self.infeasibility_count*2
 
     ######################################################
     # Finds the duration of a single route
