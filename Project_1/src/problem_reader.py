@@ -1,6 +1,5 @@
 import numpy as np
 import math
-import itertools
 
 class ProblemSpec:
     def __init__(self, fileName):
@@ -114,6 +113,3 @@ class Customer:
         return self.i != other.i
 
 
-
-#if __name__ == "__main__":
-#    pr = problemSpec('p23')

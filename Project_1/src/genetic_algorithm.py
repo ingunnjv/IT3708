@@ -26,7 +26,6 @@ class GA:
         self.elite_ratio = elite_ratio
         self.tournament_ratio = tournament_ratio
         self.div_bound = div_bound
-        self.crossover_init_prob = crossover_prob
         self.crossover_prob = crossover_prob
         self.intra_mutation_prob = intra_mutation_prob
         self.inter_mutation_prob = inter_mutation_prob
@@ -48,17 +47,12 @@ class GA:
             self.population.append(genotype)
 
     ######################################################
-    # Periodically decays the crossover prob
-    def updateCrossoverProb(self, generation):
-        self.crossover_prob = self.crossover_init_prob*math.exp(-(generation/self.crossover_decay))
-
-
-    ######################################################
-    # Periodically decays the crossover prob
+    # Brute force mutates the best invidiual and applies the best mutation it found
     def superMutate(self, offspring):
-        type = random.randint(1, 1)
-        if type == 1:
+        type = random.randint(1, 2)
+        if type == 1: # inversions
             original_fitness = offspring.fitness
+            original_duration = offspring.duration
             best_fitness = original_fitness
             super_material = None
             super_segment_length = None
@@ -86,7 +80,8 @@ class GA:
                             super_route = route
                         material.reverse()
                         route[route_index: route_index + segment_length] = material
-                        offspring.fitness = original_fitness
+            offspring.fitness = original_fitness
+            offspring.duration = original_duration
             if super_material != None:
                 material = super_route[super_index: super_index + super_segment_length]
                 material.reverse()
@@ -94,9 +89,40 @@ class GA:
 
                 offspring.updateFitnessVariables(self.problem_spec)
                 offspring.updateFitness(self.problem_spec)
+        if type == 2: # swaps
+            super_customers_index = None
+            super_routes = None
+            original_fitness = offspring.fitness
+            original_duration = offspring.duration
+            best_fitness = original_fitness
+            for i1 in range(0, len(offspring.vehicle_routes)):
+                route_1 = offspring.vehicle_routes[i1]
+                for j1 in range(0, len(route_1) - 1):
+                    customer_1 = route_1[j1]
+                    for i2 in range(i1, len(offspring.vehicle_routes)):
+                        route_2 = offspring.vehicle_routes[i2]
+                        for j2 in range(j1 + 1, len(route_2)):
+                            customer_2 = route_2[j2]
+                            route_1[j1] = customer_2
+                            route_2[j2] = customer_1
+                            offspring.updateFitnessVariables(self.problem_spec)
+                            offspring.updateFitness(self.problem_spec)
+                            new_fitness = offspring.fitness
+                            if new_fitness < best_fitness:
+                                best_fitness = new_fitness
+                                super_routes = [route_1, route_2]
+                                super_customers_index = [j1, j2]
+                            route_1[j1] = customer_1
+                            route_2[j2] = customer_2
+
+            offspring.fitness = original_fitness
+            offspring.duration = original_duration
+            if super_routes != None:
+                temp_customer = super_routes[0][super_customers_index[0]]
+                super_routes[0][super_customers_index[0]] = super_routes[1][super_customers_index[1]]
+                super_routes[1][super_customers_index[1]] = temp_customer
 
         return
-
 
 
     ######################################################
@@ -512,8 +538,7 @@ class GA:
                 self.superMutate(new_population[0])
 
             # Check for early stop based on time limit for computing
-            if (timer() - start_evolution_time)/60 > self.time_limit:
-                break
+            if (timer() - start_evolution_time)/60 > self.time_limit: break
             # Check for early stop based on solution quality
             for index, percent in enumerate(self.early_stopping_percents):
                 if elites[0].checkForSatisfyingSolution(self.problem_spec, percent):
@@ -578,7 +603,7 @@ class GA:
 
 
 if __name__ == '__main__':
-    ga = GA(fileName='p23', population_size=25, generation_size=35, generations=50000,
+    ga = GA(fileName='p01', population_size=25, generation_size=35, generations=50000,
             elite_ratio=0.4, tournament_ratio=0.10, div_bound=400, time_limit = 10,
             crossover_prob=0.6, intra_mutation_prob=0.2, inter_mutation_prob=0.25,
             inter_mutation_attempt_rate=10)
