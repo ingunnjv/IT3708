@@ -200,7 +200,7 @@ class Genotype:
     ######################################################
     #
     def updateFitness(self, problem_spec):
-        self.fitness = self.duration + self.duration_ol + self.demand_ol + problem_spec.max_cost*self.infeasibility_count*2
+        self.fitness = self.duration + self.duration_ol + self.demand_ol + 2*problem_spec.max_cost*(self.infeasibility_count)
 
     ######################################################
     # Finds the duration of a single route

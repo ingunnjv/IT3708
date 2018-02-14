@@ -113,12 +113,16 @@ class GA:
                             route_1[j1] = customer_1
                             route_2[j2] = customer_2
 
-            offspring.fitness = original_fitness
-            offspring.duration = original_duration
+
             if super_routes != None:
                 temp_customer = super_routes[0][super_customers_index[0]]
                 super_routes[0][super_customers_index[0]] = super_routes[1][super_customers_index[1]]
                 super_routes[1][super_customers_index[1]] = temp_customer
+                offspring.updateFitnessVariables(self.problem_spec)
+                offspring.updateFitness(self.problem_spec)
+            else:
+                offspring.fitness = original_fitness
+                offspring.duration = original_duration
 
         return
 
@@ -468,7 +472,7 @@ class GA:
 
         # Save the best individuals
         #diversification_num = int(math.ceil(len(population) / 3))
-        diversification_num = 1
+        diversification_num = 0
         best_individuals = sorted_population[:diversification_num]
         new_generation = copy.deepcopy(best_individuals)
 
@@ -526,7 +530,7 @@ class GA:
             # Print generation data to terminal
             print("Generation: %d" % generation)
             print("Best duration: %f " % self.population[int(best)].duration)
-            print("Best fitness score: %f (infeasibility_count: %d)" % (best_fitness, elites[0].infeasibility_count))
+            print("Best fitness score: %f (Infeasibility penalty factor: %.2f)" % (best_fitness, elites[0].infeasibility_count))
             print("Average fitness score: %f\n" % average_fitness)
 
             # Super mutate event
