@@ -101,3 +101,7 @@ ENV/
 .mypy_cache/
 
 \.idea/workspace\.xml
+
+Project_2/cmake-build-debug/
+
+Project_2/\.idea/

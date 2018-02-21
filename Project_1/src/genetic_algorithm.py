@@ -14,7 +14,7 @@ class GA:
                  tournament_ratio, div_bound, crossover_prob, intra_mutation_prob, inter_mutation_prob,
                  inter_mutation_attempt_rate, time_limit):
         self.problem_spec = pr.ProblemSpec(fileName)
-        self.early_stopping_percents = [30, 20, 10, 5]
+        self.early_stopping_percents = [35, 25, 15, 10]
         self.time_limit = time_limit
 
         # Parameters
@@ -472,7 +472,7 @@ class GA:
 
         # Save the best individuals
         #diversification_num = int(math.ceil(len(population) / 3))
-        diversification_num = 0
+        diversification_num = 1
         best_individuals = sorted_population[:diversification_num]
         new_generation = copy.deepcopy(best_individuals)
 
@@ -603,8 +603,8 @@ class GA:
 
 
 if __name__ == '__main__':
-    ga = GA(fileName='p23', population_size=25, generation_size=50, generations=50000,
-            elite_ratio=0.4, tournament_ratio=0.10, div_bound=200, time_limit = 20,
+    ga = GA(fileName='3', population_size=25, generation_size=40, generations=100000,
+            elite_ratio=0.4, tournament_ratio=0.10, div_bound=300, time_limit = 18,
             crossover_prob=0.6, intra_mutation_prob=0.2, inter_mutation_prob=0.25,
             inter_mutation_attempt_rate=10)
 
