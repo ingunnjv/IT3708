@@ -3,23 +3,28 @@
 #include <vector>
 #include <Eigen/Dense>
 #include "image_loader.h"
-
-#include <opencv2/core.hpp>
-#include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
+#include <opencv2/core/eigen.hpp>
+
+
 using namespace std;
 using Eigen::MatrixXd;
 
 int main() {
-    cout << "Hello, World!" << endl;
-
-    cv::Mat image;
-    image = cv::imread("../Test Images/1/s6.jpg", cv::IMREAD_COLOR);
-    cv::imshow("Displayed image", image);
-    cv::waitKey(0);
-
     ImageLoader test = ImageLoader();
     cout << test.B << endl;
+    test.LoadImagesFromFolder("353013");
+    test.ExtractRGBChannels();
+
+
+    MatrixXd Red;
+    cv::cv2eigen(test.R_image, Red); // convert from cv::Mat to Eigen::MatrixXd
+    cout << "Rows of eigen image = " << Red.rows() << endl;
+    cout << "Cols of eigen image = " << Red.cols() << endl;
+
+    cv::imshow("Red", test.R_image);
+    cv::waitKey(0);
+
 
     MatrixXd m(2,2);
     m(0,0) = 3;
