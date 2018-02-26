@@ -25,18 +25,14 @@ void ImageLoader::LoadImagesFromFolder(string imagefolder)
         cv::String path(pathname);
         vector<cv::String> fn;
         cv::glob(path,fn,true); // recurse
-        for (size_t k=0; k<fn.size(); ++k)
-        {
+        for (size_t k=0; k<fn.size(); ++k){
             cv::Mat im = cv::imread(fn[k], cv::IMREAD_COLOR);
             if (im.empty()) continue; //only proceed if successful
 
-
             // you probably want to do some preprocessing
-            if (i == 0){ GT_images.push_back(im); }
-            else if (i == 1){ Segment_images.push_back(im); }
-            else {
-                Test_image = im;
-            }
+            if (i == 0){ /*GT_images.push_back(im);*/ }
+            else if (i == 1){ /*Segment_images.push_back(im);*/ }
+            else { Test_image = im; }
         }
     }
 }

@@ -13,8 +13,8 @@ class ImageLoader
 {
 private:
     double A;
-    std::vector<cv::Mat> GT_images;
-    std::vector<cv::Mat> Segment_images;
+    //std::vector<cv::Mat> GT_images;
+    //std::vector<cv::Mat> Segment_images;
     cv::Mat Test_image;
 
 
