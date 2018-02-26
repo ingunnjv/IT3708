@@ -18,8 +18,8 @@ Genotype::Genotype()
 
 Genotype::Genotype(MatrixXi red, MatrixXi green, MatrixXi blue)
 {
-    num_rows = int(red.rows());
-    num_cols = int(red.cols());
+    num_rows = uint16_t(red.rows());
+    num_cols = uint16_t(red.cols());
     num_pixels = num_rows * num_cols;
     chromosome.resize(num_pixels);
     red_channel = red;

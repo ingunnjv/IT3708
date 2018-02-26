@@ -17,21 +17,23 @@ int main() {
     test.ExtractRGBChannels();
 
 
-    Eigen::MatrixXi Red;
-    cv::cv2eigen(test.r_image, Red);
-    Eigen::MatrixXi Green;
-    cv::cv2eigen(test.g_image, Green);
-    Eigen::MatrixXi Blue;
-    cv::cv2eigen(test.b_image, Blue);
-    Genotype g = Genotype(Red, Green, Blue);
+    Eigen::MatrixXi red;
+    cv::cv2eigen(test.r_image, red);
+    Eigen::MatrixXi green;
+    cv::cv2eigen(test.g_image, green);
+    Eigen::MatrixXi blue;
+    cv::cv2eigen(test.b_image, blue);
+    Genotype g = Genotype(red, green, blue);
+    cout << "START\n";
     g.primMST();
+    cout << "END\n";
 
 
-    cout << "Rows of eigen image = " << Red.rows() << endl;
-    cout << "Cols of eigen image = " << Red.cols() << endl;
+    cout << "Rows of eigen image = " << red.rows() << endl;
+    cout << "Cols of eigen image = " << red.cols() << endl;
 
-    cv::imshow("Red", test.r_image);
-    cv::waitKey(0);
+    //cv::imshow("Red", test.r_image);
+    //cv::waitKey(0);
 
 
     MatrixXd m(2,2);

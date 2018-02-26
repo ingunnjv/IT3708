@@ -9,16 +9,16 @@
 #include <Eigen/Dense>
 
 struct pixel_t {
-    int row;
-    int col;
+    uint16_t row;
+    uint16_t col;
 };
 
 class Genotype {
 private:
     enum nodeConnections {left, right, up, down, none};
-    int num_pixels;
-    int num_rows;
-    int num_cols;
+    uint16_t num_pixels;
+    uint16_t num_rows;
+    uint16_t num_cols;
     Eigen::MatrixXi red_channel;
     Eigen::MatrixXi green_channel;
     Eigen::MatrixXi blue_channel;

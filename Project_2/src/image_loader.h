@@ -16,7 +16,7 @@ class ImageLoader
 private:
     std::vector<cv::Mat> gt_images;
     std::vector<cv::Mat> segment_images;
-    cv::Mat Test_image;
+    cv::Mat test_image;
 
 public:
     cv::Mat b_image;

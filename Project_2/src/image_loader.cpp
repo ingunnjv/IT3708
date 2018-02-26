@@ -33,7 +33,7 @@ void ImageLoader::LoadImagesFromFolder(string imagefolder)
             // you probably want to do some preprocessing
             if (i == 0){ gt_images.push_back(im); }
             else if (i == 1){ segment_images.push_back(im); }
-            else {Test_image = im;}
+            else {test_image = im;}
         }
     }
 }
@@ -41,7 +41,7 @@ void ImageLoader::LoadImagesFromFolder(string imagefolder)
 void ImageLoader::ExtractRGBChannels()
 {
     cv::Mat planes[3];
-    cv::split(Test_image, planes);  // BGR: planes[2] is the red channel
+    cv::split(test_image, planes);  // BGR: planes[2] is the red channel
     b_image = planes[0];
     g_image = planes[1];
     r_image = planes[2];
