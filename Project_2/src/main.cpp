@@ -18,17 +18,15 @@ int main() {
 
 
     Eigen::MatrixXi Red;
-    cv::cv2eigen(test.R_image, Red);
+    cv::cv2eigen(test.r_image, Red);
     Eigen::MatrixXi Green;
-    cv::cv2eigen(test.G_image, Green);
+    cv::cv2eigen(test.g_image, Green);
     Eigen::MatrixXi Blue;
-    cv::cv2eigen(test.B_image, Blue);
+    cv::cv2eigen(test.b_image, Blue);
     Genotype g = Genotype(Red, Green, Blue);
     g.primMST();
 
 
-    //MatrixXd Red;
-    //cv::cv2eigen(test.R_image, Red); // convert from cv::Mat to Eigen::MatrixXd
     cout << "Rows of eigen image = " << Red.rows() << endl;
     cout << "Cols of eigen image = " << Red.cols() << endl;
 

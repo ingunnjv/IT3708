@@ -17,15 +17,15 @@ private:
     int num_pixels;
     int num_rows;
     int num_cols;
-    Eigen::MatrixXd red_channel;
-    Eigen::MatrixXd green_channel;
-    Eigen::MatrixXd blue_channel;
+    Eigen::MatrixXi red_channel;
+    Eigen::MatrixXi green_channel;
+    Eigen::MatrixXi blue_channel;
     Eigen::ArrayXi chromosome;
 
     int minKey(double key[], bool mstSet[]);
 public:
     Genotype();
-    Genotype(Eigen::MatrixXd red, Eigen::MatrixXd green, Eigen::MatrixXd blue);
+    Genotype(Eigen::MatrixXi red, Eigen::MatrixXi green, Eigen::MatrixXi blue);
     double rgbDistance(pixel_t x, pixel_t y);
     void primMST();
     int printMST(int parent[]);
