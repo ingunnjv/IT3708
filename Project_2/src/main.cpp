@@ -3,6 +3,7 @@
 #include <vector>
 #include <Eigen/Dense>
 #include "image_loader.h"
+#include "Genotype.h"
 #include <opencv2/highgui.hpp>
 #include <opencv2/core/eigen.hpp>
 
@@ -16,8 +17,18 @@ int main() {
     test.ExtractRGBChannels();
 
 
-    MatrixXd Red;
-    cv::cv2eigen(test.r_image, Red); // convert from cv::Mat to Eigen::MatrixXd
+    Eigen::MatrixXi Red;
+    cv::cv2eigen(test.R_image, Red);
+    Eigen::MatrixXi Green;
+    cv::cv2eigen(test.G_image, Green);
+    Eigen::MatrixXi Blue;
+    cv::cv2eigen(test.B_image, Blue);
+    Genotype g = Genotype(Red, Green, Blue);
+    g.primMST();
+
+
+    //MatrixXd Red;
+    //cv::cv2eigen(test.R_image, Red); // convert from cv::Mat to Eigen::MatrixXd
     cout << "Rows of eigen image = " << Red.rows() << endl;
     cout << "Cols of eigen image = " << Red.cols() << endl;
 
