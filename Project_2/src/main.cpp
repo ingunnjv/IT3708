@@ -27,8 +27,6 @@ int main() {
     g.primMST();
 
 
-    //MatrixXd Red;
-    //cv::cv2eigen(test.R_image, Red); // convert from cv::Mat to Eigen::MatrixXd
     cout << "Rows of eigen image = " << Red.rows() << endl;
     cout << "Cols of eigen image = " << Red.cols() << endl;
 

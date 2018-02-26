@@ -67,7 +67,7 @@ void Genotype::primMST() {
         mstSet[u] = true;
 
         pixel_t x, y;
-        x.row = u / num_rows;
+        x.row = u / num_cols;
         x.col = u % num_cols;
         int neighbors[4] = {false, false, false, false};
         int neighbor_pos[4];
@@ -97,12 +97,8 @@ void Genotype::primMST() {
             // mstSet[v] is false for vertices not yet included in MST
             // update the key only if rgbDistance(u, v) is smaller than key(v)
             if (neighbors[i] && !mstSet[v]){
-                y.row = v / num_rows; // integer division
+                y.row = v / num_cols; // integer division
                 y.col = v % num_cols;
-                if (x.row >= red_channel.rows() || x.col >= red_channel.cols() || y.row >= red_channel.rows() || y.col >= red_channel.cols())
-                {
-                    int no = 1;
-                }
                 if (rgbDistance(x, y) < key[v]) {
                     parent[v] = u;
                     key[v] = rgbDistance(x, y);
