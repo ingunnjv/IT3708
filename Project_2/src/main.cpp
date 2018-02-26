@@ -12,17 +12,16 @@ using Eigen::MatrixXd;
 
 int main() {
     ImageLoader test = ImageLoader();
-    cout << test.B << endl;
     test.LoadImagesFromFolder("353013");
     test.ExtractRGBChannels();
 
 
     MatrixXd Red;
-    cv::cv2eigen(test.R_image, Red); // convert from cv::Mat to Eigen::MatrixXd
+    cv::cv2eigen(test.r_image, Red); // convert from cv::Mat to Eigen::MatrixXd
     cout << "Rows of eigen image = " << Red.rows() << endl;
     cout << "Cols of eigen image = " << Red.cols() << endl;
 
-    cv::imshow("Red", test.R_image);
+    cv::imshow("Red", test.r_image);
     cv::waitKey(0);
 
 

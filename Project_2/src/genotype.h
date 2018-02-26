@@ -17,15 +17,15 @@ private:
     int num_pixels;
     int num_rows;
     int num_cols;
-    Eigen::MatrixXd adjacencyMatrix;
-    Eigen::MatrixXd redChannel;
-    Eigen::MatrixXd greenChannel;
-    Eigen::MatrixXd blueChannel;
+    Eigen::MatrixXd adjacency_matrix;
+    Eigen::MatrixXd red_channel;
+    Eigen::MatrixXd green_channel;
+    Eigen::MatrixXd blue_channel;
     Eigen::ArrayXi chromosome;
 public:
     Genotype();
     Genotype(Eigen::MatrixXd red, Eigen::MatrixXd green, Eigen::MatrixXd blue);
-    double RGB_distance(pixel_t x, pixel_t y);
+    double rgbDistance(pixel_t x, pixel_t y);
     void constructAdjacencyMatrix();
 };
 

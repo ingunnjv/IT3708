@@ -2,14 +2,14 @@
 // Created by Ingunn on 23.02.2018.
 //
 
-#include "Genotype.h"
+#include "genotype.h"
 using namespace std;
 using Eigen::MatrixXd;
 
 Genotype::Genotype()
 {
     num_pixels = 10;
-    adjacencyMatrix = MatrixXd::Zero(num_pixels, num_pixels);
+    adjacency_matrix = MatrixXd::Zero(num_pixels, num_pixels);
     chromosome.resize(num_pixels);
 }
 
@@ -18,18 +18,18 @@ Genotype::Genotype(MatrixXd red, MatrixXd green, MatrixXd blue)
     num_rows = red.rows();
     num_cols = red.cols();
     num_pixels = num_rows * num_cols;
-    adjacencyMatrix = MatrixXd::Zero(num_pixels, num_pixels);
+    adjacency_matrix = MatrixXd::Zero(num_pixels, num_pixels);
     chromosome.resize(num_pixels);
-    redChannel = red;
-    greenChannel = green;
-    blueChannel = blue;
+    red_channel = red;
+    green_channel = green;
+    blue_channel = blue;
 }
 
-double Genotype::RGB_distance(pixel_t x, pixel_t y)
+double Genotype::rgbDistance(pixel_t x, pixel_t y)
 {
-    double dist = sqrt( pow(redChannel(x.row, x.col) - redChannel(y.row, y.col), 2)
-                        + pow(greenChannel(x.row, x.col) - greenChannel(y.row, y.col), 2)
-                        + pow(blueChannel(x.row, x.col) - blueChannel(y.row, y.col), 2) );
+    double dist = sqrt( pow(red_channel(x.row, x.col) - red_channel(y.row, y.col), 2)
+                        + pow(green_channel(x.row, x.col) - green_channel(y.row, y.col), 2)
+                        + pow(blue_channel(x.row, x.col) - blue_channel(y.row, y.col), 2) );
     return dist;
 }
 
@@ -43,22 +43,22 @@ void Genotype::constructAdjacencyMatrix()
         if (i % num_cols != 0){
             y.row = (i - 1) / num_rows;
             y.col = (i - 1) % num_cols;
-            adjacencyMatrix(i, i - 1) = RGB_distance(x, y);
+            adjacency_matrix(i, i - 1) = rgbDistance(x, y);
         }
         if ((i + 1) % num_cols != 0){
             y.row = (i + 1) / num_rows;
             y.col = (i + 1) % num_cols;
-            adjacencyMatrix(i, i + 1) = RGB_distance(x, y);
+            adjacency_matrix(i, i + 1) = rgbDistance(x, y);
         }
         if (i >= num_cols){
             y.row = (i - num_cols) / num_rows;
             y.col = (i - num_cols) % num_cols;
-            adjacencyMatrix(i, i - num_cols) = RGB_distance(x, y);
+            adjacency_matrix(i, i - num_cols) = rgbDistance(x, y);
         }
         if (i + num_cols < num_pixels){
             y.row = (i + num_cols) / num_rows;
             y.col = (i + num_cols) % num_cols;
-            adjacencyMatrix(i, i + num_cols) = RGB_distance(x, y);
+            adjacency_matrix(i, i + num_cols) = rgbDistance(x, y);
         }
     }
 }

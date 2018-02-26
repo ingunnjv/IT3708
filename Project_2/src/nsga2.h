@@ -2,16 +2,16 @@
 // Created by Ingunn on 23.02.2018.
 //
 
-#ifndef PROJECT_2_NSGA_II_H
-#define PROJECT_2_NSGA_II_H
+#ifndef PROJECT_2_NSGA2_H
+#define PROJECT_2_NSGA2_H
 
-#include "Genotype.h"
+#include "genotype.h"
 #include <vector>
 
 using namespace std;
 
 
-class NSGA_II {
+class Nsga2 {
     vector<Genotype> population;
     void fastNonDominatedSort();
     void crowdingDistanceAssignment();

@@ -2,10 +2,10 @@
 // Created by Ingunn on 23.02.2018.
 //
 
-#include "NSGA_II.h"
+#include "nsga2.h"
 
 
-void NSGA_II::mainLoop()
+void Nsga2::mainLoop()
 {
     // combine parent and offspring population Pt + Qt = Rt
     // fastNonDominatedSort() returns all nondominated fronts of Rt

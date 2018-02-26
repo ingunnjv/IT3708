@@ -12,22 +12,16 @@
 class ImageLoader
 {
 private:
-    double A;
-    std::vector<cv::Mat> GT_images;
-    std::vector<cv::Mat> Segment_images;
+    std::vector<cv::Mat> gt_images;
+    std::vector<cv::Mat> segment_images;
     cv::Mat Test_image;
 
-
-
 public:
-    cv::Mat B_image;
-    cv::Mat G_image;
-    cv::Mat R_image;
+    cv::Mat b_image;
+    cv::Mat g_image;
+    cv::Mat r_image;
     ImageLoader();
     void LoadImagesFromFolder(std::string imagefolder);
     void ExtractRGBChannels();
-    double B;
-
-
 
 };
