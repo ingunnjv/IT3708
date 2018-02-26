@@ -4,6 +4,7 @@
 
 #include "genotype.h"
 #include <random>
+
 using namespace std;
 using Eigen::MatrixXd;
 using Eigen::MatrixXi;
@@ -17,8 +18,8 @@ Genotype::Genotype()
 
 Genotype::Genotype(MatrixXi red, MatrixXi green, MatrixXi blue)
 {
-    num_rows = red.rows();
-    num_cols = red.cols();
+    num_rows = int(red.rows());
+    num_cols = int(red.cols());
     num_pixels = num_rows * num_cols;
     chromosome.resize(num_pixels);
     red_channel = red;
@@ -98,7 +99,7 @@ void Genotype::primMST() {
             if (neighbors[i] && !mstSet[v]){
                 y.row = v / num_rows; // integer division
                 y.col = v % num_cols;
-                if (x.row >= redChannel.rows() || x.col >= redChannel.cols() || y.row >= redChannel.rows() || y.col >= redChannel.cols())
+                if (x.row >= red_channel.rows() || x.col >= red_channel.cols() || y.row >= red_channel.rows() || y.col >= red_channel.cols())
                 {
                     int no = 1;
                 }

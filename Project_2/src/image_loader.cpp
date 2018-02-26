@@ -1,6 +1,7 @@
 //
 // Created by LasseBot on 21-Feb-18.
 //
+
 #include "image_loader.h"
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>

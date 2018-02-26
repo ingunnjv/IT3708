@@ -6,8 +6,10 @@
 #define PROJECT_2_IMAGE_LOADER_H
 
 #endif //PROJECT_2_IMAGE_LOADER_H
+#pragma once
 #include <opencv2/core.hpp>
 #include <vector>
+
 
 class ImageLoader
 {

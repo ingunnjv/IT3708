@@ -5,6 +5,7 @@
 #ifndef PROJECT_2_NSGA2_H
 #define PROJECT_2_NSGA2_H
 
+#pragma once
 #include "genotype.h"
 #include <vector>
 
