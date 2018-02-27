@@ -8,10 +8,7 @@
 #pragma once
 #include <Eigen/Dense>
 
-struct pixel_t {
-    uint16_t row;
-    uint16_t col;
-};
+
 
 class Genotype {
 private:
@@ -19,18 +16,12 @@ private:
     uint16_t num_pixels;
     uint16_t num_rows;
     uint16_t num_cols;
-    Eigen::MatrixXi red_channel;
-    Eigen::MatrixXi green_channel;
-    Eigen::MatrixXi blue_channel;
-    Eigen::ArrayXi chromosome;
+   Eigen::ArrayXi chromosome;
 
-    int minKey(double key[], bool mstSet[]);
 public:
     Genotype();
     Genotype(Eigen::MatrixXi red, Eigen::MatrixXi green, Eigen::MatrixXi blue);
-    double rgbDistance(pixel_t x, pixel_t y);
-    void primMST();
-    int printMST(int parent[]);
+
 };
 
 

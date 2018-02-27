@@ -25,7 +25,7 @@ int main() {
     cv::cv2eigen(test.b_image, blue);
     Genotype g = Genotype(red, green, blue);
     cout << "START\n";
-    g.primMST();
+   //g.primMST();
     cout << "END\n";
 
 
