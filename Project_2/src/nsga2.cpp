@@ -4,8 +4,45 @@
 
 #include "nsga2.h"
 
+/////////////////////////////////////////////////////////
+Nsga2::Nsga2()
+{
+    this->mutation_rate = 0;
+    this->crossover_rate = 0;
+    this->tournament_size = 0;
+    this->generation_limit = 0;
+}
 
-void Nsga2::mainLoop()
+/////////////////////////////////////////////////////////
+Nsga2::Nsga2(double mutation_rate, double crossover_rate, double tournament_size, double time_limit,
+      uint16_t generation_limit)
+{
+    this->mutation_rate = mutation_rate;
+    this->crossover_rate = crossover_rate;
+    this->tournament_size = tournament_size;
+    this->generation_limit = generation_limit;
+}
+
+/////////////////////////////////////////////////////////
+void Nsga2::fastNonDominatedSort()
+{
+
+}
+
+/////////////////////////////////////////////////////////
+void Nsga2::crowdingDistanceAssignment()
+{
+
+}
+
+/////////////////////////////////////////////////////////
+void Nsga2::crowdedComparison()
+{
+
+}
+
+/////////////////////////////////////////////////////////
+void Nsga2::runMainLoop()
 {
     // combine parent and offspring population Pt + Qt = Rt
     // fastNonDominatedSort() returns all nondominated fronts of Rt

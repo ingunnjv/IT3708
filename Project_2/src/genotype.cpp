@@ -3,7 +3,7 @@
 //
 
 #include "genotype.h"
-#include <random>
+
 
 using namespace std;
 using Eigen::MatrixXd;
@@ -12,7 +12,6 @@ using Eigen::MatrixXi;
 Genotype::Genotype()
 {
     num_pixels = 10;
-    //adjacencyMatrix = MatrixXd::Zero(num_pixels, num_pixels);
     chromosome.resize(num_pixels);
 }
 
@@ -61,7 +60,7 @@ void Genotype::primMST() {
     // The MST will have num_pixels vertices
     for (int count = 0; count < num_pixels - 1; count++) {
         // Pick the minimum key vertex from the set of vertices not yet included in MST
-        int u = minKey(key, mstSet);
+        uint32_t u = minKey(key, mstSet);
 
         // Add the picked vertex to the MST Set
         mstSet[u] = true;
@@ -110,13 +109,13 @@ void Genotype::primMST() {
 
 // A utility function to find the vertex with minimum key value, from
 // the set of vertices not yet included in MST
-int Genotype::minKey(double key[], bool mstSet[])
+uint32_t Genotype::minKey(double key[], bool mstSet[])
 {
     // Initialize min value
     double min = INT_MAX;
-    int min_index;
+    uint32_t min_index;
 
-    for (int v = 0; v < num_pixels; v++)
+    for (uint32_t v = 0; v < num_pixels; v++)
         if (! mstSet[v] && key[v] < min)
             min = key[v], min_index = v;
 

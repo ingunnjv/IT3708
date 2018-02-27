@@ -2,13 +2,21 @@
 // Created by LasseBot on 21-Feb-18.
 //
 
+
 #ifndef PROJECT_2_IMAGE_LOADER_H
 #define PROJECT_2_IMAGE_LOADER_H
 
 #endif //PROJECT_2_IMAGE_LOADER_H
+
 #pragma once
-#include <opencv2/core.hpp>
+
+#include <iostream>
 #include <vector>
+#include <Eigen/Dense>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/core.hpp>
+#include <opencv/cxeigen.hpp>
 
 
 class ImageLoader
@@ -19,9 +27,9 @@ private:
     cv::Mat test_image;
 
 public:
-    cv::Mat b_image;
-    cv::Mat g_image;
-    cv::Mat r_image;
+    Eigen::MatrixXi b_channel;
+    Eigen::MatrixXi g_channel;
+    Eigen::MatrixXi r_channel;
     ImageLoader();
     void LoadImagesFromFolder(std::string imagefolder);
     void ExtractRGBChannels();

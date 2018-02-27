@@ -6,6 +6,7 @@
 #define PROJECT_2_GENOTYPE_H
 
 #pragma once
+#include <random>
 #include <Eigen/Dense>
 
 struct pixel_t {
@@ -15,6 +16,7 @@ struct pixel_t {
 
 class Genotype {
 private:
+    // Node connections types for genes
     enum nodeConnections {left, right, up, down, none};
     uint16_t num_pixels;
     uint16_t num_rows;
@@ -24,7 +26,7 @@ private:
     Eigen::MatrixXi blue_channel;
     Eigen::ArrayXi chromosome;
 
-    int minKey(double key[], bool mstSet[]);
+    uint32_t minKey(double key[], bool mstSet[]);
 public:
     Genotype();
     Genotype(Eigen::MatrixXi red, Eigen::MatrixXi green, Eigen::MatrixXi blue);
