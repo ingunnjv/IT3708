@@ -4,12 +4,7 @@
 #pragma once
 #include "utils.h"
 #include "genotype.h"
-#include <vector>
-#include <Eigen/Dense>
-#include <set>
-
 #include "nsga2.h"
-#include "utils.h"
 #include <set>
 #include <iostream>
 
@@ -125,21 +120,21 @@ void Nsga2::runMainLoop()
 
 struct Cmp
 {
-    bool operator ()(const std::pair<uint32_t, double> &a, const std::pair<uint32_t, double> &b) {
+    bool operator ()(const pair<uint32_t, double> &a, const pair<uint32_t, double> &b) {
         return a.second <= b.second;
     }
 };
 /////////////////////////////////////////////////////////
 /// Prim's algorithm
-void Nsga2::primMST(Eigen::MatrixXi &red, Eigen::MatrixXi &green, Eigen::MatrixXi &blue) {
-    uint16_t num_rows = uint16_t(red.rows());
-    uint16_t num_cols = uint16_t(red.cols());
+void Nsga2::primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue) {
+    auto num_rows = uint16_t(red.rows());
+    auto num_cols = uint16_t(red.cols());
     uint32_t num_pixels = num_rows * num_cols;
 
     int parent[num_pixels];   // Array to store constructed MST
     double key[num_pixels];   // Key values used to pick minimum weight edge in cut
     bool mstSet[num_pixels];  // To represent set of vertices not yet included in MST
-    std::set <std::pair <uint32_t, double>, Cmp> vertices_considered;
+    set <pair <uint32_t, double>, Cmp> vertices_considered;
     pixel_t x, y;
 
     // Initialize all keys as INFINITE
@@ -149,7 +144,7 @@ void Nsga2::primMST(Eigen::MatrixXi &red, Eigen::MatrixXi &green, Eigen::MatrixX
     // Always include first vertex in MST.
     key[0] = 0;     // Make key 0 so that this vertex is picked as first vertex
     parent[0] = -1; // First node is always root of MST
-    vertices_considered.insert(std::make_pair(0, key[0]));
+    vertices_considered.insert(make_pair(0, key[0]));
 
     // The MST will have num_pixels vertices
     for (int count = 0; count < num_pixels - 1; count++) {
@@ -203,7 +198,7 @@ void Nsga2::primMST(Eigen::MatrixXi &red, Eigen::MatrixXi &green, Eigen::MatrixX
                     parent[v] = u;
                     key[v] = dist;
                 }
-                vertices_considered.insert(std::make_pair(v, key[v]));
+                vertices_considered.insert(make_pair(v, key[v]));
             }
         }
         //if (!vertices_considered.empty()){ std::cout << "set size: " << vertices_considered.size() << std::endl; }

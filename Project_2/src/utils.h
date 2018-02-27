@@ -13,8 +13,8 @@ struct pixel_t {
     uint16_t col;
 };
 
-double rgbDistance(pixel_t x, pixel_t y, const Eigen::MatrixXi &red_channel, const Eigen::MatrixXi &green_channel,
-                   const Eigen::MatrixXi &blue_channel);
+double rgbDistance(pixel_t x, pixel_t y, const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
+                   const Eigen::MatrixXi &blue);
 void setUserArgs(int argc, char **argv, double &mutation_rate, double &crossover_rate, double &tournament_size,
                  double &time_limit, double &generation_limit, double &population_size);
 

@@ -37,9 +37,9 @@ int main(int argc, char *argv[]) {
     Nsga2 ga = Nsga2(mutation_rate, crossover_Rate, tournament_size, time_limit, generation_limit);
 
 
-    //cout << "START\n";
-    //ga.primMST(image.r_channel, image.g_channel, image.b_channel);
-    //cout << "END\n";
+    cout << "START\n";
+    ga.primMST(image.r_channel, image.g_channel, image.b_channel);
+    cout << "END\n";
 
 
     MatrixXd m(2,2);

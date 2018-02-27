@@ -15,10 +15,9 @@ private:
     std::vector<double> objectiveValues;          // values of the two objectives that are optimized
 
 
-    //uint32_t minKey(double key[], bool mstSet[]);
 public:
     std::vector<Genotype> dominates;                 // set of solutions that p dominates
-    int domination_counter;                  // number of solution that dominates the solution p
+    int domination_counter;                          // number of solution that dominates the solution p
     int rank;
 
     void setRank(int rank);

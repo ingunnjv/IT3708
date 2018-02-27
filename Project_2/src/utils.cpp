@@ -6,12 +6,12 @@
 #include "utils.h"
 
 /////////////////////////////////////////////////////////
-double rgbDistance(pixel_t x, pixel_t y, const Eigen::MatrixXi &red_channel, const Eigen::MatrixXi &green_channel,
-                   const Eigen::MatrixXi &blue_channel)
+double rgbDistance(pixel_t x, pixel_t y, const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
+                   const Eigen::MatrixXi &blue)
 {
-    double dist = sqrt( pow(red_channel(x.row, x.col) - red_channel(y.row, y.col), 2)
-                        + pow(green_channel(x.row, x.col) - green_channel(y.row, y.col), 2)
-                        + pow(blue_channel(x.row, x.col) - blue_channel(y.row, y.col), 2) );
+    double dist = sqrt( pow(red(x.row, x.col) - red(y.row, y.col), 2)
+                        + pow(green(x.row, x.col) - green(y.row, y.col), 2)
+                        + pow(blue(x.row, x.col) - blue(y.row, y.col), 2) );
     return dist;
 }
 
