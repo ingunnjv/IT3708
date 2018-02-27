@@ -16,7 +16,8 @@ private:
     double crossover_rate;
     double tournament_size;
     double time_limit;
-    uint16_t generation_limit;
+    double generation_limit;
+    uint16_t population_size;
 
 
 
@@ -24,11 +25,11 @@ public:
     // Constructors
     Nsga2();
     Nsga2(double mutation_rate, double crossover_rate, double tournament_size, double time_limit,
-          uint16_t generation_limit);
+          double generation_limit);
 
-    void primMST(Eigen::MatrixXi &red, Eigen::MatrixXi &green, Eigen::MatrixXi &blue);
+    void primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
 
-    void fastNonDominatedSort();
+    std::vector< std::vector<Genotype> > fastNonDominatedSort();
     void crowdingDistanceAssignment();
     void crowdedComparison();
     void runMainLoop();

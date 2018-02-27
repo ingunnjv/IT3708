@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 #include <cmath>
 #include <vector>
@@ -5,52 +6,40 @@
 #include "image_loader.h"
 #include "genotype.h"
 #include "nsga2.h"
+#include "utils.h"
 #include <opencv2/highgui.hpp>
 #include <opencv2/core/eigen.hpp>
+#include <set>
+
+#pragma once
+
 
 
 using namespace std;
 using Eigen::MatrixXd;
 
 int main(int argc, char *argv[]) {
-    ImageLoader test = ImageLoader();
-    test.LoadImagesFromFolder("353013");
-    test.ExtractRGBChannels();
+    ImageLoader image = ImageLoader();
+    image.LoadImagesFromFolder("353013");
+    image.ExtractRGBChannels();
 
-    //Genotype g = Genotype(test.r_channel, test.g_channel, test.b_channel);
+    Genotype g = Genotype(image.r_channel, image.g_channel, image.b_channel);
 
     //cout << "Rows of eigen image = " << red.rows() << endl;
     //cout << "Cols of eigen image = " << red.cols() << endl;
 
-    //cv::imshow("Red", test.r_image);
+    //cv::imshow("Red", image.r_image);
     //cv::waitKey(0);
 
-    Nsga2 ga = Nsga2();
-    cout << "START\n";
-    ga.primMST(test.r_channel, test.g_channel, test.b_channel);
-    cout << "END\n";
-//    for (uint8_t i = 0; i < argc; i+=2)
-//    {
-//        double mutation_rate = 0;
-//        double crossover_rate = 0;
-//        double tournament_size = 0;
-//        double time_limit = 0;
-//        double generation_limit = 0;
-        //char* argument = argv[i];
-//        if (argument[0] == 'mutation_rate')
-//        {
-//            //mutation_rate = atof(argv[i+1]);
-//        }
+    double mutation_rate, crossover_Rate, tournament_size, time_limit, generation_limit, population_size;
+    setUserArgs(argc, argv, mutation_rate, crossover_Rate, tournament_size,
+                time_limit, generation_limit, population_size);
+    Nsga2 ga = Nsga2(mutation_rate, crossover_Rate, tournament_size, time_limit, generation_limit);
 
-//        switch (argument)
-/*        {
-            case 'mutation_rate':
-                mutation_rate = argv[i+1];
-                break;
 
-        }*/
-   // }
-    //Nsga2 ga = Nsga2(0.1, 0.6, 4.0, 1, 100);
+    //cout << "START\n";
+    //ga.primMST(image.r_channel, image.g_channel, image.b_channel);
+    //cout << "END\n";
 
 
     MatrixXd m(2,2);

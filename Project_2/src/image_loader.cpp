@@ -2,7 +2,15 @@
 // Created by LasseBot on 21-Feb-18.
 //
 
+#include <iostream>
+#include <vector>
+#include <Eigen/Dense>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv/cxeigen.hpp>
 #include "image_loader.h"
+
+
 
 
 using namespace std;
