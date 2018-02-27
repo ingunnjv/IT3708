@@ -19,19 +19,16 @@ int main(int argc, char *argv[]) {
 
     Genotype g = Genotype(test.r_channel, test.g_channel, test.b_channel);
 
-    cout << "START\n";
-   //g.primMST();
-    cout << "END\n";
-
-
     //cout << "Rows of eigen image = " << red.rows() << endl;
     //cout << "Cols of eigen image = " << red.cols() << endl;
 
     //cv::imshow("Red", test.r_image);
     //cv::waitKey(0);
 
-    Nsga2 Nsga2 = Nsga2(0.1, 0.6, 4.0, 1, 100);
-
+    Nsga2 nsga = Nsga2();
+    cout << "START\n";
+    nsga.primMST(test.r_channel, test.g_channel, test.b_channel);
+    cout << "END\n";
 
     MatrixXd m(2,2);
     m(0,0) = 3;

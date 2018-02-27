@@ -6,7 +6,6 @@
 #define PROJECT_2_UTILS_H
 
 #pragma once
-//#include <cmath>
 #include <Eigen/Dense>
 
 struct pixel_t {

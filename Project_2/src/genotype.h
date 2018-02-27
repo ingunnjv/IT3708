@@ -18,9 +18,9 @@ private:
     uint16_t num_pixels;
     uint16_t num_rows;
     uint16_t num_cols;
-   Eigen::ArrayXi chromosome;
+    Eigen::ArrayXi chromosome;
 
-    uint32_t minKey(double key[], bool mstSet[]);
+    //uint32_t minKey(double key[], bool mstSet[]);
 public:
     Genotype();
     Genotype(Eigen::MatrixXi red, Eigen::MatrixXi green, Eigen::MatrixXi blue);
