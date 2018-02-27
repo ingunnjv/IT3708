@@ -1,9 +1,10 @@
 #include <iostream>
-#include <math.h>
+#include <cmath>
 #include <vector>
 #include <Eigen/Dense>
 #include "image_loader.h"
-#include "Genotype.h"
+#include "genotype.h"
+#include "nsga2.h"
 #include <opencv2/highgui.hpp>
 #include <opencv2/core/eigen.hpp>
 
@@ -11,29 +12,25 @@
 using namespace std;
 using Eigen::MatrixXd;
 
-int main() {
+int main(int argc, char *argv[]) {
     ImageLoader test = ImageLoader();
     test.LoadImagesFromFolder("353013");
     test.ExtractRGBChannels();
 
+    Genotype g = Genotype(test.r_channel, test.g_channel, test.b_channel);
 
-    Eigen::MatrixXi red;
-    cv::cv2eigen(test.r_image, red);
-    Eigen::MatrixXi green;
-    cv::cv2eigen(test.g_image, green);
-    Eigen::MatrixXi blue;
-    cv::cv2eigen(test.b_image, blue);
-    Genotype g = Genotype(red, green, blue);
     cout << "START\n";
    //g.primMST();
     cout << "END\n";
 
 
-    cout << "Rows of eigen image = " << red.rows() << endl;
-    cout << "Cols of eigen image = " << red.cols() << endl;
+    //cout << "Rows of eigen image = " << red.rows() << endl;
+    //cout << "Cols of eigen image = " << red.cols() << endl;
 
     //cv::imshow("Red", test.r_image);
     //cv::waitKey(0);
+
+    Nsga2 Nsga2 = Nsga2(0.1, 0.6, 4.0, 1, 100);
 
 
     MatrixXd m(2,2);

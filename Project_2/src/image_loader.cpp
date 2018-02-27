@@ -3,9 +3,7 @@
 //
 
 #include "image_loader.h"
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/highgui.hpp>
-#include <iostream>
+
 
 using namespace std;
 
@@ -42,7 +40,7 @@ void ImageLoader::ExtractRGBChannels()
 {
     cv::Mat planes[3];
     cv::split(test_image, planes);  // BGR: planes[2] is the red channel
-    b_image = planes[0];
-    g_image = planes[1];
-    r_image = planes[2];
+    cv::cv2eigen(planes[0], b_channel);
+    cv::cv2eigen(planes[1], g_channel);
+    cv::cv2eigen(planes[2], r_channel);
 }
