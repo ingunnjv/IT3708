@@ -11,7 +11,7 @@ INCLUDE_DIRECTORIES(C:/Users/Public/eigen-eigen-5a0156e40feb)
 
 include_directories(${OpenCV_INCLUDE_DIRS})
 
-add_executable(Project_2 src/main.cpp src/image_loader.cpp src/image_loader.h src/genotype.cpp src/genotype.h src/nsga2.cpp src/nsga2.h src/utils.h)
+add_executable(Project_2 src/main.cpp src/image_loader.cpp src/image_loader.h src/genotype.cpp src/genotype.h src/nsga2.cpp src/nsga2.h src/utils.h src/utils.cpp)
 
 # add libs you need
 set(OpenCV_LIBS opencv_core opencv_imgproc opencv_highgui opencv_imgcodecs)

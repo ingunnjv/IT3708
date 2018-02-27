@@ -4,6 +4,10 @@
 
 #include "nsga2.h"
 #include "utils.h"
+#include <set>
+#include <iostream>
+
+
 
 /////////////////////////////////////////////////////////
 Nsga2::Nsga2()
@@ -60,8 +64,17 @@ void Nsga2::runMainLoop()
     // increment the generation counter, t = t + 1
 }
 
-void Nsga2::primMST(const Eigen::MatrixXi red, const Eigen::MatrixXi green, const Eigen::MatrixXi blue) {
-    // Prim's algorithm
+
+
+struct Cmp
+{
+    bool operator ()(const std::pair<uint32_t, double> &a, const std::pair<uint32_t, double> &b) {
+        return a.second <= b.second;
+    }
+};
+/////////////////////////////////////////////////////////
+/// Prim's algorithm
+void Nsga2::primMST(Eigen::MatrixXi &red, Eigen::MatrixXi &green, Eigen::MatrixXi &blue) {
     uint16_t num_rows = uint16_t(red.rows());
     uint16_t num_cols = uint16_t(red.cols());
     uint32_t num_pixels = num_rows * num_cols;
@@ -69,6 +82,8 @@ void Nsga2::primMST(const Eigen::MatrixXi red, const Eigen::MatrixXi green, cons
     int parent[num_pixels];   // Array to store constructed MST
     double key[num_pixels];   // Key values used to pick minimum weight edge in cut
     bool mstSet[num_pixels];  // To represent set of vertices not yet included in MST
+    std::set <std::pair <uint32_t, double>, Cmp> vertices_considered;
+    pixel_t x, y;
 
     // Initialize all keys as INFINITE
     for (int i = 0; i < num_pixels; i++)
@@ -77,16 +92,23 @@ void Nsga2::primMST(const Eigen::MatrixXi red, const Eigen::MatrixXi green, cons
     // Always include first vertex in MST.
     key[0] = 0;     // Make key 0 so that this vertex is picked as first vertex
     parent[0] = -1; // First node is always root of MST
+    vertices_considered.insert(std::make_pair(0, key[0]));
 
     // The MST will have num_pixels vertices
     for (int count = 0; count < num_pixels - 1; count++) {
         // Pick the minimum key vertex from the set of vertices not yet included in MST
-        uint32_t u = minKey(key, mstSet, num_pixels);
+        auto it = vertices_considered.begin();
+        while (mstSet[it->first]){
+            // this pixel has already been added to the tree
+            vertices_considered.erase(it);
+            it = vertices_considered.begin();
+        }
+        uint32_t u = it->first;
+        vertices_considered.erase(it);
 
         // Add the picked vertex to the MST Set
         mstSet[u] = true;
 
-        pixel_t x, y;
         x.row = u / num_cols;
         x.col = u % num_cols;
         bool neighbors[4] = {false, false, false, false};
@@ -109,33 +131,26 @@ void Nsga2::primMST(const Eigen::MatrixXi red, const Eigen::MatrixXi green, cons
         }
 
         // Update key value and parent index of the adjacent vertices of the picked vertex.
-        for (uint8_t i = 0; i < 4; i++){
+        for (int i = 0; i < 4; i++){
             uint32_t v = neighbor_pos[i];
             // calculate rgbDistance(u, v) only for adjacent vertices of u
             // mstSet[v] is false for vertices not yet included in MST
             // update the key only if rgbDistance(u, v) is smaller than key(v)
             if (neighbors[i] && !mstSet[v]){
+
                 y.row = v / num_cols; // integer division
                 y.col = v % num_cols;
-                if (rgbDistance(x, y, red, green, blue) < key[v]) {
+                double dist = rgbDistance(x, y, red, green, blue);
+                if (dist < key[v]) {
                     parent[v] = u;
-                    key[v] = rgbDistance(x, y, red, green, blue);
+                    key[v] = dist;
                 }
+                vertices_considered.insert(std::make_pair(v, key[v]));
             }
         }
+        //if (!vertices_considered.empty()){ std::cout << "set size: " << vertices_considered.size() << std::endl; }
+        delete[] neighbors;
+        delete[] neighbor_pos;
     }
 }
 
-// A utility function to find the vertex with minimum key value, from the set of vertices not yet included in MST
-uint32_t Nsga2::minKey(double key[], bool mstSet[], uint32_t num_pixels)
-{
-    // Initialize min value
-    double min = INT_MAX;
-    uint32_t min_index;
-
-    for (uint32_t v = 0; v < num_pixels; v++)
-        if (! mstSet[v] && key[v] < min)
-            min = key[v], min_index = v;
-
-    return min_index;
-}

@@ -23,8 +23,7 @@ void ImageLoader::LoadImagesFromFolder(string imagefolder)
         cv::String path(pathname);
         vector<cv::String> fn;
         cv::glob(path, fn, true); // recurse
-        for (size_t k=0; k<fn.size(); ++k)
-        {
+        for (size_t k=0; k<fn.size(); ++k){
             cv::Mat im = cv::imread(fn[k], cv::IMREAD_COLOR);
             if (im.empty()) continue; //only proceed if successful
 

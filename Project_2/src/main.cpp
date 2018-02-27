@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
     test.LoadImagesFromFolder("353013");
     test.ExtractRGBChannels();
 
-    Genotype g = Genotype(test.r_channel, test.g_channel, test.b_channel);
+    //Genotype g = Genotype(test.r_channel, test.g_channel, test.b_channel);
 
     //cout << "Rows of eigen image = " << red.rows() << endl;
     //cout << "Cols of eigen image = " << red.cols() << endl;
@@ -25,9 +25,9 @@ int main(int argc, char *argv[]) {
     //cv::imshow("Red", test.r_image);
     //cv::waitKey(0);
 
-    Nsga2 nsga = Nsga2();
+    Nsga2 ga = Nsga2();
     cout << "START\n";
-    nsga.primMST(test.r_channel, test.g_channel, test.b_channel);
+    ga.primMST(test.r_channel, test.g_channel, test.b_channel);
     cout << "END\n";
 //    for (uint8_t i = 0; i < argc; i+=2)
 //    {
@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
 
         }*/
    // }
-    Nsga2 ga = Nsga2(0.1, 0.6, 4.0, 1, 100);
+    //Nsga2 ga = Nsga2(0.1, 0.6, 4.0, 1, 100);
 
 
     MatrixXd m(2,2);
