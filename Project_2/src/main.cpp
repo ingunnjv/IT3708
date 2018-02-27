@@ -30,7 +30,28 @@ int main(int argc, char *argv[]) {
     //cv::imshow("Red", test.r_image);
     //cv::waitKey(0);
 
-    Nsga2 Nsga2 = Nsga2(0.1, 0.6, 4.0, 1, 100);
+//    for (uint8_t i = 0; i < argc; i+=2)
+//    {
+//        double mutation_rate = 0;
+//        double crossover_rate = 0;
+//        double tournament_size = 0;
+//        double time_limit = 0;
+//        double generation_limit = 0;
+        //char* argument = argv[i];
+//        if (argument[0] == 'mutation_rate')
+//        {
+//            //mutation_rate = atof(argv[i+1]);
+//        }
+
+//        switch (argument)
+/*        {
+            case 'mutation_rate':
+                mutation_rate = argv[i+1];
+                break;
+
+        }*/
+   // }
+    Nsga2 ga = Nsga2(0.1, 0.6, 4.0, 1, 100);
 
 
     MatrixXd m(2,2);

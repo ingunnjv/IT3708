@@ -20,6 +20,7 @@ Nsga2::Nsga2(double mutation_rate, double crossover_rate, double tournament_size
     this->mutation_rate = mutation_rate;
     this->crossover_rate = crossover_rate;
     this->tournament_size = tournament_size;
+    this->time_limit = time_limit;
     this->generation_limit = generation_limit;
 }
 
