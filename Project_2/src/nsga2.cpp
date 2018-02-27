@@ -1,9 +1,16 @@
 //
 // Created by Ingunn on 23.02.2018.
 //
+#pragma once
+#include "utils.h"
+#include "genotype.h"
+#include <vector>
+#include <Eigen/Dense>
+#include <set>
 
 #include "nsga2.h"
-#include "utils.h"
+
+using namespace std;
 
 /////////////////////////////////////////////////////////
 Nsga2::Nsga2()
@@ -12,23 +19,74 @@ Nsga2::Nsga2()
     this->crossover_rate = 0;
     this->tournament_size = 0;
     this->generation_limit = 0;
+    this->population_size = 0;
+    this->population.resize(population_size);
 }
 
 /////////////////////////////////////////////////////////
 Nsga2::Nsga2(double mutation_rate, double crossover_rate, double tournament_size, double time_limit,
-      uint16_t generation_limit)
+      double generation_limit)
 {
     this->mutation_rate = mutation_rate;
     this->crossover_rate = crossover_rate;
     this->tournament_size = tournament_size;
     this->time_limit = time_limit;
     this->generation_limit = generation_limit;
+    this->population_size = 10;
+    this->population.resize(population_size);
 }
 
 /////////////////////////////////////////////////////////
-void Nsga2::fastNonDominatedSort()
+vector< vector<Genotype> > Nsga2::fastNonDominatedSort()
 {
+    // Create storage for the optimal solutions fronts (worst case if there is only 1 front with the entire pop)
+    vector< vector<Genotype> > fronts;//(this->population_size, vector<Genotype>(this->population_size));
+    vector<Genotype> first_front;
 
+    // Iterate through the entire population to find who dominates who
+    for (auto &p: this->population)
+    {
+        for (auto &q: this->population)
+        {
+            if (p < q) // check if p dominates q
+            {
+                p.insertToDominationSet(q);
+            }
+            else if (p > q) // check if q dominates p
+            {
+                p.domination_counter++;
+            }
+        }
+        if (p.domination_counter == 0)
+        {
+            p.setRank(1);
+            first_front.push_back(p); // non-dominated solutions belongs to the first front
+
+        }
+    }
+    // Iterate through the population again to decide in which front to put each of them
+    fronts[0] = first_front;
+    int i = 0;  // initialize front counter
+    while (!fronts[i].empty())
+    {
+        vector<Genotype> prev_front = fronts[i];
+        vector<Genotype> new_front; // to store members of the next front
+        for (auto &p: prev_front)
+        {
+            for (auto &q: p.dominates)
+            {
+                q.domination_counter--;
+                if (q.domination_counter == 0)
+                {
+                    q.setRank(i+1);
+                    new_front.push_back(q);
+                }
+            }
+        }
+        i++;
+        fronts[i] = new_front;
+    }
+    return fronts;
 }
 
 /////////////////////////////////////////////////////////
@@ -60,7 +118,8 @@ void Nsga2::runMainLoop()
     // increment the generation counter, t = t + 1
 }
 
-void Nsga2::primMST(const Eigen::MatrixXi red, const Eigen::MatrixXi green, const Eigen::MatrixXi blue) {
+/////////////////////////////////////////////////////////
+void Nsga2::primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue) {
     // Prim's algorithm
     uint16_t num_rows = uint16_t(red.rows());
     uint16_t num_cols = uint16_t(red.cols());
@@ -90,7 +149,7 @@ void Nsga2::primMST(const Eigen::MatrixXi red, const Eigen::MatrixXi green, cons
         x.row = u / num_cols;
         x.col = u % num_cols;
         bool neighbors[4] = {false, false, false, false};
-        uint32_t neighbor_pos[4];
+        static uint32_t neighbor_pos[4];
         if (u % num_cols != 0) {
             neighbors[0] = true;
             neighbor_pos[0] = u - 1;
@@ -109,24 +168,29 @@ void Nsga2::primMST(const Eigen::MatrixXi red, const Eigen::MatrixXi green, cons
         }
 
         // Update key value and parent index of the adjacent vertices of the picked vertex.
+        uint32_t v;
         for (uint8_t i = 0; i < 4; i++){
-            uint32_t v = neighbor_pos[i];
+            v = neighbor_pos[i];
             // calculate rgbDistance(u, v) only for adjacent vertices of u
             // mstSet[v] is false for vertices not yet included in MST
             // update the key only if rgbDistance(u, v) is smaller than key(v)
             if (neighbors[i] && !mstSet[v]){
                 y.row = v / num_cols; // integer division
                 y.col = v % num_cols;
-                if (rgbDistance(x, y, red, green, blue) < key[v]) {
+
+                double dist = 1;//rgbDistance(x, y, red, green, blue);
+
+                if (dist < key[v]) {
                     parent[v] = u;
-                    key[v] = rgbDistance(x, y, red, green, blue);
+                    key[v] = dist;
                 }
             }
         }
     }
 }
 
-// A utility function to find the vertex with minimum key value, from the set of vertices not yet included in MST
+
+/////////////////////////////////////////////////////////
 uint32_t Nsga2::minKey(double key[], bool mstSet[], uint32_t num_pixels)
 {
     // Initialize min value
