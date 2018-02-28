@@ -53,11 +53,11 @@ Genotype::Genotype(const MatrixXi &red, const MatrixXi &green, const MatrixXi &b
 }
 
 /////////////////////////////////////////////////////////
-bool Genotype::operator<(const Genotype &left, const Genotype &right) const
+bool Genotype::operator<(const Genotype &right) const
 {
-    for (vector<double>::size_type i = 0; i != left.objective_values.size(); i++)
+    for (vector<double>::size_type i = 0; i != right.objective_values.size(); i++)
     {
-        if (left.objective_values[i] > right.objective_values[i])
+        if (this->objective_values[i]  > right.objective_values[i])
         {
             return false;
         };
@@ -66,11 +66,11 @@ bool Genotype::operator<(const Genotype &left, const Genotype &right) const
 }
 
 /////////////////////////////////////////////////////////
-bool Genotype::operator>(const Genotype &left, const Genotype &right) const
+bool Genotype::operator>(const Genotype &right) const
 {
-    for (vector<double>::size_type i = 0; i != left.objective_values.size(); i++)
+    for (vector<double>::size_type i = 0; i != right.objective_values.size(); i++)
     {
-        if (left.objective_values[i] < right.objective_values[i])
+        if (this->objective_values[i] < right.objective_values[i])
         {
             return false;
         };

@@ -103,10 +103,12 @@ void Nsga2::crowdingDistanceAssignment(vector<Genotype> &front)
     }
     for (uint8_t obj_val_num = 0; obj_val_num != num_objectives; obj_val_num++)
     {
-        tuple<double, double> extreme_vals = objectiveValueSort(front, obj_val_num); // sort on objective value number and return min and max of the objective
+        // sort on objective value number and return min and max of the objective
+        tuple<double, double> extreme_vals = objectiveValueSort(front, obj_val_num);
         double fmin = get<0>(extreme_vals);
         double fmax = get<1>(extreme_vals);
-        front[0].crowding_distance = DBL_MAX; // such that boundary points are always selected
+        // set first and last genotypes distance to inf such that boundary points are always selected
+        front[0].crowding_distance = DBL_MAX;
         front.back().crowding_distance = DBL_MAX;
         for (vector<Genotype>::size_type i = 1; i != front_size - 1; i++)
         {
@@ -142,6 +144,26 @@ Genotype Nsga2::crowdedComparison(const Genotype &gt1, const Genotype &gt2)
 /////////////////////////////////////////////////////////
 void Nsga2::runMainLoop()
 {
+    // TODO: initialize population here
+
+
+    int generation = 0;
+    while (generation < generation_limit)
+    {
+        vector< vector<Genotype> > fronts = fastNonDominatedSort();
+        vector<Genotype> parents_pop;
+        int i = 0;
+        while (parents_pop.size() + fronts[i].size() < population_size)
+        {
+            i++;
+        }
+
+
+
+
+        vector<Genotype> offspring_pop = makeNewPop(parents_pop);
+        generation++;
+    }
     // combine parent and offspring population Pt + Qt = Rt
     // fastNonDominatedSort() returns all nondominated fronts of Rt
     // Pt+1 = Ø and i = 1
@@ -156,7 +178,10 @@ void Nsga2::runMainLoop()
     // increment the generation counter, t = t + 1
 }
 
-
+/////////////////////////////////////////////////////////
+std::vector<Genotype> Nsga2::makeNewPop(std::vector<Genotype> parent_pop) {
+    return parent_pop;
+}
 
 struct Cmp
 {
@@ -246,6 +271,8 @@ void Nsga2::primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, co
         delete[] neighbor_pos;
     }
 }
+
+
 
 
 

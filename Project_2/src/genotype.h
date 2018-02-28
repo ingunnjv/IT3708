@@ -27,8 +27,8 @@ public:
 
     Genotype();
     Genotype(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
-    bool operator<(const Genotype &left, const Genotype &right) const;
-    bool operator>(const Genotype &left, const Genotype &right) const;
+    bool operator<(const Genotype &right) const;
+    bool operator>(const Genotype &right) const;
 };
 
 

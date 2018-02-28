@@ -34,6 +34,7 @@ public:
     void crowdingDistanceAssignment(std::vector<Genotype> &front);
     Genotype crowdedComparison(const Genotype &gt1, const Genotype &gt2);
     void runMainLoop();
+    std::vector<Genotype> makeNewPop(std::vector<Genotype> parent_pop);
 };
 
 
