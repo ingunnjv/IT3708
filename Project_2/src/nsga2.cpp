@@ -35,14 +35,14 @@ Nsga2::Nsga2(double mutation_rate, double crossover_rate, uint16_t tournament_si
     this->population.resize(population_size);
 }
 
-
+/////////////////////////////////////////////////////////
 struct Cmp2
 {
     bool operator ()(const pair<uint32_t, double> &a, const pair<uint32_t, double> &b) {
         return a.second >= b.second;
     }
 };
-/////////////////////////////////////////////////////////
+
 void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue)
 {
     int num_rows = int(red.rows());
