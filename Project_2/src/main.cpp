@@ -12,18 +12,30 @@
 #include <set>
 
 #pragma once
-
-
-
 using namespace std;
 using Eigen::MatrixXd;
+
+// A utility function to print the constructed MST stored in parent[]
+void printMST(vector<int> parent, int num_pixels, const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue)
+{
+    pixel_t x, y;
+    auto cols = uint16_t(red.cols());
+    printf("Edge   Weight\n");
+    for (int i = 1; i < num_pixels; i++) {
+        x.row = i / cols;
+        x.col = i % cols;
+        y.row = parent[i] / cols;
+        y.col = parent[i] % cols;
+        printf("%d - %d    %f \n", parent[i], i, rgbDistance(y, x, red, green, blue));
+    }
+}
 
 int main(int argc, char *argv[]) {
     ImageLoader image = ImageLoader();
     image.LoadImagesFromFolder("353013");
     image.ExtractRGBChannels();
 
-    Genotype g = Genotype(image.r_channel, image.g_channel, image.b_channel);
+    //Genotype g = Genotype(image.r_channel, image.g_channel, image.b_channel);
 
     //cout << "Rows of eigen image = " << red.rows() << endl;
     //cout << "Cols of eigen image = " << red.cols() << endl;
@@ -36,10 +48,12 @@ int main(int argc, char *argv[]) {
                 time_limit, generation_limit, population_size);
     Nsga2 ga = Nsga2(mutation_rate, crossover_Rate, tournament_size, time_limit, generation_limit);
 
-
     cout << "START\n";
-    ga.primMST(image.r_channel, image.g_channel, image.b_channel);
+    ga.initializePopulation(image.r_channel, image.g_channel, image.b_channel);
     cout << "END\n";
+    //vector<int> parent_graph = ga.primMST(image.r_channel, image.g_channel, image.b_channel);
+    //
+    //printMST(parent_graph, image.r_channel.rows() * image.r_channel.cols(), image.r_channel, image.g_channel, image.b_channel);
 
 
     MatrixXd m(2,2);

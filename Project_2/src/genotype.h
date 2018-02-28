@@ -8,9 +8,10 @@
 #include <vector>
 #include <set>
 
+enum genValues {left, right, up, down, none}; // all possible values of a gene
+
 class Genotype {
 private:
-    enum genValues {left, right, up, down, none}; // all possible values of a gene
     std::vector<uint8_t> chromosome;                    // storage the entire set of genes
     std::vector<double> objectiveValues;          // values of the two objectives that are optimized
 
@@ -24,7 +25,7 @@ public:
     void insertToDominationSet(Genotype &i);
 
     Genotype();
-    Genotype(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
+    Genotype(int num_pixels, int num_cols, std::vector<int> &parents);
     friend bool operator<(const Genotype &left, const Genotype &right);
     friend bool operator>(const Genotype &left, const Genotype &right);
 };

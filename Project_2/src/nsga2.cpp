@@ -34,6 +34,41 @@ Nsga2::Nsga2(double mutation_rate, double crossover_rate, double tournament_size
     this->population.resize(population_size);
 }
 
+
+struct Cmp2
+{
+    bool operator ()(const pair<uint32_t, double> &a, const pair<uint32_t, double> &b) {
+        return a.second >= b.second;
+    }
+};
+/////////////////////////////////////////////////////////
+void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue)
+{
+    int num_rows = uint16_t(red.rows());
+    int num_cols = uint16_t(red.cols());
+    int num_pixels = num_rows * num_cols;
+    ///In the initialization of
+    ///the ith individual in the population, the (i−1) long links are
+    ///removed from the MST individual.
+    vector<int> parent_graph = primMST(red, green, blue);
+    set < pair<uint32_t, double>, Cmp2 > links;
+
+    pixel_t x, y;
+    for (int i = 1; i < num_pixels; i++) {
+        x.row = i / num_cols, x.col = i % num_cols;
+        y.row = parent_graph[i] / num_cols, y.col = parent_graph[i] % num_cols;
+        links.insert(make_pair(i, rgbDistance(y, x, red, green, blue)));
+    }
+    int a = 10;
+    for (int i = 0; i < population_size; i++){
+        population[i] = Genotype(num_pixels, num_cols, parent_graph);
+        auto it = links.begin();
+        parent_graph[it->first] = -1;
+        if (!links.empty()) { links.erase(it); }
+        a++;
+    }
+}
+
 /////////////////////////////////////////////////////////
 vector< vector<Genotype> > Nsga2::fastNonDominatedSort()
 {
@@ -126,12 +161,12 @@ struct Cmp
 };
 /////////////////////////////////////////////////////////
 /// Prim's algorithm
-void Nsga2::primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue) {
+vector<int> Nsga2::primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue) {
     auto num_rows = uint16_t(red.rows());
     auto num_cols = uint16_t(red.cols());
     uint32_t num_pixels = num_rows * num_cols;
 
-    int parent[num_pixels];   // Array to store constructed MST
+    vector<int> parent(num_pixels);   // Array to store constructed MST
     double key[num_pixels];   // Key values used to pick minimum weight edge in cut
     bool mstSet[num_pixels];  // To represent set of vertices not yet included in MST
     set <pair <uint32_t, double>, Cmp> vertices_considered;
@@ -205,5 +240,6 @@ void Nsga2::primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, co
         delete[] neighbors;
         delete[] neighbor_pos;
     }
+    return parent;
 }
 
