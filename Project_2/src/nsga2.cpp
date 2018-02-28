@@ -115,15 +115,21 @@ vector< vector<Genotype> > Nsga2::fastNonDominatedSort()
 }
 
 /////////////////////////////////////////////////////////
-std::tuple<double, double> Nsga2::objectiveValueSort(std::vector<Genotype> &genotypes, uint8_t objective_num)
+tuple<double, double> Nsga2::objectiveValueSort(std::vector<Genotype> &front, uint8_t obj_val_i)
 {
-
+    if (obj_val_i == 0){
+        sort(front.begin(), front.end(), sortByObj1);
+    }
+    else if (obj_val_i == 1)
+    {
+        sort(front.begin(), front.end(), sortByObj2);
+    }
 }
 
 /////////////////////////////////////////////////////////
 void Nsga2::crowdedDistanceSort(std::vector<Genotype> front)
 {
-
+    sort(front.begin(), front.end(), sortByCrowdedComparison);
 }
 
 /////////////////////////////////////////////////////////
@@ -147,30 +153,6 @@ void Nsga2::crowdingDistanceAssignment(vector<Genotype> &front)
         for (vector<Genotype>::size_type i = 1; i != front_size - 1; i++)
         {
             front[i].crowding_distance += (front[i+1].objective_values[obj_val_num] - front[i-1].objective_values[obj_val_num])/(fmax-fmin);
-        }
-    }
-}
-
-/////////////////////////////////////////////////////////
-Genotype Nsga2::crowdedComparison(const Genotype &gt1, const Genotype &gt2)
-{
-    if (gt1.rank > gt2.rank)
-    {
-        return gt1;
-    }
-    else if (gt1.rank < gt2.rank)
-    {
-        return gt2;
-    }
-    else if (gt1.rank == gt2.rank)
-    {
-        if (gt1.crowding_distance >= gt2.crowding_distance)
-        {
-            return gt1;
-        }
-        else if (gt1.crowding_distance < gt2.crowding_distance)
-        {
-            return gt2;
         }
     }
 }
@@ -207,18 +189,18 @@ void Nsga2::runMainLoop()
 }
 
 /////////////////////////////////////////////////////////
-std::vector<Genotype> Nsga2::makeNewPop(std::vector<Genotype> parent_pop) {
+vector<Genotype> Nsga2::makeNewPop(std::vector<Genotype> parent_pop) {
     return parent_pop;
 }
 
+
+/////////////////////////////////////////////////////////
 struct Cmp
 {
     bool operator ()(const pair<uint32_t, double> &a, const pair<uint32_t, double> &b) {
         return a.second <= b.second;
     }
 };
-/////////////////////////////////////////////////////////
-/// Prim's algorithm
 vector<int> Nsga2::primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue) {
     auto num_rows = uint16_t(red.rows());
     auto num_cols = uint16_t(red.cols());
@@ -300,8 +282,3 @@ vector<int> Nsga2::primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &gr
     }
     return parent;
 }
-
-
-
-
-

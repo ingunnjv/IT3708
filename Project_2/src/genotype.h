@@ -27,8 +27,8 @@ public:
 
     Genotype();
     Genotype(int num_pixels, int num_cols, std::vector<int> &parents);
-    bool operator<(const Genotype &right) const;
-    bool operator>(const Genotype &right) const;
+    bool operator<(const Genotype &rhs) const;
+    bool operator>(const Genotype &rhs) const;
 };
 
 

@@ -25,7 +25,6 @@ Genotype::Genotype()
     this->domination_counter = 0;
     this->rank = 0;
     this->crowding_distance = 0;
-
 }
 
 /////////////////////////////////////////////////////////
@@ -60,11 +59,11 @@ Genotype::Genotype(int num_pixels, int num_cols,  vector<int> &parents)
 }
 
 /////////////////////////////////////////////////////////
-bool Genotype::operator<(const Genotype &right) const
+bool Genotype::operator<(const Genotype &rhs) const
 {
-    for (vector<double>::size_type i = 0; i != right.objective_values.size(); i++)
+    for (vector<double>::size_type i = 0; i != rhs.objective_values.size(); i++)
     {
-        if (this->objective_values[i]  > right.objective_values[i])
+        if (this->objective_values[i]  > rhs.objective_values[i])
         {
             return false;
         };
@@ -73,11 +72,11 @@ bool Genotype::operator<(const Genotype &right) const
 }
 
 /////////////////////////////////////////////////////////
-bool Genotype::operator>(const Genotype &right) const
+bool Genotype::operator>(const Genotype &rhs) const
 {
-    for (vector<double>::size_type i = 0; i != right.objective_values.size(); i++)
+    for (vector<double>::size_type i = 0; i != rhs.objective_values.size(); i++)
     {
-        if (this->objective_values[i] < right.objective_values[i])
+        if (this->objective_values[i] < rhs.objective_values[i])
         {
             return false;
         };
