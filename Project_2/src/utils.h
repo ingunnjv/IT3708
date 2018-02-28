@@ -1,10 +1,6 @@
-//
-// Created by Ingunn on 27.02.2018.
-//
 #pragma once
 #ifndef PROJECT_2_UTILS_H
 #define PROJECT_2_UTILS_H
-
 
 #include <Eigen/Dense>
 #include <vector>

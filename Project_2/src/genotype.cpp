@@ -1,18 +1,7 @@
-//
-// Created by Ingunn on 23.02.2018.
-//
-
-
-#include <random>
-#include <Eigen/Dense>
-#include <vector>
-#include <iostream>
-
+#pragma once
 #include "genotype.h"
 
 using namespace std;
-using Eigen::MatrixXd;
-using Eigen::MatrixXi;
 
 /////////////////////////////////////////////////////////
 void Genotype::setRank(int rank)

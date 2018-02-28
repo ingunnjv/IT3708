@@ -1,20 +1,10 @@
 #pragma once
 #include <iostream>
-#include <cmath>
-#include <vector>
 #include <Eigen/Dense>
 #include "image_loader.h"
-#include "genotype.h"
 #include "nsga2.h"
-#include "utils.h"
-#include <opencv2/highgui.hpp>
-#include <opencv2/core/eigen.hpp>
-#include <set>
 
-#pragma once
 using namespace std;
-using Eigen::MatrixXd;
-
 
 int main(int argc, char *argv[]) {
 

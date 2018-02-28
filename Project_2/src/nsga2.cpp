@@ -1,13 +1,5 @@
-//
-// Created by Ingunn on 23.02.2018.
-//
 #pragma once
-#include "utils.h"
-#include "genotype.h"
 #include "nsga2.h"
-#include <set>
-#include <iostream>
-#include <cfloat>
 
 using namespace std;
 

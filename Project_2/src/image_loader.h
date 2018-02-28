@@ -1,14 +1,13 @@
-//
-// Created by LasseBot on 21-Feb-18.
-//
-
-#pragma once
 #ifndef PROJECT_2_IMAGE_LOADER_H
 #define PROJECT_2_IMAGE_LOADER_H
 
-#endif //PROJECT_2_IMAGE_LOADER_H
-
 #include <opencv2/core.hpp>
+#include <iostream>
+#include <vector>
+#include <Eigen/Dense>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv/cxeigen.hpp>
 
 class ImageLoader
 {
@@ -26,3 +25,5 @@ public:
     void ExtractRGBChannels();
 
 };
+
+#endif //PROJECT_2_IMAGE_LOADER_H

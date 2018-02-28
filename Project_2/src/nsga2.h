@@ -4,6 +4,10 @@
 #include "genotype.h"
 #include <vector>
 #include <Eigen/Dense>
+#include <set>
+#include <iostream>
+#include <cfloat>
+#include "utils.h"
 
 class Nsga2 {
 private:
@@ -50,6 +54,5 @@ public:
     /* Run the main loop of the algorithm */
     void runMainLoop();
 };
-
 
 #endif //PROJECT_2_NSGA_II_H
