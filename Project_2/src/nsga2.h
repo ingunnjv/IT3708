@@ -27,7 +27,8 @@ public:
     Nsga2(double mutation_rate, double crossover_rate, uint16_t tournament_size, double time_limit,
           uint16_t generation_limit, uint16_t population_size);
 
-    void primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
+    void initializePopulation(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
+    std::vector<int> primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
 
     std::vector< std::vector<Genotype> > fastNonDominatedSort();
     std::tuple<double, double> objectiveValueSort(std::vector<Genotype> &genotypes, uint8_t objective_num);

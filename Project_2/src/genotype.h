@@ -26,7 +26,7 @@ public:
     void insertToDominationSet(Genotype &i);
 
     Genotype();
-    Genotype(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
+    Genotype(int num_pixels, int num_cols, std::vector<int> &parents);
     bool operator<(const Genotype &right) const;
     bool operator>(const Genotype &right) const;
 };
