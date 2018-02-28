@@ -31,10 +31,12 @@ int main(int argc, char *argv[]) {
     //cv::imshow("Red", image.r_image);
     //cv::waitKey(0);
 
-    double mutation_rate, crossover_Rate, tournament_size, time_limit, generation_limit, population_size;
+    double mutation_rate, crossover_Rate, time_limit;
+    uint16_t tournament_size, generation_limit, population_size;
     setUserArgs(argc, argv, mutation_rate, crossover_Rate, tournament_size,
                 time_limit, generation_limit, population_size);
-    Nsga2 ga = Nsga2(mutation_rate, crossover_Rate, tournament_size, time_limit, generation_limit);
+    Nsga2 ga = Nsga2(mutation_rate, crossover_Rate, tournament_size,
+                     time_limit, generation_limit, population_size);
 
 
     cout << "START\n";

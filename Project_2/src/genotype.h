@@ -8,25 +8,27 @@
 #include <vector>
 #include <set>
 
+enum genValues {left, right, up, down, none}; // all possible values of a gene
+
 class Genotype {
 private:
-    enum genValues {left, right, up, down, none}; // all possible values of a gene
-    std::vector<uint8_t> chromosome;                    // storage the entire set of genes
-    std::vector<double> objectiveValues;          // values of the two objectives that are optimized
-
+    std::vector<uint8_t> chromosome; // storage the entire set of genes
 
 public:
-    std::vector<Genotype> dominates;                 // set of solutions that p dominates
-    int domination_counter;                          // number of solution that dominates the solution p
-    int rank;
+    std::vector<Genotype> dominates; // set of solutions that this dominates
+    int domination_counter; // number of solution that dominates this solution
+    uint16_t rank; // ranges from 0 to maximum of the size of the population
+    double crowding_distance; // measure of how far away the genotype is from others in the population
+    std::vector<double> objective_values; // values of the two objectives that are optimized
+    uint8_t num_objectives; // length of objective_values
 
     void setRank(int rank);
     void insertToDominationSet(Genotype &i);
 
     Genotype();
     Genotype(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
-    friend bool operator<(const Genotype &left, const Genotype &right);
-    friend bool operator>(const Genotype &left, const Genotype &right);
+    bool operator<(const Genotype &left, const Genotype &right) const;
+    bool operator>(const Genotype &left, const Genotype &right) const;
 };
 
 

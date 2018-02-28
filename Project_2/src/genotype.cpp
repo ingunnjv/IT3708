@@ -16,7 +16,7 @@ using Eigen::MatrixXi;
 /////////////////////////////////////////////////////////
 void Genotype::setRank(int rank)
 {
-    this->rank = rank;
+    this->rank = uint16_t(rank);
 }
 
 /////////////////////////////////////////////////////////
@@ -30,9 +30,12 @@ Genotype::Genotype()
 {
     int num_pixels = 10;
     this->chromosome.resize(num_pixels);
-    this->objectiveValues.resize(2);
+    this->num_objectives = 2;
+    this->objective_values.resize(this->num_objectives);
     this->domination_counter = 0;
     this->rank = 0;
+    this->crowding_distance = 0;
+
 }
 
 /////////////////////////////////////////////////////////
@@ -42,17 +45,19 @@ Genotype::Genotype(const MatrixXi &red, const MatrixXi &green, const MatrixXi &b
     int num_cols = uint16_t(red.cols());
     int num_pixels = num_rows * num_cols;
     this->chromosome.resize(num_pixels);
-    this->objectiveValues.resize(2);
+    this->num_objectives = 2;
+    this->objective_values.resize(this->num_objectives);
     this->domination_counter = 0;
     this->rank = 0;
+    this->crowding_distance = 0;
 }
 
 /////////////////////////////////////////////////////////
-bool operator<(const Genotype &left, const Genotype &right)
+bool Genotype::operator<(const Genotype &left, const Genotype &right) const
 {
-    for (vector<double>::size_type i = 0; i != left.objectiveValues.size(); i++)
+    for (vector<double>::size_type i = 0; i != left.objective_values.size(); i++)
     {
-        if (left.objectiveValues[i] > right.objectiveValues[i])
+        if (left.objective_values[i] > right.objective_values[i])
         {
             return false;
         };
@@ -61,11 +66,11 @@ bool operator<(const Genotype &left, const Genotype &right)
 }
 
 /////////////////////////////////////////////////////////
-bool operator>(const Genotype &left, const Genotype &right)
+bool Genotype::operator>(const Genotype &left, const Genotype &right) const
 {
-    for (vector<double>::size_type i = 0; i != left.objectiveValues.size(); i++)
+    for (vector<double>::size_type i = 0; i != left.objective_values.size(); i++)
     {
-        if (left.objectiveValues[i] < right.objectiveValues[i])
+        if (left.objective_values[i] < right.objective_values[i])
         {
             return false;
         };

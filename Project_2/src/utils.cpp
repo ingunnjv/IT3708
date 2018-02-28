@@ -16,8 +16,8 @@ double rgbDistance(pixel_t x, pixel_t y, const Eigen::MatrixXi &red, const Eigen
 }
 
 /////////////////////////////////////////////////////////
-void setUserArgs(int argc, char **argv, double &mutation_rate, double &crossover_rate, double &tournament_size,
-                 double &time_limit, double &generation_limit, double &population_size)
+void setUserArgs(const int argc, char **argv, double &mutation_rate, double &crossover_rate,
+                 uint16_t &tournament_size, double &time_limit, uint16_t &generation_limit, uint16_t &population_size)
 {
     mutation_rate = 0;
     crossover_rate = 0;
@@ -41,7 +41,7 @@ void setUserArgs(int argc, char **argv, double &mutation_rate, double &crossover
         }
         else if(!strcmp("tournament_size", arg_name))
         {
-            tournament_size = arg_val;
+            tournament_size = uint16_t(arg_val);
             continue;
         }
         else if(!strcmp("time_limit", arg_name))
@@ -51,12 +51,12 @@ void setUserArgs(int argc, char **argv, double &mutation_rate, double &crossover
         }
         else if(!strcmp("generation_limit", arg_name))
         {
-            generation_limit = arg_val;
+            generation_limit = uint16_t(arg_val);
             continue;
         }
         else if(!strcmp("population_size", arg_name))
         {
-            population_size = arg_val;
+            population_size = uint16_t(arg_val);
             continue;
         }
     }

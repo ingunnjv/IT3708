@@ -15,8 +15,9 @@ struct pixel_t {
 
 double rgbDistance(pixel_t x, pixel_t y, const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
                    const Eigen::MatrixXi &blue);
-void setUserArgs(int argc, char **argv, double &mutation_rate, double &crossover_rate, double &tournament_size,
-                 double &time_limit, double &generation_limit, double &population_size);
+void setUserArgs(const int argc, char **argv, double &mutation_rate, double &crossover_rate,
+                 uint16_t &tournament_size,
+                 double &time_limit, uint16_t &generation_limit, uint16_t &population_size);
 
 
 #endif //PROJECT_2_UTILS_H
