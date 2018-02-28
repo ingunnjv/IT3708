@@ -27,16 +27,16 @@ public:
     Nsga2(double mutation_rate, double crossover_rate, uint16_t tournament_size, double time_limit,
           uint16_t generation_limit, uint16_t population_size);
 
+    /* Initializes a population using the distance in RGB space of a picture as basis of gene type*/
     void initializePopulation(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
     std::vector<int> primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
-
     std::vector< std::vector<Genotype> > fastNonDominatedSort();
     std::tuple<double, double> objectiveValueSort(std::vector<Genotype> &genotypes, uint8_t objective_num);
     void crowdedDistanceSort(std::vector<Genotype> front);
     void crowdingDistanceAssignment(std::vector<Genotype> &front);
     Genotype crowdedComparison(const Genotype &gt1, const Genotype &gt2);
-    void runMainLoop();
     std::vector<Genotype> makeNewPop(std::vector<Genotype> parent_pop);
+    void runMainLoop();
 };
 
 

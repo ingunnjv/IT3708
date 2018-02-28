@@ -7,17 +7,20 @@
 
 
 #include <Eigen/Dense>
+#include <vector>
 
 struct pixel_t {
-    uint16_t row;
-    uint16_t col;
+    int row;
+    int col;
 };
 
 double rgbDistance(pixel_t x, pixel_t y, const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
                    const Eigen::MatrixXi &blue);
-void setUserArgs(const int argc, char **argv, double &mutation_rate, double &crossover_rate,
-                 uint16_t &tournament_size,
-                 double &time_limit, uint16_t &generation_limit, uint16_t &population_size);
+void setUserArgs(int argc, char **argv, double &mutation_rate, double &crossover_rate,
+                 uint16_t &tournament_size, double &time_limit, uint16_t &generation_limit,
+                 uint16_t &population_size, int &problem_num);
+void printMST(std::vector<int> parent, int num_pixels,
+              const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
 
 
 #endif //PROJECT_2_UTILS_H

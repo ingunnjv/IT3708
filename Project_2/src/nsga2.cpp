@@ -45,8 +45,8 @@ struct Cmp2
 /////////////////////////////////////////////////////////
 void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue)
 {
-    int num_rows = uint16_t(red.rows());
-    int num_cols = uint16_t(red.cols());
+    int num_rows = int(red.rows());
+    int num_cols = int(red.cols());
     int num_pixels = num_rows * num_cols;
     ///In the initialization of
     ///the ith individual in the population, the (i−1) long links are
