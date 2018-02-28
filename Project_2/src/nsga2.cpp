@@ -88,7 +88,14 @@ vector< vector<Genotype> > Nsga2::fastNonDominatedSort()
 }
 
 /////////////////////////////////////////////////////////
-std::tuple<double, double> Nsga2::objectiveValueSort(std::vector<Genotype> &genotypes, uint8_t objective_num) {
+std::tuple<double, double> Nsga2::objectiveValueSort(std::vector<Genotype> &genotypes, uint8_t objective_num)
+{
+
+}
+
+/////////////////////////////////////////////////////////
+void Nsga2::crowdedDistanceSort(std::vector<Genotype> front)
+{
 
 }
 
@@ -144,38 +151,32 @@ Genotype Nsga2::crowdedComparison(const Genotype &gt1, const Genotype &gt2)
 /////////////////////////////////////////////////////////
 void Nsga2::runMainLoop()
 {
-    // TODO: initialize population here
-
+    vector< vector<Genotype> > fronts;
+    vector<Genotype> parents_pop = population;
+    vector<Genotype> offspring_pop;
 
     int generation = 0;
     while (generation < generation_limit)
     {
-        vector< vector<Genotype> > fronts = fastNonDominatedSort();
-        vector<Genotype> parents_pop;
+        population.insert(parents_pop.end(), offspring_pop.begin(), offspring_pop.end());
+        fronts = fastNonDominatedSort();
+        parents_pop.clear();
         int i = 0;
         while (parents_pop.size() + fronts[i].size() < population_size)
         {
+            crowdingDistanceAssignment(fronts[i]);
+            parents_pop.insert(parents_pop.end(), fronts[i].begin(), fronts[i].end());
             i++;
         }
-
-
-
-
-        vector<Genotype> offspring_pop = makeNewPop(parents_pop);
+        crowdedDistanceSort(fronts[i]);
+        parents_pop.insert(parents_pop.end(), fronts[i].begin(), fronts[i].begin() + (population_size - uint16_t(parents_pop.size())));
+        //TODO: implement some sort of early stopping by comparing solutions with PRI
+        offspring_pop = makeNewPop(parents_pop);
         generation++;
     }
-    // combine parent and offspring population Pt + Qt = Rt
-    // fastNonDominatedSort() returns all nondominated fronts of Rt
-    // Pt+1 = Ø and i = 1
-    // until until the parent population Pt+1 is filled:
-    // - - calculate crowding-distance in Fi
-    // include ith nondominated front in the parent pop
-    // check the next front for inclusion, i = i + 1
 
-    // sort the next nondominated front in descending order <n
-    // choose the first (N - |Pt+1|) elements of Fi
-    // - - use selection, crossover and mutation to create a new population Qt+1
-    // increment the generation counter, t = t + 1
+    // TODO: show solution
+    // TODO: get and print PRI of the best solution
 }
 
 /////////////////////////////////////////////////////////

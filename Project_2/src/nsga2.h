@@ -31,6 +31,7 @@ public:
 
     std::vector< std::vector<Genotype> > fastNonDominatedSort();
     std::tuple<double, double> objectiveValueSort(std::vector<Genotype> &genotypes, uint8_t objective_num);
+    void crowdedDistanceSort(std::vector<Genotype> front);
     void crowdingDistanceAssignment(std::vector<Genotype> &front);
     Genotype crowdedComparison(const Genotype &gt1, const Genotype &gt2);
     void runMainLoop();
