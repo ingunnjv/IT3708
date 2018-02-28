@@ -1,6 +1,3 @@
-//
-// Created by LasseBot on 27-Feb-18.
-//
 #pragma once
 #include <Eigen/Dense>
 #include "utils.h"

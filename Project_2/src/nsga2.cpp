@@ -28,13 +28,6 @@ Nsga2::Nsga2(double mutation_rate, double crossover_rate, uint16_t tournament_si
 }
 
 /////////////////////////////////////////////////////////
-struct Cmp2
-{
-    bool operator ()(const pair<uint32_t, double> &a, const pair<uint32_t, double> &b) {
-        return a.second >= b.second;
-    }
-};
-
 void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue)
 {
     int num_rows = int(red.rows());
@@ -44,7 +37,7 @@ void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::Matrix
     ///the ith individual in the population, the (i−1) long links are
     ///removed from the MST individual.
     vector<int> parent_graph = primMST(red, green, blue);
-    set < pair<uint32_t, double>, Cmp2 > links;
+    set < pair<uint32_t, double>, pairCmpGe > links;
 
     pixel_t x, y;
     for (int i = 1; i < num_pixels; i++) {
@@ -195,12 +188,6 @@ vector<Genotype> Nsga2::makeNewPop(std::vector<Genotype> parent_pop) {
 
 
 /////////////////////////////////////////////////////////
-struct Cmp
-{
-    bool operator ()(const pair<uint32_t, double> &a, const pair<uint32_t, double> &b) {
-        return a.second <= b.second;
-    }
-};
 vector<int> Nsga2::primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue) {
     auto num_rows = uint16_t(red.rows());
     auto num_cols = uint16_t(red.cols());
@@ -209,7 +196,7 @@ vector<int> Nsga2::primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &gr
     vector<int> parent(num_pixels);   // Array to store constructed MST
     double key[num_pixels];   // Key values used to pick minimum weight edge in cut
     bool mstSet[num_pixels];  // To represent set of vertices not yet included in MST
-    set <pair <uint32_t, double>, Cmp> vertices_considered;
+    set <pair <uint32_t, double>, pairCmpLe> vertices_considered;
     pixel_t x, y;
 
     // Initialize all keys as INFINITE
