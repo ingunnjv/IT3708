@@ -65,7 +65,7 @@ void setUserArgs(int argc, char **argv, double &mutation_rate, double &crossover
 }
 
 /////////////////////////////////////////////////////////
-void printMST(std::vector<int> parent, int num_pixels,
+void printMST(std::vector<int> &parent, int num_pixels,
               const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue)
 {
     pixel_t x, y;
@@ -76,7 +76,7 @@ void printMST(std::vector<int> parent, int num_pixels,
         x.col = i % cols;
         y.row = parent[i] / cols;
         y.col = parent[i] % cols;
-        printf("%d - %d    %f \n", parent[i], i, rgbDistance(y, x, red, green, blue));
+        printf("%d - %d    %f \n", parent[i], i, rgbDistance(x, y, red, green, blue));
     }
 }
 

@@ -24,15 +24,15 @@ int main(int argc, char *argv[]) {
     // Create GA
     Nsga2 ga = Nsga2(mutation_rate, crossover_Rate, tournament_size,
                      time_limit, generation_limit, population_size);
-    // Initalize a population
+    // Initialize a population
     ga.initializePopulation(image.r_channel, image.g_channel, image.b_channel);
-    ga.population[0].genotypeToPhenotypeDecoding(image.r_channel.rows(), image.r_channel.cols());
-    // Run the algorithm
-    ga.runMainLoop();
+    cout << "Start decoding" << endl;
+    //printMST(parent, image.r_channel.rows() * image.r_channel.cols(), image.r_channel, image.g_channel, image.b_channel);
+    ga.population[4].genotypeToPhenotypeDecoding(image.r_channel.rows(), image.r_channel.cols());
+    cout << "End decoding" << endl;
 
-    //vector<int> parent_graph = ga.primMST(image.r_channel, image.g_channel, image.b_channel);
-    //
-    //printMST(parent_graph, image.r_channel.rows() * image.r_channel.cols(), image.r_channel, image.g_channel, image.b_channel);
+    // Run the algorithm
+    //ga.runMainLoop();
 
 
     return 0;

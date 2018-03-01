@@ -13,6 +13,7 @@ enum genValues {left, right, up, down, none}; // all possible values of a gene
 class Genotype {
 private:
     std::vector<uint8_t> chromosome; // storage the entire set of genes
+    std::vector< std::vector<int> > segments;
 
 public:
     std::vector<Genotype> dominates; // set of solutions that this dominates

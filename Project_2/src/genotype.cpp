@@ -86,24 +86,24 @@ bool Genotype::operator>(const Genotype &rhs) const
 
 void Genotype::genotypeToPhenotypeDecoding(int num_rows, int num_cols)
 {
-    vector< vector<int> > segments;
+    //vector< vector<int> > segments;
     Eigen::MatrixXi segmented_image(num_rows, num_cols);
     segmented_image = Eigen::MatrixXi::Ones(num_rows, num_cols)*(-1);
 
     int segment_number = 0;
-    for (int i = 0; i < this->chromosome.size(); i++) {
+    int total_number_of_segments = segment_number;
+    for(vector<int>::size_type i = this->chromosome.size() - 1; i != (vector<int>::size_type) - 1; i--){
         int row = i / num_cols, col = i % num_cols;
-        if (segmented_image(row, col) == -1){
-            // pixel is not yet assigned to a segment
+        if (segmented_image(row, col) == -1){ // pixel is not yet assigned to a segment
+            segment_number = total_number_of_segments;
             segmented_image(row, col) = segment_number;
+            total_number_of_segments++;
         }
-        else{
-            // already assigned to a segment, skip
+        else{ // already assigned to a segment, skip
             continue;
         }
         int next = i;
-        while(this->chromosome[next] != none){
-            // find next gene
+        while(this->chromosome[next] != none){ // find next gene
             if (this->chromosome[next] == genValues::right)
                 next = next + 1;
             else if (this->chromosome[next] == genValues::left)
@@ -112,10 +112,12 @@ void Genotype::genotypeToPhenotypeDecoding(int num_rows, int num_cols)
                 next = next + num_cols;
             else if (this->chromosome[next] == genValues::up)
                 next = next - num_cols;
+
             row = next / num_cols, col = next % num_cols;
 
             if (segmented_image(row, col) != -1 && segmented_image(row, col) < segment_number){
                 // this is part of a previously defined segment. go back
+                total_number_of_segments--;
                 segment_number = segmented_image(row, col);
                 next = i;
                 row = next / num_cols, col = next % num_cols;
@@ -124,7 +126,14 @@ void Genotype::genotypeToPhenotypeDecoding(int num_rows, int num_cols)
         }
         segment_number++;
     }
-    cout << segmented_image << endl;
+    //cout << segmented_image << endl;
+    cout << "Total number of segments: " << total_number_of_segments << endl;
+    // create vector of segments
+    this->segments.resize(total_number_of_segments);
+    for (int pixel = 0; pixel < this->chromosome.size(); pixel++){
+        int row = pixel / num_cols, col = pixel % num_cols;
+        this->segments[segmented_image(row, col)].push_back(pixel);
+    }
 }
 
 
