@@ -8,12 +8,21 @@
 #include <vector>
 #include <iostream>
 
+
+
 enum genValues {left, right, up, down, none}; // all possible values of a gene
+struct GeneNode {
+    int segment;
+    uint8_t value;
+    GeneNode* child;
+    std::vector<GeneNode*> parents;
+};
+typedef Eigen::Matrix<GeneNode, Eigen::Dynamic, Eigen::Dynamic> GeneMatrix;
 
 class Genotype {
 private:
-    std::vector<uint8_t> chromosome; // storage the entire set of genes
-    std::vector< std::vector<int> > segments;
+    GeneMatrix chromosome; // storage the entire set of genes
+    std::vector< std::vector<int> > segments; // segments of a solution
 
 public:
     std::vector<Genotype> dominates; // set of solutions that this dominates
@@ -26,9 +35,10 @@ public:
     void setRank(int rank);
     void insertToDominationSet(Genotype &i);
     void genotypeToPhenotypeDecoding(int num_rows, int num_cols);
+    void visualize();
 
     Genotype();
-    Genotype(int num_pixels, int num_cols, std::vector<int> &parents);
+    Genotype(int num_rows, int num_cols,  std::vector<int> &parents);
     bool operator<(const Genotype &rhs) const;
     bool operator>(const Genotype &rhs) const;
 };

@@ -19,7 +19,7 @@ void Genotype::insertToDominationSet(Genotype &i)
 Genotype::Genotype()
 {
     int num_pixels = 10;
-    this->chromosome.resize(num_pixels);
+    this->chromosome.resize(10,10);
     this->num_objectives = 2;
     this->objective_values.resize(this->num_objectives);
     this->domination_counter = 0;
@@ -28,34 +28,56 @@ Genotype::Genotype()
 }
 
 /////////////////////////////////////////////////////////
-Genotype::Genotype(int num_pixels, int num_cols,  vector<int> &parents)
+Genotype::Genotype(int num_rows, int num_cols,  vector<int> &parents)
 {
-    this->chromosome.resize(num_pixels);
+    this->chromosome.resize(num_rows, num_cols);
     this->num_objectives = 2;
     this->objective_values.resize(this->num_objectives);
     this->domination_counter = 0;
     this->rank = 0;
     this->crowding_distance = 0;
 
-    for (int i = 0; i < num_pixels; i++) {
-
-        if (parents[i] == -1){
-            this->chromosome[i] = genValues::none;
-        }
-        else{
-            if (parents[i] - i == 1) //right
-                this->chromosome[i] = genValues::right;
-            else if (parents[i] - i == -1)//left
-                this->chromosome[i] = genValues::left;
-            else if (parents[i] - i == num_cols)
-                this->chromosome[i] = genValues::down;
-            else if (parents[i] - i == -num_cols)
-                this->chromosome[i] = genValues::up;
+    for (int row = 0; row < num_rows; row++){
+        for (int col = 0; col < num_cols; col++){
+            int i = row * num_cols + col;
+            if (parents[i] == -1){
+                chromosome(row, col)->value = genValues::none;
+            }
             else{
-                cout << "Error in chromosome initialization" << endl;
+                if (parents[i] - i == 1)
+                    this->chromosome[row, col].value = genValues::right;
+                else if (parents[i] - i == -1)
+                    this->chromosome[row, col].value = genValues::left;
+                else if (parents[i] - i == num_cols)
+                    this->chromosome[row, col].value = genValues::down;
+                else if (parents[i] - i == -num_cols)
+                    this->chromosome[row, col].value = genValues::up;
+                else{
+                    cout << "Error in chromosome initialization" << endl;
+                }
             }
         }
     }
+
+    //for (int i = 0; i < num_pixels; i++) {
+//
+    //    if (parents[i] == -1){
+    //        this->chromosome[i] = genValues::none;
+    //    }
+    //    else{
+    //        if (parents[i] - i == 1)
+    //            this->chromosome[i] = genValues::right;
+    //        else if (parents[i] - i == -1)
+    //            this->chromosome[i] = genValues::left;
+    //        else if (parents[i] - i == num_cols)
+    //            this->chromosome[i] = genValues::down;
+    //        else if (parents[i] - i == -num_cols)
+    //            this->chromosome[i] = genValues::up;
+    //        else{
+    //            cout << "Error in chromosome initialization" << endl;
+    //        }
+    //    }
+    //}
 }
 
 /////////////////////////////////////////////////////////
@@ -83,10 +105,9 @@ bool Genotype::operator>(const Genotype &rhs) const
     }
     return true;
 }
-
+/*
 void Genotype::genotypeToPhenotypeDecoding(int num_rows, int num_cols)
 {
-    //vector< vector<int> > segments;
     Eigen::MatrixXi segmented_image(num_rows, num_cols);
     segmented_image = Eigen::MatrixXi::Ones(num_rows, num_cols)*(-1);
 
@@ -136,5 +157,10 @@ void Genotype::genotypeToPhenotypeDecoding(int num_rows, int num_cols)
     }
 }
 
+void Genotype::visualize()
+{
 
+}
+
+*/
 
