@@ -20,7 +20,7 @@ private:
     uint16_t population_size;
 
 public:
-    std::vector<Genotype> population;
+    std::vector<Genotype> population; // for testing in main. move back to private later
     // Constructors
     Nsga2();
     Nsga2(double mutation_rate, double crossover_rate, uint16_t tournament_size, double time_limit,
