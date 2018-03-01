@@ -24,6 +24,7 @@ public:
 
     void setRank(int rank);
     void insertToDominationSet(Genotype &i);
+    void genotypeToPhenotypeDecoding(int num_rows, int num_cols);
 
     Genotype();
     Genotype(int num_pixels, int num_cols, std::vector<int> &parents);

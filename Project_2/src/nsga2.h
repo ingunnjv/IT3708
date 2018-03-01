@@ -11,7 +11,7 @@
 
 class Nsga2 {
 private:
-    std::vector<Genotype> population;
+
     double mutation_rate;
     double crossover_rate;
     double time_limit;
@@ -22,6 +22,7 @@ private:
 
 
 public:
+    std::vector<Genotype> population;
     // Constructors
     Nsga2();
     Nsga2(double mutation_rate, double crossover_rate, uint16_t tournament_size, double time_limit,

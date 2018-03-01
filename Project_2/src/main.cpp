@@ -53,6 +53,7 @@ int main(int argc, char *argv[]) {
     cout << "START\n";
     ga.initializePopulation(image.r_channel, image.g_channel, image.b_channel);
     cout << "END\n";
+    ga.population[0].genotypeToPhenotypeDecoding(image.r_channel.rows(), image.r_channel.cols());
     //vector<int> parent_graph = ga.primMST(image.r_channel, image.g_channel, image.b_channel);
     //
     //printMST(parent_graph, image.r_channel.rows() * image.r_channel.cols(), image.r_channel, image.g_channel, image.b_channel);
