@@ -1,13 +1,5 @@
-//
-// Created by Ingunn on 23.02.2018.
-//
 #pragma once
-#include "utils.h"
-#include "genotype.h"
 #include "nsga2.h"
-#include <set>
-#include <iostream>
-#include <cfloat>
 
 using namespace std;
 
@@ -35,24 +27,17 @@ Nsga2::Nsga2(double mutation_rate, double crossover_rate, uint16_t tournament_si
     this->population.resize(population_size);
 }
 
-
-struct Cmp2
-{
-    bool operator ()(const pair<uint32_t, double> &a, const pair<uint32_t, double> &b) {
-        return a.second >= b.second;
-    }
-};
 /////////////////////////////////////////////////////////
 void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue)
 {
-    int num_rows = uint16_t(red.rows());
-    int num_cols = uint16_t(red.cols());
+    int num_rows = int(red.rows());
+    int num_cols = int(red.cols());
     int num_pixels = num_rows * num_cols;
     ///In the initialization of
     ///the ith individual in the population, the (i−1) long links are
     ///removed from the MST individual.
     vector<int> parent_graph = primMST(red, green, blue);
-    set < pair<uint32_t, double>, Cmp2 > links;
+    set < pair<uint32_t, double>, pairCmpGe > links;
 
     pixel_t x, y;
     for (int i = 1; i < num_pixels; i++) {
@@ -123,8 +108,21 @@ vector< vector<Genotype> > Nsga2::fastNonDominatedSort()
 }
 
 /////////////////////////////////////////////////////////
-std::tuple<double, double> Nsga2::objectiveValueSort(std::vector<Genotype> &genotypes, uint8_t objective_num) {
+tuple<double, double> Nsga2::objectiveValueSort(std::vector<Genotype> &front, uint8_t obj_val_i)
+{
+    if (obj_val_i == 0){
+        sort(front.begin(), front.end(), sortByObj1);
+    }
+    else if (obj_val_i == 1)
+    {
+        sort(front.begin(), front.end(), sortByObj2);
+    }
+}
 
+/////////////////////////////////////////////////////////
+void Nsga2::crowdedDistanceSort(std::vector<Genotype> &front)
+{
+    sort(front.begin(), front.end(), sortByCrowdedComparison);
 }
 
 /////////////////////////////////////////////////////////
@@ -153,79 +151,43 @@ void Nsga2::crowdingDistanceAssignment(vector<Genotype> &front)
 }
 
 /////////////////////////////////////////////////////////
-Genotype Nsga2::crowdedComparison(const Genotype &gt1, const Genotype &gt2)
-{
-    if (gt1.rank > gt2.rank)
-    {
-        return gt1;
-    }
-    else if (gt1.rank < gt2.rank)
-    {
-        return gt2;
-    }
-    else if (gt1.rank == gt2.rank)
-    {
-        if (gt1.crowding_distance >= gt2.crowding_distance)
-        {
-            return gt1;
-        }
-        else if (gt1.crowding_distance < gt2.crowding_distance)
-        {
-            return gt2;
-        }
-    }
-}
-
-/////////////////////////////////////////////////////////
 void Nsga2::runMainLoop()
 {
-    // TODO: initialize population here
-
+    vector< vector<Genotype> > fronts;
+    vector<Genotype> parents_pop = population;
+    vector<Genotype> offspring_pop;
 
     int generation = 0;
     while (generation < generation_limit)
     {
-        vector< vector<Genotype> > fronts = fastNonDominatedSort();
-        vector<Genotype> parents_pop;
+        population.insert(parents_pop.end(), offspring_pop.begin(), offspring_pop.end());
+        fronts = fastNonDominatedSort();
+        parents_pop.clear();
         int i = 0;
         while (parents_pop.size() + fronts[i].size() < population_size)
         {
+            crowdingDistanceAssignment(fronts[i]);
+            parents_pop.insert(parents_pop.end(), fronts[i].begin(), fronts[i].end());
             i++;
         }
-
-
-
-
-        vector<Genotype> offspring_pop = makeNewPop(parents_pop);
+        crowdedDistanceSort(fronts[i]);
+        parents_pop.insert(parents_pop.end(), fronts[i].begin(), fronts[i].begin() + (population_size - uint16_t(parents_pop.size())));
+        //TODO: implement some sort of early stopping by comparing solutions with PRI
+        offspring_pop = makeNewPop(parents_pop);
         generation++;
     }
-    // combine parent and offspring population Pt + Qt = Rt
-    // fastNonDominatedSort() returns all nondominated fronts of Rt
-    // Pt+1 = Ø and i = 1
-    // until until the parent population Pt+1 is filled:
-    // - - calculate crowding-distance in Fi
-    // include ith nondominated front in the parent pop
-    // check the next front for inclusion, i = i + 1
 
-    // sort the next nondominated front in descending order <n
-    // choose the first (N - |Pt+1|) elements of Fi
-    // - - use selection, crossover and mutation to create a new population Qt+1
-    // increment the generation counter, t = t + 1
+    // TODO: show solution
+    // TODO: get and print PRI of the best solution
 }
 
 /////////////////////////////////////////////////////////
-std::vector<Genotype> Nsga2::makeNewPop(std::vector<Genotype> parent_pop) {
+vector<Genotype> Nsga2::makeNewPop(std::vector<Genotype> &parent_pop) {
     return parent_pop;
 }
 
-struct Cmp
-{
-    bool operator ()(const pair<uint32_t, double> &a, const pair<uint32_t, double> &b) {
-        return a.second <= b.second;
-    }
-};
+
 /////////////////////////////////////////////////////////
-/// Prim's algorithm
 vector<int> Nsga2::primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue) {
     auto num_rows = uint16_t(red.rows());
     auto num_cols = uint16_t(red.cols());
@@ -234,7 +196,7 @@ vector<int> Nsga2::primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &gr
     vector<int> parent(num_pixels);   // Array to store constructed MST
     double key[num_pixels];   // Key values used to pick minimum weight edge in cut
     bool mstSet[num_pixels];  // To represent set of vertices not yet included in MST
-    set <pair <uint32_t, double>, Cmp> vertices_considered;
+    set <pair <uint32_t, double>, pairCmpLe> vertices_considered;
     pixel_t x, y;
 
     // Initialize all keys as INFINITE
@@ -307,8 +269,3 @@ vector<int> Nsga2::primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &gr
     }
     return parent;
 }
-
-
-
-
-

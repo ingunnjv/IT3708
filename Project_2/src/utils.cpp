@@ -1,8 +1,4 @@
-//
-// Created by LasseBot on 27-Feb-18.
-//
 #pragma once
-#include <Eigen/Dense>
 #include "utils.h"
 
 /////////////////////////////////////////////////////////
@@ -16,8 +12,9 @@ double rgbDistance(pixel_t x, pixel_t y, const Eigen::MatrixXi &red, const Eigen
 }
 
 /////////////////////////////////////////////////////////
-void setUserArgs(const int argc, char **argv, double &mutation_rate, double &crossover_rate,
-                 uint16_t &tournament_size, double &time_limit, uint16_t &generation_limit, uint16_t &population_size)
+void setUserArgs(int argc, char **argv, double &mutation_rate, double &crossover_rate,
+                 uint16_t &tournament_size, double &time_limit, uint16_t &generation_limit, uint16_t &population_size,
+                 int &problem_num)
 {
     mutation_rate = 0;
     crossover_rate = 0;
@@ -59,5 +56,43 @@ void setUserArgs(const int argc, char **argv, double &mutation_rate, double &cro
             population_size = uint16_t(arg_val);
             continue;
         }
+        else if(!strcmp("problem_num", arg_name))
+        {
+            problem_num = int(arg_val);
+            continue;
+        }
+    }
+}
+
+/////////////////////////////////////////////////////////
+void printMST(std::vector<int> parent, int num_pixels,
+              const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue)
+{
+    pixel_t x, y;
+    auto cols = uint16_t(red.cols());
+    printf("Edge   Weight\n");
+    for (int i = 1; i < num_pixels; i++) {
+        x.row = i / cols;
+        x.col = i % cols;
+        y.row = parent[i] / cols;
+        y.col = parent[i] % cols;
+        printf("%d - %d    %f \n", parent[i], i, rgbDistance(y, x, red, green, blue));
+    }
+}
+
+/////////////////////////////////////////////////////////
+bool sortByObj1(const Genotype &lhs, const Genotype &rhs) { return lhs.objective_values[0] > rhs.objective_values[0]; }
+
+/////////////////////////////////////////////////////////
+bool sortByObj2(const Genotype &lhs, const Genotype &rhs) { return lhs.objective_values[1] > rhs.objective_values[1]; }
+
+/////////////////////////////////////////////////////////
+bool sortByCrowdedComparison(const Genotype &lhs, const Genotype &rhs) {
+    if (lhs.rank != rhs.rank) {
+        return lhs.rank > rhs.rank;
+    }
+    else if (lhs.rank == rhs.rank)
+    {
+        return lhs.crowding_distance > rhs.crowding_distance;
     }
 }

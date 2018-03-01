@@ -1,12 +1,12 @@
-//
-// Created by Ingunn on 23.02.2018.
-//
-#pragma once
 #ifndef PROJECT_2_GENOTYPE_H
 #define PROJECT_2_GENOTYPE_H
 
 #include <vector>
 #include <set>
+#include <random>
+#include <Eigen/Dense>
+#include <vector>
+#include <iostream>
 
 enum genValues {left, right, up, down, none}; // all possible values of a gene
 
@@ -28,8 +28,8 @@ public:
 
     Genotype();
     Genotype(int num_pixels, int num_cols, std::vector<int> &parents);
-    bool operator<(const Genotype &right) const;
-    bool operator>(const Genotype &right) const;
+    bool operator<(const Genotype &rhs) const;
+    bool operator>(const Genotype &rhs) const;
 };
 
 
