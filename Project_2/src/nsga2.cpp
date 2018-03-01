@@ -120,7 +120,7 @@ tuple<double, double> Nsga2::objectiveValueSort(std::vector<Genotype> &front, ui
 }
 
 /////////////////////////////////////////////////////////
-void Nsga2::crowdedDistanceSort(std::vector<Genotype> front)
+void Nsga2::crowdedDistanceSort(std::vector<Genotype> &front)
 {
     sort(front.begin(), front.end(), sortByCrowdedComparison);
 }
@@ -182,7 +182,7 @@ void Nsga2::runMainLoop()
 }
 
 /////////////////////////////////////////////////////////
-vector<Genotype> Nsga2::makeNewPop(std::vector<Genotype> parent_pop) {
+vector<Genotype> Nsga2::makeNewPop(std::vector<Genotype> &parent_pop) {
     return parent_pop;
 }
 

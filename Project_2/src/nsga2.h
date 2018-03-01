@@ -40,13 +40,13 @@ public:
     std::tuple<double, double> objectiveValueSort(std::vector<Genotype> &front, uint8_t obj_val_i);
 
     /* Sorts a front of genotypes based on their crowding distance (best to worst -> greatest to lowest) */
-    void crowdedDistanceSort(std::vector<Genotype> front);
+    void crowdedDistanceSort(std::vector<Genotype> &front);
 
     /* Assigns every genotype in a front a crowding_distance */
     void crowdingDistanceAssignment(std::vector<Genotype> &front);
 
     /* Creates a new offspring population using crossover and mutation */
-    std::vector<Genotype> makeNewPop(std::vector<Genotype> parent_pop);
+    std::vector<Genotype> makeNewPop(std::vector<Genotype> &parent_pop);
 
     /* Run the main loop of the algorithm */
     void runMainLoop();

@@ -8,6 +8,7 @@
 #include <set>
 #include <iostream>
 #include "genotype.h"
+#include <Eigen/Dense>
 
 
 struct pixel_t {
