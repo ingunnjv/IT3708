@@ -17,7 +17,7 @@ struct GeneNode {
     GeneNode* child;
     std::vector<GeneNode*> parents;
 };
-typedef Eigen::Matrix<GeneNode, Eigen::Dynamic, Eigen::Dynamic> GeneMatrix;
+typedef Eigen::Matrix<struct GeneNode, Eigen::Dynamic, Eigen::Dynamic> GeneMatrix;
 
 class Genotype {
 private:
@@ -39,8 +39,10 @@ public:
 
     Genotype();
     Genotype(int num_rows, int num_cols,  std::vector<int> &parents);
+
     bool operator<(const Genotype &rhs) const;
     bool operator>(const Genotype &rhs) const;
+
 };
 
 

@@ -37,25 +37,39 @@ Genotype::Genotype(int num_rows, int num_cols,  vector<int> &parents)
     this->rank = 0;
     this->crowding_distance = 0;
 
+
+
+
     for (int row = 0; row < num_rows; row++){
         for (int col = 0; col < num_cols; col++){
             int i = row * num_cols + col;
             if (parents[i] == -1){
-                chromosome(row, col)->value = genValues::none;
+                this->chromosome(row, col).value = genValues::none;
+                this->chromosome(row, col).child = NULL;
             }
             else{
-                if (parents[i] - i == 1)
-                    this->chromosome[row, col].value = genValues::right;
-                else if (parents[i] - i == -1)
-                    this->chromosome[row, col].value = genValues::left;
-                else if (parents[i] - i == num_cols)
-                    this->chromosome[row, col].value = genValues::down;
-                else if (parents[i] - i == -num_cols)
-                    this->chromosome[row, col].value = genValues::up;
+                if (parents[i] - i == 1) {
+                    this->chromosome(row, col).value = genValues::right;
+                    this->chromosome(row, col).child = &chromosome(row, col + 1);
+                }
+                else if (parents[i] - i == -1) {
+                    this->chromosome(row, col).value = genValues::left;
+                    this->chromosome(row, col).child = &chromosome(row, col - 1);
+                }
+                else if (parents[i] - i == num_cols) {
+                    this->chromosome(row, col).value = genValues::down;
+                    this->chromosome(row, col).child = &chromosome(row + 1, col);
+                }
+                else if (parents[i] - i == -num_cols){
+                    this->chromosome(row, col).value = genValues::up;
+                    this->chromosome(row, col).child = &chromosome(row - 1, col);
+                }
                 else{
                     cout << "Error in chromosome initialization" << endl;
                 }
+                this->chromosome(row, col).child->parents.push_back(&chromosome(row, col));
             }
+
         }
     }
 
@@ -79,6 +93,16 @@ Genotype::Genotype(int num_rows, int num_cols,  vector<int> &parents)
     //    }
     //}
 }
+
+//Genotype::~Genotype(){
+//    int rows = this->chromosome.rows();
+//    int cols = this->chromosome.cols();
+//    for (int row = 0; row < rows; row++) {
+//        for (int col = 0; col < cols; col++) {
+//            free(this->chromosome(row, col));
+//        }
+//    }
+//}
 
 /////////////////////////////////////////////////////////
 bool Genotype::operator<(const Genotype &rhs) const

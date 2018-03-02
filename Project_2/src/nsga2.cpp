@@ -45,13 +45,11 @@ void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::Matrix
         y.row = parent_graph[i] / num_cols, y.col = parent_graph[i] % num_cols;
         links.insert(make_pair(i, rgbDistance(y, x, red, green, blue)));
     }
-    int a = 10;
     for (int i = 0; i < population_size; i++){
         population[i] = Genotype(num_rows, num_cols, parent_graph);
         auto it = links.begin();
         parent_graph[it->first] = -1;
         if (!links.empty()) { links.erase(it); }
-        a++;
     }
 }
 
