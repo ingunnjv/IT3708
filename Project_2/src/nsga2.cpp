@@ -264,8 +264,8 @@ vector<int> Nsga2::primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &gr
             }
         }
         //if (!vertices_considered.empty()){ std::cout << "set size: " << vertices_considered.size() << std::endl; }
-        delete[] neighbors;
-        delete[] neighbor_pos;
+        //delete[] neighbors;
+        //delete[] neighbor_pos;
     }
     return parent;
 }

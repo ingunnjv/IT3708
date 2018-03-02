@@ -7,8 +7,6 @@
 using namespace std;
 
 int main(int argc, char *argv[]) {
-
-
     // Set hyper parameters
     double mutation_rate, crossover_Rate, time_limit;
     uint16_t tournament_size, generation_limit, population_size;
