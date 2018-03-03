@@ -1,3 +1,4 @@
+#pragma once
 #ifndef PROJECT_2_GENOTYPE_H
 #define PROJECT_2_GENOTYPE_H
 
@@ -7,6 +8,7 @@
 #include <Eigen/Dense>
 #include <vector>
 #include <iostream>
+#include "utils.h"
 
 
 
@@ -22,6 +24,8 @@ typedef Eigen::Matrix<struct GeneNode, Eigen::Dynamic, Eigen::Dynamic> GeneMatri
 class Genotype {
 private:
     GeneMatrix chromosome; // storage the entire set of genes
+    uint16_t num_cols;
+    uint16_t num_rows;
     std::vector< std::vector<int> > segments; // segments of a solution
 
 public:
@@ -34,11 +38,19 @@ public:
 
     void setRank(int rank);
     void insertToDominationSet(Genotype &i);
-    void genotypeToPhenotypeDecoding(int num_rows, int num_cols);
-    void visualize();
+    void calculateObjectives(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
+    //void genotypeToPhenotypeDecoding(uint16_t num_rows, uint16_t num_cols);
+    //void visualize();
+    double calcEuclideanRgbDiff(signed short dir_y, signed short dir_x, int this_col, int this_row, int this_segment,
+                                const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
 
     Genotype();
-    Genotype(int num_rows, int num_cols,  std::vector<int> &parents);
+    Genotype(uint16_t num_rows, uint16_t num_cols,  std::vector<int> &parents);
+
+
+    static bool sortByObj1(const Genotype &lhs, const Genotype &rhs);
+    static bool sortByObj2(const Genotype &lhs, const Genotype &rhs);
+    static bool sortByCrowdedComparison(const Genotype &lhs, const Genotype &rhs);
 
     bool operator<(const Genotype &rhs) const;
     bool operator>(const Genotype &rhs) const;

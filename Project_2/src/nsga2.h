@@ -1,13 +1,15 @@
+#pragma once
 #ifndef PROJECT_2_NSGA2_H
 #define PROJECT_2_NSGA2_H
 
+#include "utils.h"
 #include "genotype.h"
 #include <vector>
 #include <Eigen/Dense>
 #include <set>
 #include <iostream>
 #include <cfloat>
-#include "utils.h"
+
 
 class Nsga2 {
 private:
@@ -39,7 +41,7 @@ public:
     std::tuple<double, double> objectiveValueSort(std::vector<Genotype> &front, uint8_t obj_val_i);
 
     /* Sorts a front of genotypes based on their crowding distance (best to worst -> greatest to lowest) */
-    void crowdedDistanceSort(std::vector<Genotype> &front);
+    void crowdingDistanceSort(std::vector<Genotype> &front);
 
     /* Assigns every genotype in a front a crowding_distance */
     void crowdingDistanceAssignment(std::vector<Genotype> &front);
