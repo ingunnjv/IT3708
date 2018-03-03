@@ -1,4 +1,3 @@
-#pragma once
 #include "nsga2.h"
 
 using namespace std;
@@ -60,40 +59,30 @@ vector< vector<Genotype> > Nsga2::fastNonDominatedSort()
     vector<Genotype> first_front;
 
     // Iterate through the entire population to find who dominates who
-    for (auto &p: this->population)
-    {
-        for (auto &q: this->population)
-        {
-            if (p < q) // check if p dominates q
-            {
+    for (auto &p: population) {
+        for (auto &q: population) {
+            if (p < q){ // check if p dominates q
                 p.insertToDominationSet(q);
             }
-            else if (p > q) // check if q dominates p
-            {
+            else if (p > q){ // check if q dominates p
                 p.domination_counter++;
             }
         }
-        if (p.domination_counter == 0) // if p is dominated by no one, it means it belongs to the first rank
-        {
+        if (p.domination_counter == 0){ // if p is dominated by no one, it means it belongs to the first rank
             p.setRank(0);
             first_front.push_back(p); // non-dominated solutions belongs to the first front
-
         }
     }
     // Iterate through the population again to decide in which front to put each of them
     fronts[0] = first_front;
     int i = 0; // initialize front counter
-    while (!fronts[i].empty()) // if last iteration gave no new front, the prev front was the last front
-    {
+    while (!fronts[i].empty()){ // if last iteration gave no new front, the prev front was the last front
         vector<Genotype> prev_front = fronts[i];
         vector<Genotype> new_front; // to store members of the next front
-        for (auto &p: prev_front)
-        {
-            for (auto &q: p.dominates)
-            {
+        for (auto &p: prev_front) {
+            for (auto &q: p.dominates) {
                 q.domination_counter--; // removing the counts given by the prev front
-                if (q.domination_counter == 0) // q must belong to the next front if its counter is now zero
-                {
+                if (q.domination_counter == 0){ // q must belong to the next front if its counter is now zero
                     q.setRank(i+1);
                     new_front.push_back(q);
                 }
@@ -109,18 +98,25 @@ vector< vector<Genotype> > Nsga2::fastNonDominatedSort()
 tuple<double, double> Nsga2::objectiveValueSort(std::vector<Genotype> &front, uint8_t obj_val_i)
 {
     if (obj_val_i == 0){
-        sort(front.begin(), front.end(), sortByObj1);
+        sort(front.begin(), front.end(), Genotype::sortByObj1);
+        double fmin = front[0].objective_values[0];
+        double fmax = front.back().objective_values[0];
+        tuple<double, double> extreme_vals (make_tuple(fmin, fmax));
+        return extreme_vals;
     }
-    else if (obj_val_i == 1)
-    {
-        sort(front.begin(), front.end(), sortByObj2);
+    else if (obj_val_i == 1) {
+        sort(front.begin(), front.end(), Genotype::sortByObj2);
+        double fmin = front[0].objective_values[1];
+        double fmax = front.back().objective_values[1];
+        tuple<double, double> extreme_vals (make_tuple(fmin, fmax));
+        return extreme_vals;
     }
 }
 
 /////////////////////////////////////////////////////////
-void Nsga2::crowdedDistanceSort(std::vector<Genotype> &front)
+void Nsga2::crowdingDistanceSort(std::vector<Genotype> &front)
 {
-    sort(front.begin(), front.end(), sortByCrowdedComparison);
+    sort(front.begin(), front.end(), Genotype::sortByCrowdedComparison);
 }
 
 /////////////////////////////////////////////////////////
@@ -128,12 +124,10 @@ void Nsga2::crowdingDistanceAssignment(vector<Genotype> &front)
 {
     vector<Genotype>::size_type front_size = front.size(); // number of solutions in the front
     uint8_t num_objectives = front[0].num_objectives; // number of objectives in problem
-    for (auto &genotype: front) // initialize all crowding distances to zero
-    {
+    for (auto &genotype: front){ // initialize all crowding distances to zero
         genotype.crowding_distance = 0;
     }
-    for (uint8_t obj_val_num = 0; obj_val_num != num_objectives; obj_val_num++)
-    {
+    for (uint8_t obj_val_num = 0; obj_val_num != num_objectives; obj_val_num++){
         // sort on objective value number and return min and max of the objective
         tuple<double, double> extreme_vals = objectiveValueSort(front, obj_val_num);
         double fmin = get<0>(extreme_vals);
@@ -143,7 +137,14 @@ void Nsga2::crowdingDistanceAssignment(vector<Genotype> &front)
         front.back().crowding_distance = DBL_MAX;
         for (vector<Genotype>::size_type i = 1; i != front_size - 1; i++)
         {
-            front[i].crowding_distance += (front[i+1].objective_values[obj_val_num] - front[i-1].objective_values[obj_val_num])/(fmax-fmin);
+            if (fmin-fmax != 0) {
+                front[i].crowding_distance +=
+                        (front[i + 1].objective_values[obj_val_num] - front[i - 1].objective_values[obj_val_num]) /
+                        (fmax - fmin);
+            }
+            else{ // avoids division by zero
+                front[i].crowding_distance = DBL_MAX;
+            }
         }
     }
 }
@@ -164,11 +165,12 @@ void Nsga2::runMainLoop()
         int i = 0;
         while (parents_pop.size() + fronts[i].size() < population_size)
         {
-            crowdingDistanceAssignment(fronts[i]);
+            //crowdingDistanceAssignment(fronts[i]);
             parents_pop.insert(parents_pop.end(), fronts[i].begin(), fronts[i].end());
             i++;
         }
-        crowdedDistanceSort(fronts[i]);
+        crowdingDistanceAssignment(fronts[i]);
+        crowdingDistanceSort(fronts[i]);
         parents_pop.insert(parents_pop.end(), fronts[i].begin(), fronts[i].begin() + (population_size - uint16_t(parents_pop.size())));
         //TODO: implement some sort of early stopping by comparing solutions with PRI
         offspring_pop = makeNewPop(parents_pop);

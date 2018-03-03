@@ -7,13 +7,17 @@
 #include <cfloat>
 #include <set>
 #include <iostream>
-#include "genotype.h"
-#include <Eigen/Dense>
 
 
 struct pixel_t {
     int row;
     int col;
+};
+
+struct rgb_centroid_t{
+    double r;
+    double g;
+    double b;
 };
 
 struct pairCmpLe
@@ -37,8 +41,6 @@ void setUserArgs(int argc, char **argv, double &mutation_rate, double &crossover
                  uint16_t &population_size, int &problem_num);
 void printMST(std::vector<int> &parent, int num_pixels,
               const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
-bool sortByObj1(const Genotype &lhs, const Genotype &rhs);
-bool sortByObj2(const Genotype &lhs, const Genotype &rhs);
-bool sortByCrowdedComparison(const Genotype &lhs, const Genotype &rhs);
+
 
 #endif //PROJECT_2_UTILS_H

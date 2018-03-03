@@ -1,4 +1,3 @@
-#pragma once
 #include "utils.h"
 
 /////////////////////////////////////////////////////////
@@ -80,19 +79,4 @@ void printMST(std::vector<int> &parent, int num_pixels,
     }
 }
 
-/////////////////////////////////////////////////////////
-bool sortByObj1(const Genotype &lhs, const Genotype &rhs) { return lhs.objective_values[0] > rhs.objective_values[0]; }
 
-/////////////////////////////////////////////////////////
-bool sortByObj2(const Genotype &lhs, const Genotype &rhs) { return lhs.objective_values[1] > rhs.objective_values[1]; }
-
-/////////////////////////////////////////////////////////
-bool sortByCrowdedComparison(const Genotype &lhs, const Genotype &rhs) {
-    if (lhs.rank != rhs.rank) {
-        return lhs.rank > rhs.rank;
-    }
-    else if (lhs.rank == rhs.rank)
-    {
-        return lhs.crowding_distance > rhs.crowding_distance;
-    }
-}
