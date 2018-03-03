@@ -7,6 +7,7 @@
 #include <Eigen/Dense>
 #include <vector>
 #include <iostream>
+#include <opencv2/core.hpp>
 
 
 
@@ -35,7 +36,7 @@ public:
     void setRank(int rank);
     void insertToDominationSet(Genotype &i);
     void genotypeToPhenotypeDecoding(int num_rows, int num_cols);
-    void visualize();
+    void visualize(cv::Mat &test_image, int num_rows, int num_cols);
 
     Genotype();
     Genotype(int num_rows, int num_cols,  std::vector<int> &parents);

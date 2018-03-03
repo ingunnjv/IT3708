@@ -14,9 +14,10 @@ class ImageLoader
 private:
     std::vector<cv::Mat> gt_images;
     std::vector<cv::Mat> segment_images;
-    cv::Mat test_image;
+
 
 public:
+    cv::Mat test_image;
     Eigen::MatrixXi b_channel;
     Eigen::MatrixXi g_channel;
     Eigen::MatrixXi r_channel;
