@@ -26,8 +26,8 @@ int main(int argc, char *argv[]) {
     ga.initializePopulation(image.r_channel, image.g_channel, image.b_channel);
     cout << "Start decoding" << endl;
     //printMST(parent, image.r_channel.rows() * image.r_channel.cols(), image.r_channel, image.g_channel, image.b_channel);
-    ga.population[3].genotypeToPhenotypeDecoding(image.r_channel.rows(), image.r_channel.cols());
-    ga.population[3].visualize(image.test_image, image.r_channel.rows(), image.r_channel.cols());
+    ga.population[4].genotypeToPhenotypeDecoding(image.r_channel.rows(), image.r_channel.cols());
+    ga.population[4].visualize(image.b_channel, image.g_channel, image.r_channel, image.r_channel.rows(), image.r_channel.cols());
     cout << "End decoding" << endl;
 
     // Run the algorithm

@@ -36,7 +36,7 @@ public:
     void setRank(int rank);
     void insertToDominationSet(Genotype &i);
     void genotypeToPhenotypeDecoding(int num_rows, int num_cols);
-    void visualize(cv::Mat &test_image, int num_rows, int num_cols);
+    void visualize(Eigen::MatrixXi &blue_ch, Eigen::MatrixXi &green_ch, Eigen::MatrixXi &red_ch, int num_rows, int num_cols);
 
     Genotype();
     Genotype(int num_rows, int num_cols,  std::vector<int> &parents);
