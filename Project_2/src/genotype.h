@@ -8,6 +8,7 @@
 #include <Eigen/Dense>
 #include <vector>
 #include <iostream>
+#include <opencv2/core.hpp>
 #include "utils.h"
 
 
@@ -38,11 +39,12 @@ public:
 
     void setRank(int rank);
     void insertToDominationSet(Genotype &i);
+    void genotypeToPhenotypeDecoding(int num_rows, int num_cols);
+    void visualize(cv::Mat &test_image, int num_rows, int num_cols);
     void calculateObjectives(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
-    //void genotypeToPhenotypeDecoding(uint16_t num_rows, uint16_t num_cols);
-    //void visualize();
     double calcEuclideanRgbDiff(signed short dir_y, signed short dir_x, int this_col, int this_row, int this_segment,
                                 const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
+
 
     Genotype();
     Genotype(uint16_t num_rows, uint16_t num_cols,  std::vector<int> &parents);
