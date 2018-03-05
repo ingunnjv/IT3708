@@ -20,6 +20,7 @@ struct GeneNode {
     uint8_t value;
     GeneNode* child;
     std::vector<GeneNode*> parents;
+    GeneNode(){parents.reserve(4);};
 };
 typedef Eigen::Matrix<struct GeneNode, Eigen::Dynamic, Eigen::Dynamic> GeneMatrix;
 
@@ -47,6 +48,7 @@ public:
 
 
     Genotype();
+    Genotype(uint16_t num_rows, uint16_t num_cols);
     Genotype(uint16_t num_rows, uint16_t num_cols,  std::vector<int> &parents);
     //~Genotype() = default;
 
