@@ -56,80 +56,83 @@ void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::Matrix
 }
 
 /////////////////////////////////////////////////////////
-vector<vector<Genotype> > Nsga2::fastNonDominatedSort() {
-    vector< vector<Genotype> > fronts;//(this->population_size, vector<Genotype>(this->population_size));
-    fronts.reserve(this->population_size);
-    vector<Genotype> first_front;
+void Nsga2::fastNonDominatedSort(std::vector<std::vector<Genotype*> > &fronts) {
+    vector<Genotype*> first_front;
     first_front.reserve(this->population_size);
 
     // Iterate through the entire population to find who dominates who
+    int p_i = 0, q_i = 0;
      for (auto &p: this->population) {
         for (auto &q: this->population) {
-            if (p < q){ // check if p dominates q
-                p.insertToDominationSet(q);
+            if (p_i != q_i){
+                if (p < q){ // check if p dominates q
+                    p.insertToDominationSet(q);
+                }
+                else if (p > q){ // check if q dominates p
+                    p.domination_counter++;
+                }
             }
-            else if (p > q){ // check if q dominates p
-                p.domination_counter++;
-            }
+            q_i++;
         }
         if (p.domination_counter == 0){ // if p is dominated by no one, it means it belongs to the first rank
             p.setRank(0);
-            first_front.push_back(p); // non-dominated solutions belongs to the first front
+            first_front.push_back(&p); // non-dominated solutions belongs to the first front
         }
+        p_i++;
+        q_i = 0;
     }
     // Iterate through the population again to decide in which front to put each of them
     fronts.push_back(first_front);
     int i = 0; // initialize front counter
     while (!fronts[i].empty()){ // if last iteration gave no new front, the prev front was the last front
-        vector<Genotype> new_front; // to store members of the next front
+        vector<Genotype*> new_front; // to store members of the next front
         new_front.reserve(this->population_size);
         for (auto &p: fronts[i]) {
-            for (auto *q: p.dominates) {
+            for (auto *q: p->dominates) {
                 q->domination_counter--; // removing the counts given by the prev front
                 if (q->domination_counter == 0){ // q must belong to the next front if its counter is now zero
                     q->setRank(i+1);
-                    new_front.push_back(*q);
+                    new_front.push_back(q);
                 }
             }
         }
         i++;
         fronts.push_back(new_front);
     }
-    return fronts;
 }
 
 /////////////////////////////////////////////////////////
-tuple<double, double> Nsga2::objectiveValueSort(std::vector<Genotype> &front, uint8_t obj_val_i)
+tuple<double, double> Nsga2::objectiveValueSort(std::vector<Genotype*> &front, uint8_t obj_val_i)
 {
     if (obj_val_i == 0){
         sort(front.begin(), front.end(), Genotype::sortByObj1);
-        double fmin = front[0].objective_values[0];
-        double fmax = front.back().objective_values[0];
+        double fmin = front[0]->objective_values[0];
+        double fmax = front.back()->objective_values[0];
         tuple<double, double> extreme_vals (make_tuple(fmin, fmax));
         return extreme_vals;
     }
     else if (obj_val_i == 1) {
         sort(front.begin(), front.end(), Genotype::sortByObj2);
-        double fmin = front[0].objective_values[1];
-        double fmax = front.back().objective_values[1];
+        double fmin = front[0]->objective_values[1];
+        double fmax = front.back()->objective_values[1];
         tuple<double, double> extreme_vals (make_tuple(fmin, fmax));
         return extreme_vals;
     }
 }
 
 /////////////////////////////////////////////////////////
-void Nsga2::crowdingDistanceSort(std::vector<Genotype> &front)
+void Nsga2::crowdingDistanceSort(std::vector<Genotype*> &front)
 {
     sort(front.begin(), front.end(), Genotype::sortByCrowdedComparison);
 }
 
 /////////////////////////////////////////////////////////
-void Nsga2::crowdingDistanceAssignment(vector<Genotype> &front)
+void Nsga2::crowdingDistanceAssignment(vector<Genotype*> &front)
 {
     vector<Genotype>::size_type front_size = front.size(); // number of solutions in the front
-    uint8_t num_objectives = front[0].num_objectives; // number of objectives in problem
+    uint8_t num_objectives = front[0]->num_objectives; // number of objectives in problem
     for (auto &genotype: front){ // initialize all crowding distances to zero
-        genotype.crowding_distance = 0;
+        genotype->crowding_distance = 0;
     }
     for (uint8_t obj_val_num = 0; obj_val_num != num_objectives; obj_val_num++){
         // sort on objective value number and return min and max of the objective
@@ -137,17 +140,17 @@ void Nsga2::crowdingDistanceAssignment(vector<Genotype> &front)
         double fmin = get<0>(extreme_vals);
         double fmax = get<1>(extreme_vals);
         // set first and last genotypes distance to inf such that boundary points are always selected
-        front[0].crowding_distance = DBL_MAX;
-        front.back().crowding_distance = DBL_MAX;
+        front[0]->crowding_distance = DBL_MAX;
+        front.back()->crowding_distance = DBL_MAX;
         for (vector<Genotype>::size_type i = 1; i != front_size - 1; i++)
         {
             if (fmin-fmax != 0) {
-                front[i].crowding_distance +=
-                        (front[i + 1].objective_values[obj_val_num] - front[i - 1].objective_values[obj_val_num]) /
+                front[i]->crowding_distance +=
+                        (front[i + 1]->objective_values[obj_val_num] - front[i - 1]->objective_values[obj_val_num]) /
                         (fmax - fmin);
             }
             else{ // avoids division by zero
-                front[i].crowding_distance = DBL_MAX;
+                front[i]->crowding_distance = DBL_MAX;
             }
         }
     }
@@ -156,10 +159,10 @@ void Nsga2::crowdingDistanceAssignment(vector<Genotype> &front)
 /////////////////////////////////////////////////////////
 void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue)
 {
-    vector< vector<Genotype> > fronts;
+    vector< vector<Genotype*> > fronts;
     fronts.reserve(this->population_size);
-    vector<Genotype> next_gen;
-    next_gen.reserve(this->population_size);
+    vector<Genotype> parents_pop;
+    parents_pop.reserve(this->population_size);
     vector<Genotype> offspring_pop;
     offspring_pop.reserve(this->population_size);
 
@@ -169,25 +172,25 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
         //TODO: implement some sort of early stopping by comparing solutions with PRI
 
         /* Create the next gen pop by the non-domination principle */
-        fronts = fastNonDominatedSort();
-        next_gen.clear();
+        fastNonDominatedSort(fronts);
+        parents_pop.clear();
         int i = 0;
-        while (next_gen.size() + fronts[i].size() < population_size)
+        while (parents_pop.size() + fronts[i].size() < population_size)
         {
             //crowdingDistanceAssignment(fronts[i]);
-            next_gen.insert(next_gen.end(), fronts[i].begin(), fronts[i].end());
+            //parents_pop.insert(parents_pop.end(), fronts[i].begin(), fronts[i].end());
             i++;
         }
         //crowdingDistanceAssignment(fronts[i]);
         //crowdingDistanceSort(fronts[i]);
-        next_gen.insert(next_gen.end(), fronts[i].begin(), fronts[i].begin() + (population_size - uint16_t(next_gen.size())));
+        //parents_pop.insert(parents_pop.end(), fronts[i].begin(), fronts[i].begin() + (population_size - uint16_t(parents_pop.size())));
 
         /* Create a new offspring population by crossover and mutation */
-        offspring_pop = makeNewPop(next_gen); // TODO: Implement this function (+crossover & mutation)
+        //offspring_pop = makeNewPop(parents_pop); // TODO: Implement this function (+crossover & mutation)
 
         /* Combine the parent and offspring population for next iteration */
         population.clear();
-        population.insert(population.end(), next_gen.begin(), next_gen.end());
+        population.insert(population.end(), parents_pop.begin(), parents_pop.end());
         population.insert(population.end(), offspring_pop.begin(), offspring_pop.end());
         generation++;
     }
