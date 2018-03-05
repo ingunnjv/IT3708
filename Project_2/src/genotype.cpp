@@ -16,7 +16,8 @@ void Genotype::setRank(int rank)
 /////////////////////////////////////////////////////////
 void Genotype::insertToDominationSet(Genotype &i)
 {
-    this->dominates.push_back(i);
+    Genotype* g_p = &i;
+    this->dominates.push_back(g_p);
 }
 
 /////////////////////////////////////////////////////////
@@ -172,7 +173,7 @@ void Genotype::genotypeToPhenotypeDecoding(int num_rows, int num_cols)
     //    cout << endl;
     //}
 
-    cout << "Total number of segments: " << total_number_of_segments << endl;
+    //cout << "Total number of segments: " << total_number_of_segments << endl;
     /*
     // create vector of segments
     this->segments.resize(total_number_of_segments);
@@ -264,7 +265,7 @@ void Genotype::calculateObjectives(const Eigen::MatrixXi &red, const Eigen::Matr
     for (int row = 0; row < num_rows; row++) {
         for (int col = 0; col < num_cols; col++) {
             int segment_num = chromosome(row,col).segment;
-            if (find(segment_nums_found.begin(), segment_nums_found.end(), segment_num) != segment_nums_found.end()){
+            if (find(segment_nums_found.begin(), segment_nums_found.end(), segment_num) == segment_nums_found.end()){
                 segment_nums_found.push_back(segment_num);
             }
         }
@@ -315,11 +316,11 @@ void Genotype::calculateObjectives(const Eigen::MatrixXi &red, const Eigen::Matr
             int this_col = p.col;
             int this_segment = chromosome(this_row, this_col).segment;
             double segment_boundary_diff = 0;
-            segment_boundary_diff += calcEuclideanRgbDiff(-1, 0, this_col, this_row, this_segment, red,green,blue);
-            segment_boundary_diff += calcEuclideanRgbDiff(1, 0, this_col, this_row, this_segment, red,green,blue);
-            segment_boundary_diff += calcEuclideanRgbDiff(0, -1, this_col, this_row, this_segment, red,green,blue);
-            segment_boundary_diff += calcEuclideanRgbDiff(0, 1, this_col, this_row, this_segment, red,green,blue);
-            objective_values[1] += segment_boundary_diff;
+            segment_boundary_diff -= calcEuclideanRgbDiff(-1, 0, this_col, this_row, this_segment, red,green,blue);
+            segment_boundary_diff -= calcEuclideanRgbDiff(1, 0, this_col, this_row, this_segment, red,green,blue);
+            segment_boundary_diff -= calcEuclideanRgbDiff(0, -1, this_col, this_row, this_segment, red,green,blue);
+            segment_boundary_diff -= calcEuclideanRgbDiff(0, 1, this_col, this_row, this_segment, red,green,blue);
+            objective_values[1] -= segment_boundary_diff;
             }
         i++;
     }
@@ -346,7 +347,7 @@ bool Genotype::sortByCrowdedComparison(const Genotype &lhs, const Genotype &rhs)
 double Genotype::calcEuclideanRgbDiff(signed short dir_y, signed short dir_x, int this_col, int this_row, int this_segment,
                                       const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue) {
     double diff = 0;
-    if (this_col + dir_x > 0 && this_col + dir_x < num_cols && this_row + dir_y > 0 && this_row + dir_y < num_rows) {
+    if (this_col + dir_x >= 0 && this_col + dir_x < num_cols && this_row + dir_y >= 0 && this_row + dir_y < num_rows) {
         if (chromosome(this_row + dir_y, this_col + dir_x).segment != this_segment) {
             diff = sqrt(pow(red(this_row, this_col) - red(this_row + dir_y, this_col + dir_x), 2)
                         + pow(green(this_row, this_col) - green(this_row + dir_y, this_col + dir_x), 2)
@@ -357,5 +358,7 @@ double Genotype::calcEuclideanRgbDiff(signed short dir_y, signed short dir_x, in
     return diff;
 }
 
-
-
+/*
+Genotype::~Genotype(){
+    cout << "deleted genotype!" << endl;
+}*/

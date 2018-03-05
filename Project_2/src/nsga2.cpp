@@ -49,18 +49,22 @@ void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::Matrix
         auto it = links.begin();
         parent_graph[it->first] = -1;
         if (!links.empty()) { links.erase(it); }
+        population[i].genotypeToPhenotypeDecoding(num_rows, num_cols);
+        population[i].calculateObjectives(red, green, blue);
+        cout << "Created genotype with " << i << " segments." << endl;
     }
 }
 
 /////////////////////////////////////////////////////////
-vector< vector<Genotype> > Nsga2::fastNonDominatedSort()
-{
+vector<vector<Genotype> > Nsga2::fastNonDominatedSort() {
     vector< vector<Genotype> > fronts;//(this->population_size, vector<Genotype>(this->population_size));
+    fronts.reserve(this->population_size);
     vector<Genotype> first_front;
+    first_front.reserve(this->population_size);
 
     // Iterate through the entire population to find who dominates who
-    for (auto &p: population) {
-        for (auto &q: population) {
+     for (auto &p: this->population) {
+        for (auto &q: this->population) {
             if (p < q){ // check if p dominates q
                 p.insertToDominationSet(q);
             }
@@ -74,22 +78,22 @@ vector< vector<Genotype> > Nsga2::fastNonDominatedSort()
         }
     }
     // Iterate through the population again to decide in which front to put each of them
-    fronts[0] = first_front;
+    fronts.push_back(first_front);
     int i = 0; // initialize front counter
     while (!fronts[i].empty()){ // if last iteration gave no new front, the prev front was the last front
-        vector<Genotype> prev_front = fronts[i];
         vector<Genotype> new_front; // to store members of the next front
-        for (auto &p: prev_front) {
-            for (auto &q: p.dominates) {
-                q.domination_counter--; // removing the counts given by the prev front
-                if (q.domination_counter == 0){ // q must belong to the next front if its counter is now zero
-                    q.setRank(i+1);
-                    new_front.push_back(q);
+        new_front.reserve(this->population_size);
+        for (auto &p: fronts[i]) {
+            for (auto *q: p.dominates) {
+                q->domination_counter--; // removing the counts given by the prev front
+                if (q->domination_counter == 0){ // q must belong to the next front if its counter is now zero
+                    q->setRank(i+1);
+                    new_front.push_back(*q);
                 }
             }
         }
         i++;
-        fronts[i] = new_front;
+        fronts.push_back(new_front);
     }
     return fronts;
 }
@@ -150,30 +154,41 @@ void Nsga2::crowdingDistanceAssignment(vector<Genotype> &front)
 }
 
 /////////////////////////////////////////////////////////
-void Nsga2::runMainLoop()
+void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue)
 {
     vector< vector<Genotype> > fronts;
-    vector<Genotype> parents_pop = population;
+    fronts.reserve(this->population_size);
+    vector<Genotype> next_gen;
+    next_gen.reserve(this->population_size);
     vector<Genotype> offspring_pop;
+    offspring_pop.reserve(this->population_size);
 
     int generation = 0;
     while (generation < generation_limit)
     {
-        population.insert(parents_pop.end(), offspring_pop.begin(), offspring_pop.end());
+        //TODO: implement some sort of early stopping by comparing solutions with PRI
+
+        /* Create the next gen pop by the non-domination principle */
         fronts = fastNonDominatedSort();
-        parents_pop.clear();
+        next_gen.clear();
         int i = 0;
-        while (parents_pop.size() + fronts[i].size() < population_size)
+        while (next_gen.size() + fronts[i].size() < population_size)
         {
             //crowdingDistanceAssignment(fronts[i]);
-            parents_pop.insert(parents_pop.end(), fronts[i].begin(), fronts[i].end());
+            next_gen.insert(next_gen.end(), fronts[i].begin(), fronts[i].end());
             i++;
         }
-        crowdingDistanceAssignment(fronts[i]);
-        crowdingDistanceSort(fronts[i]);
-        parents_pop.insert(parents_pop.end(), fronts[i].begin(), fronts[i].begin() + (population_size - uint16_t(parents_pop.size())));
-        //TODO: implement some sort of early stopping by comparing solutions with PRI
-        offspring_pop = makeNewPop(parents_pop);
+        //crowdingDistanceAssignment(fronts[i]);
+        //crowdingDistanceSort(fronts[i]);
+        next_gen.insert(next_gen.end(), fronts[i].begin(), fronts[i].begin() + (population_size - uint16_t(next_gen.size())));
+
+        /* Create a new offspring population by crossover and mutation */
+        offspring_pop = makeNewPop(next_gen); // TODO: Implement this function (+crossover & mutation)
+
+        /* Combine the parent and offspring population for next iteration */
+        population.clear();
+        population.insert(population.end(), next_gen.begin(), next_gen.end());
+        population.insert(population.end(), offspring_pop.begin(), offspring_pop.end());
         generation++;
     }
 

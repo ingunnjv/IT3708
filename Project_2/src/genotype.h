@@ -14,6 +14,7 @@
 
 
 enum genValues {left, right, up, down, none}; // all possible values of a gene
+
 struct GeneNode {
     int segment;
     uint8_t value;
@@ -25,12 +26,11 @@ typedef Eigen::Matrix<struct GeneNode, Eigen::Dynamic, Eigen::Dynamic> GeneMatri
 class Genotype {
 private:
     GeneMatrix chromosome; // storage the entire set of genes
-    uint16_t num_cols;
-    uint16_t num_rows;
-    std::vector< std::vector<int> > segments; // segments of a solution
+    int num_cols;
+    int num_rows;
 
 public:
-    std::vector<Genotype> dominates; // set of solutions that this dominates
+    std::vector<Genotype*> dominates; // set of solutions that this dominates
     int domination_counter; // number of solution that dominates this solution
     uint16_t rank; // ranges from 0 to maximum of the size of the population
     double crowding_distance; // measure of how far away the genotype is from others in the population
@@ -48,6 +48,7 @@ public:
 
     Genotype();
     Genotype(uint16_t num_rows, uint16_t num_cols,  std::vector<int> &parents);
+    //~Genotype() = default;
 
 
     static bool sortByObj1(const Genotype &lhs, const Genotype &rhs);
