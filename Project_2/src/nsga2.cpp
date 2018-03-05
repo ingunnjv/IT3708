@@ -1,5 +1,8 @@
 #include "nsga2.h"
-
+#include <stdlib.h>
+#include <random>
+#include <chrono>
+#include <ctime>
 using namespace std;
 
 /////////////////////////////////////////////////////////
@@ -183,7 +186,7 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
         next_gen.insert(next_gen.end(), fronts[i].begin(), fronts[i].begin() + (population_size - uint16_t(next_gen.size())));
 
         /* Create a new offspring population by crossover and mutation */
-        offspring_pop = makeNewPop(next_gen); // TODO: Implement this function (+crossover & mutation)
+        offspring_pop = makeNewPop(next_gen, offspring_pop); // TODO: Implement this function (+crossover & mutation)
 
         /* Combine the parent and offspring population for next iteration */
         population.clear();
@@ -197,8 +200,55 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
 }
 
 /////////////////////////////////////////////////////////
-vector<Genotype> Nsga2::makeNewPop(std::vector<Genotype> &parent_pop) {
-    return parent_pop;
+vector<Genotype> Nsga2::makeNewPop(vector<Genotype> &parent_pop, vector<Genotype> &offspring_pop) {
+    unsigned seed = (unsigned)chrono::system_clock::now().time_since_epoch().count();
+    default_random_engine generator(seed);
+    uniform_real_distribution<double> distribution(0.0,1.0);
+    vector <Genotype> offspring(2);
+
+    vector <Genotype> selected_parents;
+    while (offspring_pop.size() < this->population_size){
+
+        selected_parents.clear();
+        tournament_selection(selected_parents);
+        double crossover_event = distribution(generator);
+        if (crossover_event < this->crossover_rate){
+            offspring = crossover(selected_parents);
+
+        }
+        else{
+            offspring = selected_parents; //deep copy?
+        }
+        offspring_pop.insert(offspring_pop.end(), offspring.begin(), offspring.end());
+
+        double mutation_event = distribution(generator);
+        if (mutation_event < this->mutation_rate){
+
+        }
+
+
+    }
+
+    return offspring_pop;
+}
+
+void Nsga2::tournament_selection(vector <Genotype> &selected_parents)
+{
+    selected_parents.resize(this->tournament_size);
+    for (int i = 0; i < this->tournament_size; i++){
+        int random = rand() % this->population_size;
+        selected_parents.push_back(this->population[random]);
+    }
+    crowdingDistanceSort(selected_parents);
+
+    // keep only the 2 best individuals
+    selected_parents.resize(2);
+
+}
+
+vector<Genotype> Nsga2::crossover(vector<Genotype> &parents)
+{
+    return parents;
 }
 
 

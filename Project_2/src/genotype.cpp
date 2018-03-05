@@ -335,7 +335,7 @@ bool Genotype::sortByObj2(const Genotype &lhs, const Genotype &rhs) { return lhs
 /////////////////////////////////////////////////////////
 bool Genotype::sortByCrowdedComparison(const Genotype &lhs, const Genotype &rhs) {
     if (lhs.rank != rhs.rank) {
-        return lhs.rank > rhs.rank;
+        return lhs.rank < rhs.rank;
     }
     else if (lhs.rank == rhs.rank)
     {
