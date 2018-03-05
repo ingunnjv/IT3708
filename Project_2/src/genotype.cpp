@@ -320,26 +320,26 @@ void Genotype::calculateObjectives(const Eigen::MatrixXi &red, const Eigen::Matr
             segment_boundary_diff -= calcEuclideanRgbDiff(1, 0, this_col, this_row, this_segment, red,green,blue);
             segment_boundary_diff -= calcEuclideanRgbDiff(0, -1, this_col, this_row, this_segment, red,green,blue);
             segment_boundary_diff -= calcEuclideanRgbDiff(0, 1, this_col, this_row, this_segment, red,green,blue);
-            objective_values[1] -= segment_boundary_diff;
+            objective_values[1] += segment_boundary_diff;
             }
         i++;
     }
 }
 
 /////////////////////////////////////////////////////////
-bool Genotype::sortByObj1(const Genotype &lhs, const Genotype &rhs) { return lhs.objective_values[0] < rhs.objective_values[0]; }
+bool Genotype::sortByObj1(const Genotype* lhs, const Genotype* rhs) { return lhs->objective_values[0] < rhs->objective_values[0]; }
 
 /////////////////////////////////////////////////////////
-bool Genotype::sortByObj2(const Genotype &lhs, const Genotype &rhs) { return lhs.objective_values[1] < rhs.objective_values[1]; }
+bool Genotype::sortByObj2(const Genotype* lhs, const Genotype* rhs) { return lhs->objective_values[1] < rhs->objective_values[1]; }
 
 /////////////////////////////////////////////////////////
-bool Genotype::sortByCrowdedComparison(const Genotype &lhs, const Genotype &rhs) {
-    if (lhs.rank != rhs.rank) {
-        return lhs.rank < rhs.rank;
+bool Genotype::sortByCrowdedComparison(const Genotype* lhs, const Genotype* rhs) {
+    if (lhs->rank != rhs->rank) {
+        return lhs->rank < rhs->rank;
     }
-    else if (lhs.rank == rhs.rank)
+    else if (lhs->rank == rhs->rank)
     {
-        return lhs.crowding_distance > rhs.crowding_distance;
+        return lhs->crowding_distance > rhs->crowding_distance;
     }
 }
 

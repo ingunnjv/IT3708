@@ -35,16 +35,16 @@ public:
     std::vector<int> primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
 
     /* Sorts the population based non-domination fronts*/
-    std::vector<std::vector<Genotype>> fastNonDominatedSort();
+    void fastNonDominatedSort(std::vector<std::vector<Genotype*> > &fronts);
 
     /* Sorts a vector of genotypes based on the objective number i's value */
-    std::tuple<double, double> objectiveValueSort(std::vector<Genotype> &front, uint8_t obj_val_i);
+    std::tuple<double, double> objectiveValueSort(std::vector<Genotype*> &front, uint8_t obj_val_i);
 
     /* Sorts a front of genotypes based on their crowding distance (best to worst -> greatest to lowest) */
-    void crowdingDistanceSort(std::vector<Genotype> &front);
+    void crowdingDistanceSort(std::vector<Genotype*> &front);
 
     /* Assigns every genotype in a front a crowding_distance */
-    void crowdingDistanceAssignment(std::vector<Genotype> &front);
+    void crowdingDistanceAssignment(std::vector<Genotype*> &front);
 
     /* Creates a new offspring population using crossover and mutation */
     std::vector<Genotype> makeNewPop(std::vector<Genotype> &parent_pop, std::vector<Genotype> &offspring_pop);
