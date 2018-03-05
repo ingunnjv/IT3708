@@ -51,9 +51,9 @@ public:
     //~Genotype() = default;
 
 
-    static bool sortByObj1(const Genotype &lhs, const Genotype &rhs);
-    static bool sortByObj2(const Genotype &lhs, const Genotype &rhs);
-    static bool sortByCrowdedComparison(const Genotype &lhs, const Genotype &rhs);
+    static bool sortByObj1(const Genotype* lhs, const Genotype* rhs);
+    static bool sortByObj2(const Genotype* lhs, const Genotype* rhs);
+    static bool sortByCrowdedComparison(const Genotype* lhs, const Genotype* rhs);
 
     bool operator<(const Genotype &rhs) const;
     bool operator>(const Genotype &rhs) const;
