@@ -7,11 +7,17 @@
 using namespace std;
 
 int main(int argc, char *argv[]) {
+    // TEST running python script
+    string command = "python \"..\\src\\testScript.py\"";
+    string args = "";
+    command += args;
+    system(command.c_str());
+
     // Set hyper parameters
-    double mutation_rate, crossover_Rate, time_limit;
+    double mutation_rate, crossover_rate, time_limit;
     uint16_t tournament_size, generation_limit, population_size;
     int problem_num;
-    setUserArgs(argc, argv, mutation_rate, crossover_Rate, tournament_size,
+    setUserArgs(argc, argv, mutation_rate, crossover_rate, tournament_size,
                 time_limit, generation_limit, population_size, problem_num);
 
     // Load the test image and the solutions
@@ -20,27 +26,21 @@ int main(int argc, char *argv[]) {
     image.ExtractRGBChannels();
 
     // Create GA
-    Nsga2 ga = Nsga2(mutation_rate, crossover_Rate, tournament_size,
+    Nsga2 ga = Nsga2(mutation_rate, crossover_rate, tournament_size,
                      time_limit, generation_limit, population_size);
     // Initialize a population
-    printf("Initializating a population with %d individuals...\n", population_size);
-    ga.initializePopulation(image.r_channel, image.g_channel, image.b_channel);
+    vector<Genotype> initial_pop (population_size);
+    printf("Initializating a population with %d individuals..\n", population_size);
+    ga.initializePopulation(image.r_channel, image.g_channel, image.b_channel, initial_pop);
 
     // Run evolutionary process
-    printf("Starting evolutionary process (NSGA-II algorithm)...\n");
-    ga.runMainLoop(image.r_channel, image.g_channel, image.b_channel);
+    printf("Starting evolutionary process (NSGA-II algorithm)..\n");
+    ga.runMainLoop(image.r_channel, image.g_channel, image.b_channel, initial_pop);
 
     // Test decoding and viz
     //ga.population[4].genotypeToPhenotypeDecoding(image.r_channel.rows(), image.r_channel.cols());
     //ga.population[4].visualize(image.b_channel, image.g_channel, image.r_channel, image.r_channel.rows(), image.r_channel.cols());
 
-    //
-
-    // Run the algorithm
-    //ga.runMainLoop();
-    //cv::namedWindow( "Test image", cv::WINDOW_AUTOSIZE );
-    //cv::imshow( "Test image", image.test_image );
-    //cv::waitKey(0);
 
     printf("Exiting program\n");
 

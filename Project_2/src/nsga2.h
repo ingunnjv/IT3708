@@ -13,7 +13,7 @@
 
 class Nsga2 {
 private:
-    std::vector<Genotype> population;
+    std::vector<Genotype*> population;
 
     double mutation_rate;
     double crossover_rate;
@@ -29,7 +29,8 @@ public:
           uint16_t generation_limit, uint16_t population_size);
 
     /// Initializes a population using a MST as the basis for gene encoding
-    void initializePopulation(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
+    void initializePopulation(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue,
+                                                   std::vector<Genotype> initial_pop);
 
     /// Creates a MST based on the distance in RGB space of a picture as basis for edges
     std::vector<int> primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
@@ -53,7 +54,8 @@ public:
     void mutation(Genotype &individual);
 
     /// Run the main loop of the algorithm
-    void runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
+    void runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue,
+                     std::vector<Genotype> initial_pop);
 };
 
 #endif //PROJECT_2_NSGA_II_H

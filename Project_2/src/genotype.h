@@ -20,7 +20,7 @@ struct GeneNode {
     uint8_t value;
     GeneNode* child;
     std::vector<GeneNode*> parents;
-    GeneNode(){parents.reserve(4);};
+    GeneNode(){parents.reserve(4), segment = -1, value = 0; child = NULL;};
 };
 typedef Eigen::Matrix<struct GeneNode, Eigen::Dynamic, Eigen::Dynamic> GeneMatrix;
 

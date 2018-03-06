@@ -156,10 +156,10 @@ bool Genotype::operator<(const Genotype &rhs) const
 {
     for (vector<double>::size_type i = 0; i != rhs.objective_values.size(); i++)
     {
-        if (this->objective_values[i]  > rhs.objective_values[i])
+        if (this->objective_values[i]  >= rhs.objective_values[i])
         {
             return false;
-        };
+        }
     }
     return true;
 }
@@ -169,10 +169,10 @@ bool Genotype::operator>(const Genotype &rhs) const
 {
     for (vector<double>::size_type i = 0; i != rhs.objective_values.size(); i++)
     {
-        if (this->objective_values[i] < rhs.objective_values[i])
+        if (this->objective_values[i] <= rhs.objective_values[i])
         {
             return false;
-        };
+        }
     }
     return true;
 }
