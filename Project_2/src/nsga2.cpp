@@ -219,7 +219,7 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
         }
 
         /* Create a new offspring population by crossover and mutation */
-        makeNewPop(parents_pop, offspring_pop); // TODO: Implement this function (+crossover & mutation)
+        makeNewPop(parents_pop, offspring_pop); // TODO: Implement this function (+mutation)
 
         /* Combine the parent and offspring population */
         if (generation == 1) {population.resize(population_size*2);}
@@ -357,7 +357,7 @@ void Nsga2::tournamentSelection(vector<Genotype *> &selected_parents)
     selected_parents.clear();
     selected_parents.resize(this->tournament_size);
     for (int i = 0; i < this->tournament_size; i++){
-        selected_parents[i] = &this->population[tournament_indices[i]];
+        selected_parents[i] = this->population[tournament_indices[i]];
     }
     crowdingDistanceSort(selected_parents);
 
