@@ -23,8 +23,18 @@ void Genotype::insertToDominationSet(Genotype &i)
 /////////////////////////////////////////////////////////
 Genotype::Genotype()
 {
-    int num_pixels = 10;
-    this->chromosome.resize(10,10);
+    this->chromosome.resize(1,1);
+    this->num_objectives = 2;
+    this->objective_values.resize(this->num_objectives);
+    this->domination_counter = 0;
+    this->rank = 0;
+    this->crowding_distance = 0;
+}
+
+/////////////////////////////////////////////////////////
+Genotype::Genotype(uint16_t num_rows, uint16_t num_cols)
+{
+    this->chromosome.resize(num_rows, num_cols);
     this->num_objectives = 2;
     this->objective_values.resize(this->num_objectives);
     this->domination_counter = 0;
@@ -195,7 +205,6 @@ void Genotype::genotypeToPhenotypeDecoding()
                         discovery_list.push_back(p);
                 }
             }
-
             while(!discovery_list.empty()){
                 GeneNode* current_gene = discovery_list.front();
                 discovery_list.erase(discovery_list.begin());
@@ -330,13 +339,13 @@ void Genotype::calculateObjectives(const Eigen::MatrixXi &red, const Eigen::Matr
     // calculate the rgb centroid for each segment
     vector<rgb_centroid_t> centroids (segment_nums_found.size());
     int i = 0;
-    for (const auto s: pixels_segment_affiliation){
+    for (const auto &s: pixels_segment_affiliation){
         rgb_centroid_t centroid = {0, 0, 0};
         double intensity_sum_r = 0;
         double intensity_sum_g = 0;
         double intensity_sum_b = 0;
         int num_pixels = 0;
-        for (auto p: s){
+        for (const auto &p: s){
             intensity_sum_r += red(p.row, p.col);
             intensity_sum_g += green(p.row, p.col);
             intensity_sum_b += blue(p.row, p.col);
@@ -352,8 +361,8 @@ void Genotype::calculateObjectives(const Eigen::MatrixXi &red, const Eigen::Matr
     objective_values[0] = 0;
     objective_values[1] = 0;
     i = 0;
-    for (const auto s: pixels_segment_affiliation) {
-        for (const auto p: s){
+    for (const auto &s: pixels_segment_affiliation) {
+        for (const auto &p: s){
             // objective 1
             double pixel_centroid_deviation = sqrt( pow(red(p.row, p.col) - centroids[i].r, 2)
                                                     + pow(green(p.row, p.col) - centroids[i].g, 2)

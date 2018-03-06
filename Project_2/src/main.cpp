@@ -23,10 +23,11 @@ int main(int argc, char *argv[]) {
     Nsga2 ga = Nsga2(mutation_rate, crossover_Rate, tournament_size,
                      time_limit, generation_limit, population_size);
     // Initialize a population
-    cout << "Initializating a population with " << population_size << " individuals..." << endl;
+    printf("Initializating a population with %d individuals...\n", population_size);
     ga.initializePopulation(image.r_channel, image.g_channel, image.b_channel);
 
     // Run evolutionary process
+    printf("Starting evolutionary process (NSGA-II algorithm)...\n");
     ga.runMainLoop(image.r_channel, image.g_channel, image.b_channel);
 
     // Test decoding and viz
@@ -40,6 +41,8 @@ int main(int argc, char *argv[]) {
     //cv::namedWindow( "Test image", cv::WINDOW_AUTOSIZE );
     //cv::imshow( "Test image", image.test_image );
     //cv::waitKey(0);
+
+    printf("Exiting program\n");
 
     return 0;
 }
