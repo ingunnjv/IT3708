@@ -44,6 +44,7 @@ Genotype::Genotype(uint16_t num_rows, uint16_t num_cols,  vector<int> &parents)
     this->rank = 0;
     this->crowding_distance = 0;
 
+    int a = 0;
     for (int row = 0; row < num_rows; row++){
         for (int col = 0; col < num_cols; col++){
             int i = row * num_cols + col;
@@ -75,7 +76,9 @@ Genotype::Genotype(uint16_t num_rows, uint16_t num_cols,  vector<int> &parents)
                 this->chromosome(row, col).child->parents.push_back(&chromosome(row, col));
             }
         }
+        a++;
     }
+    a++;
 
     //for (int i = 0; i < num_pixels; i++) {
 //
@@ -98,6 +101,45 @@ Genotype::Genotype(uint16_t num_rows, uint16_t num_cols,  vector<int> &parents)
     //}
 }
 
+void Genotype::setChromosomeValue(uint8_t value, int row, int col)
+{
+    if (value > -1 && value < 5)
+        this->chromosome(row, col).value = value;
+}
+
+uint8_t Genotype::getChromosomeValue(int row, int col)
+{
+    return this->chromosome(row, col).value;
+}
+
+void Genotype::setChromosomeSegment(int segment, int row, int col)
+{
+    if (segment != -1)
+        this->chromosome(row, col).segment = segment;
+}
+
+void Genotype::setChromosomeChildPointer(GeneNode *child, int row, int col)
+{
+    if (child != NULL)
+        this->chromosome(row, col).child = child;
+}
+
+
+GeneNode * Genotype::getChromosomeChildPointer(int row, int col)
+{
+    return this->chromosome(row, col).child;
+}
+
+void Genotype::setChromosomeParents(vector<GeneNode*> parents, int row, int col)
+{
+    if (!parents.empty())
+        this->chromosome(row, col).parents = parents;
+}
+
+vector<GeneNode*> Genotype::getChromosomeParents(int row, int col)
+{
+    return this->chromosome(row, col).parents;
+}
 
 /////////////////////////////////////////////////////////
 bool Genotype::operator<(const Genotype &rhs) const
@@ -125,13 +167,19 @@ bool Genotype::operator>(const Genotype &rhs) const
     return true;
 }
 
-void Genotype::genotypeToPhenotypeDecoding(int num_rows, int num_cols)
+void Genotype::genotypeToPhenotypeDecoding()
 {
     int segment_number = 0;
     int total_number_of_segments = segment_number;
 
+    // Initialize all segments to -1
     for(int i = 0; i < this->chromosome.size(); i++) {
-        int row = i / num_cols, col = i % num_cols;
+        int row = i / this->num_cols, col = i % this->num_cols;
+        this->chromosome(row, col).segment = -1;
+    }
+
+    for(int i = 0; i < this->chromosome.size(); i++) {
+        int row = i / this->num_cols, col = i % this->num_cols;
 
         if (this->chromosome(row, col).segment == -1) { // pixel is not yet assigned to a segment
             vector<GeneNode*> discovery_list;

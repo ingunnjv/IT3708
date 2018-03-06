@@ -26,10 +26,11 @@ typedef Eigen::Matrix<struct GeneNode, Eigen::Dynamic, Eigen::Dynamic> GeneMatri
 class Genotype {
 private:
     GeneMatrix chromosome; // storage the entire set of genes
-    int num_cols;
-    int num_rows;
+
 
 public:
+    int num_cols;
+    int num_rows;
     std::vector<Genotype*> dominates; // set of solutions that this dominates
     int domination_counter; // number of solution that dominates this solution
     uint16_t rank; // ranges from 0 to maximum of the size of the population
@@ -39,7 +40,7 @@ public:
 
     void setRank(int rank);
     void insertToDominationSet(Genotype &i);
-    void genotypeToPhenotypeDecoding(int num_rows, int num_cols);
+    void genotypeToPhenotypeDecoding();
     void visualize(Eigen::MatrixXi &blue_ch, Eigen::MatrixXi &green_ch, Eigen::MatrixXi &red_ch, int num_rows, int num_cols);
     void calculateObjectives(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
     double calcEuclideanRgbDiff(signed short dir_y, signed short dir_x, int this_col, int this_row, int this_segment,
@@ -48,6 +49,14 @@ public:
 
     Genotype();
     Genotype(uint16_t num_rows, uint16_t num_cols,  std::vector<int> &parents);
+    void setChromosomeValue(uint8_t value, int row, int col);
+    void setChromosomeSegment(int segment, int row, int col);
+    void setChromosomeChildPointer(GeneNode *child, int row, int col);
+    void setChromosomeParents(std::vector<GeneNode*> parents, int row, int col);
+
+    uint8_t getChromosomeValue(int row, int col);
+    GeneNode* getChromosomeChildPointer(int row, int col);
+    std::vector<GeneNode*> getChromosomeParents(int row, int col);
     //~Genotype() = default;
 
 
