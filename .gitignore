@@ -105,3 +105,9 @@ ENV/
 Project_2/cmake-build-debug/
 
 Project_2/\.idea/
+
+\.idea/misc\.xml
+
+\.idea/IT3708\.iml
+
+\.idea/vcs\.xml

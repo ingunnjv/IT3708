@@ -31,7 +31,8 @@ Nsga2::Nsga2(double mutation_rate, double crossover_rate, uint16_t tournament_si
 }
 
 /////////////////////////////////////////////////////////
-void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue)
+void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue,
+                                             std::vector<Genotype> initial_pop)
 {
     uint16_t num_rows = uint16_t(red.rows());
     uint16_t num_cols = uint16_t(red.cols());
@@ -41,6 +42,7 @@ void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::Matrix
     ///removed from the MST individual.
     vector<int> parent_graph = primMST(red, green, blue);
     set < pair<uint32_t, double>, pairCmpGe > links;
+    //vector<Genotype> initial_population (this->population_size);
 
     pixel_t x, y;
     for (int i = 1; i < num_pixels; i++) {
@@ -49,38 +51,40 @@ void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::Matrix
         links.insert(make_pair(i, rgbDistance(y, x, red, green, blue)));
     }
     for (int i = 0; i < population_size; i++){
-        population[i] = Genotype(num_rows, num_cols, parent_graph);
+        initial_pop[i] = Genotype(num_rows, num_cols, parent_graph);
+        //this->population[i] = &initial_pop[i];
         auto it = links.begin();
         parent_graph[it->first] = -1;
         if (!links.empty()) { links.erase(it); }
-        population[i].genotypeToPhenotypeDecoding();
-        population[i].calculateObjectives(red, green, blue);
+        initial_pop[i].genotypeToPhenotypeDecoding();
+        initial_pop[i].calculateObjectives(red, green, blue);
         printf("+ Created genotype with %d segments(s).\n", i+1);
     }
 }
 
 /////////////////////////////////////////////////////////
-void Nsga2::fastNonDominatedSort(std::vector<std::vector<Genotype*> > &fronts) {
+void Nsga2::fastNonDominatedSort(vector<vector<Genotype*> > &fronts) {
     vector<Genotype*> first_front;
     first_front.reserve(this->population_size);
 
     // Iterate through the entire population to find who dominates who
     int p_i = 0, q_i = 0;
      for (auto &p: this->population) {
+        p->dominates.clear();
         for (auto &q: this->population) {
             if (p_i != q_i){
                 if (p < q){ // check if p dominates q
-                    p.insertToDominationSet(q);
+                    p->insertToDominationSet(*q);
                 }
                 else if (p > q){ // check if q dominates p
-                    p.domination_counter++;
+                    p->domination_counter++;
                 }
             }
             q_i++;
         }
-        if (p.domination_counter == 0){ // if p is dominated by no one, it means it belongs to the first rank
-            p.setRank(0);
-            first_front.push_back(&p); // non-dominated solutions belongs to the first front
+        if (p->domination_counter == 0){ // if p is dominated by no one, it means it belongs to the first rank
+            p->setRank(0);
+            first_front.push_back(&(*p)); // non-dominated solutions belongs to the first front
         }
         p_i++;
         q_i = 0;
@@ -89,7 +93,7 @@ void Nsga2::fastNonDominatedSort(std::vector<std::vector<Genotype*> > &fronts) {
     fronts.push_back(first_front);
     int i = 0; // initialize front counter
     while (!fronts[i].empty()){ // if last iteration gave no new front, the prev front was the last front
-        vector<Genotype*> new_front; // to store members of the next front
+        std::vector<Genotype*> new_front; // to store members of the next front
         new_front.reserve(this->population_size);
         for (auto &p: fronts[i]) {
             for (auto &q: p->dominates) {
@@ -161,48 +165,71 @@ void Nsga2::crowdingDistanceAssignment(vector<Genotype*> &front)
 }
 
 /////////////////////////////////////////////////////////
-void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue) {
+void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue,
+                        std::vector<Genotype> initial_pop) {
     uint16_t num_cols = uint16_t(red.cols());
     uint16_t num_rows = uint16_t(red.rows());
 
     /* Create and reserve storage space (big objects) */
-    printf("+ Allocating memory for population buffers.\n");
+    printf("+ Allocating memory for population buffers..\n");
     vector< vector<Genotype*> > fronts;//(this->population_size, vector<Genotype*>(this->population_size));
-    fronts.reserve(this->population_size);
     vector<Genotype> parents_pop (this->population_size, Genotype(num_rows, num_cols));
     vector<Genotype> offspring_pop (this->population_size, Genotype(num_rows, num_cols));
+
+
+    for (int i = 0; i < population_size; i++){
+        population[i] = &initial_pop[i];
+    }
 
     /* Run evolutionary process */
     int generation = 1;
     while (generation <= generation_limit)
     {
-        printf("+ Generation: %d (Best MPRI score: )\n", generation);
+        /* Print process info every x'th generation */
+        if (generation % 1 == 0){
+            printf("+ Generation: %d (Best MPRI score: )\n", generation);
+        }
+
         //TODO: implement some sort of early stopping by comparing solutions with PRI
 
         /* Create the next gen pop by the non-domination principle */
         fastNonDominatedSort(fronts);
-        int i_f = 0;
-        int i_p = 0;
-        while (i_p + fronts[i_f].size() <= population_size && !fronts[i_f].empty())
+        int front_index = 0;
+        int parent_pop_index = 0;
+        while (parent_pop_index + fronts[front_index].size() <= population_size && !fronts[front_index].empty())
         {
-            crowdingDistanceAssignment(fronts[i_f]);
-            for (const auto &genotype: fronts[i_f]){
-                parents_pop[i_p] = *genotype;
-                i_p++;
+            crowdingDistanceAssignment(fronts[front_index]);
+            for (const auto &genotype: fronts[front_index]){
+                parents_pop[parent_pop_index] = *genotype;
+                parent_pop_index++;
             }
-            i_f++;
+            front_index++;
         }
-        //crowdingDistanceAssignment(fronts[i]);
-        //crowdingDistanceSort(fronts[i]);
-        //parents_pop.insert(parents_pop.end(), fronts[i].begin(), fronts[i].begin() + (population_size - uint16_t(parents_pop.size())));
+        /* Fill in the remaining population space with as many genotypes front front_index i there is space for,
+         * prioritizing the ones with the best crowding_distance */
+        if (parent_pop_index < population_size && !fronts[front_index].empty()){
+            crowdingDistanceAssignment(fronts[front_index]);
+            crowdingDistanceSort(fronts[front_index]);
+        }
+        int i = 0;
+        while(parent_pop_index < population_size && !fronts[front_index].empty()){
+            parents_pop[parent_pop_index] = *fronts[front_index][i];
+            parent_pop_index++;
+            i++;
+        }
 
         /* Create a new offspring population by crossover and mutation */
         makeNewPop(parents_pop, offspring_pop); // TODO: Implement this function (+crossover & mutation)
 
-        /* Combine the parent and offspring population for next iteration */
-        //population.clear();
-        //population.insert(population.end(), parents_pop.begin(), parents_pop.end());
-        //population.insert(population.end(), offspring_pop.begin(), offspring_pop.end());
+        /* Combine the parent and offspring population */
+        if (generation == 1) {population.resize(population_size*2);}
+        fronts.clear();
+        int j = 0;
+        for (i = 0; i < 2*population_size; i+=2){
+            population[i] = &parents_pop[j];
+            population[i+1] = &offspring_pop[j];
+            j++;
+        }
         generation++;
     }
 
