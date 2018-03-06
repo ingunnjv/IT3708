@@ -54,11 +54,11 @@ public:
     void setChromosomeValue(uint8_t value, int row, int col);
     void setChromosomeSegment(int segment, int row, int col);
     void setChromosomeChildPointer(GeneNode *child, int row, int col);
-    void setChromosomeParents(std::vector<GeneNode*> parents, int row, int col);
+
+    GeneNode * getChromosomeGeneNode(int row, int col);
 
     uint8_t getChromosomeValue(int row, int col);
     GeneNode* getChromosomeChildPointer(int row, int col);
-    std::vector<GeneNode*> getChromosomeParents(int row, int col);
     //~Genotype() = default;
 
 

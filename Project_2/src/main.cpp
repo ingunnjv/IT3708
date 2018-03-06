@@ -8,10 +8,10 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
     // Set hyper parameters
-    double mutation_rate, crossover_Rate, time_limit;
+    double mutation_rate, crossover_rate, time_limit;
     uint16_t tournament_size, generation_limit, population_size;
     int problem_num;
-    setUserArgs(argc, argv, mutation_rate, crossover_Rate, tournament_size,
+    setUserArgs(argc, argv, mutation_rate, crossover_rate, tournament_size,
                 time_limit, generation_limit, population_size, problem_num);
 
     // Load the test image and the solutions
@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
     image.ExtractRGBChannels();
 
     // Create GA
-    Nsga2 ga = Nsga2(mutation_rate, crossover_Rate, tournament_size,
+    Nsga2 ga = Nsga2(mutation_rate, crossover_rate, tournament_size,
                      time_limit, generation_limit, population_size);
     // Initialize a population
     printf("Initializating a population with %d individuals...\n", population_size);

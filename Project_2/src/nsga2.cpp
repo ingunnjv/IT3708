@@ -3,6 +3,7 @@
 #include <random>
 #include <chrono>
 #include <ctime>
+#include <algorithm>
 using namespace std;
 
 /////////////////////////////////////////////////////////
@@ -196,7 +197,7 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
         //parents_pop.insert(parents_pop.end(), fronts[i].begin(), fronts[i].begin() + (population_size - uint16_t(parents_pop.size())));
 
         /* Create a new offspring population by crossover and mutation */
-        //offspring_pop = makeNewPop(parents_pop, offspring_pop); // TODO: Implement this function (+crossover & mutation)
+        makeNewPop(parents_pop, offspring_pop); // TODO: Implement this function (+crossover & mutation)
 
         /* Combine the parent and offspring population for next iteration */
         //population.clear();
@@ -210,86 +211,149 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
 }
 
 /////////////////////////////////////////////////////////
-vector<Genotype> Nsga2::makeNewPop(vector<Genotype> &parent_pop, vector<Genotype> &offspring_pop) {
-    unsigned seed = (unsigned)chrono::system_clock::now().time_since_epoch().count();
+void Nsga2::makeNewPop(vector<Genotype> &parent_pop, vector<Genotype> &offspring_pop) {
+    unsigned seed = (unsigned) chrono::system_clock::now().time_since_epoch().count();
     default_random_engine generator(seed);
-    uniform_real_distribution<double> distribution(0.0,1.0);
+    uniform_real_distribution<double> distribution(0.0, 1.0);
 
-    vector <Genotype> offspring(2);
-    vector <Genotype*> selected_parents(2);
-    while (offspring_pop.size() < this->population_size){
+    //vector<Genotype> offspring(2, Genotype((uint16_t)parent_pop[0].num_rows, (uint16_t)parent_pop[0].num_cols));
+    vector<Genotype> offspring(2);
+    vector<Genotype *> selected_parents(2);
+    bool new_offspring_generated = false;
+    printf("+ Make new offspring population...\n");
+
+    for (int i = 0; i < offspring_pop.size(); i = i + 2) {
+        new_offspring_generated = false;
+        //while (offspring_pop.size() < this->population_size){
         tournamentSelection(selected_parents);
+        int j = 0;
+        for (auto p: selected_parents) {
+            offspring[j] = *p;
+            j++;
+        }
         double crossover_event = distribution(generator);
-        if (crossover_event < this->crossover_rate){
-            uniformCrossover(selected_parents, offspring);
+        if (crossover_event < this->crossover_rate) {
+            uniformCrossover(offspring);
+            new_offspring_generated = true;
         }
-        else{
-            int i = 0;
-            for (auto p: selected_parents){
-                offspring[i] = *p;
-                i++;
-            }
-        }
-        offspring_pop.insert(offspring_pop.end(), offspring.begin(), offspring.end());
 
-        for (auto &individual: offspring_pop){
+        int i_offspring = i;
+        for (auto &individual: offspring) {
             double mutation_event = distribution(generator);
-            if (mutation_event < this->mutation_rate){
+            if (mutation_event < this->mutation_rate) {
                 mutation(individual);
+                new_offspring_generated = true;
             }
-        }
-    }
 
-    return offspring_pop;
+            if (new_offspring_generated){
+                // update pointers:
+                // - clear all parent vectors
+                for (int row = 0; row < individual.num_rows; row++) {
+                    for (int col = 0; col < individual.num_cols; col++) {
+                        GeneNode* current_node = individual.getChromosomeGeneNode(row, col);
+                        current_node->parents.clear();
+                    }
+                }
+                // - update children and parents
+                for (int row = 0; row < individual.num_rows; row++) {
+                    for (int col = 0; col < individual.num_cols; col++) {
+                        GeneNode *child_node;
+                        switch (individual.getChromosomeValue(row, col)) {
+                            case genValues::none:
+                                individual.setChromosomeChildPointer(NULL, row, col);
+                                break;
+                            case genValues::left:
+                                child_node = individual.getChromosomeGeneNode(row, col - 1);
+                                individual.setChromosomeChildPointer(child_node, row, col);
+                                break;
+                            case genValues::right:
+                                child_node = individual.getChromosomeGeneNode(row, col + 1);
+                                individual.setChromosomeChildPointer(child_node, row, col);
+                                break;
+                            case genValues::up:
+                                child_node = individual.getChromosomeGeneNode(row - 1, col);
+                                individual.setChromosomeChildPointer(child_node, row, col);
+                                break;
+                            case genValues::down:
+                                child_node = individual.getChromosomeGeneNode(row + 1, col);
+                                individual.setChromosomeChildPointer(child_node, row, col);
+                                break;
+                            default:
+                                break;
+                        }
+                        if (individual.getChromosomeChildPointer(row, col) != NULL) {
+                            GeneNode *current_node = individual.getChromosomeGeneNode(row, col);
+                            individual.getChromosomeChildPointer(row, col)->parents.push_back(current_node);
+                        }
+                    }
+                }
+
+                // update segments
+                individual.genotypeToPhenotypeDecoding();
+
+                // TODO: update objective values
+
+            }
+
+            offspring_pop[i_offspring] = individual;
+            // update the pointers to the first node in the chromosome
+            GeneNode* first_node = offspring_pop[i_offspring].getChromosomeGeneNode(0, 0);
+            for (auto p: first_node->parents){
+                p->child = first_node;
+            }
+            i_offspring++;
+        }
+
+    }
 }
 
 void Nsga2::tournamentSelection(vector<Genotype *> &selected_parents)
 {
+    unsigned seed = (unsigned)chrono::system_clock::now().time_since_epoch().count();
+    default_random_engine generator (seed);
+    // uniform distribution of integers in the range [0, this->population_size - 1]
+    uniform_int_distribution<int> distribution(0, this->population_size - 1);
+
+    vector<int> tournament_indices;
+    while (tournament_indices.size() < this->tournament_size){
+        int random = distribution(generator);
+        if(find(tournament_indices.begin(), tournament_indices.end(), random) != tournament_indices.end()){
+            // tournament_indices contains random already
+            continue;
+        }
+        else{
+            tournament_indices.push_back(random);
+        }
+    }
+
+    // clear parents from previous tournament
     selected_parents.clear();
     selected_parents.resize(this->tournament_size);
     for (int i = 0; i < this->tournament_size; i++){
-        int random = rand() % this->population_size;
-        selected_parents.push_back(&this->population[random]);
+        selected_parents[i] = &this->population[tournament_indices[i]];
     }
     crowdingDistanceSort(selected_parents);
 
     // keep only the 2 best individuals
     selected_parents.resize(2);
-
 }
 
-void Nsga2::uniformCrossover(vector<Genotype *> &parents, vector<Genotype> &offspring)
+void Nsga2::uniformCrossover(vector<Genotype> &offspring)
 {
-    Genotype* first_parent;
-    Genotype* second_parent;
-
     unsigned seed = (unsigned)chrono::system_clock::now().time_since_epoch().count();
     default_random_engine generator(seed);
-    uniform_real_distribution<double> distribution(0.0,1.0);
-    vector <double> random_variables((unsigned)parents[0]->num_cols * parents[0]->num_rows);
-    for (int i = 0; i < random_variables.size(); i++){
-        int row = i / parents[0]->num_cols, col = i % parents[0]->num_cols;
-        random_variables[i] = distribution(generator);
-        if (random_variables[i] < 0.5){
-            first_parent = parents[0];
-            second_parent = parents[1];
-        }
-        else{
-            first_parent = parents[1];
-            second_parent = parents[0];
-        }
-        offspring[0].setChromosomeValue(first_parent->getChromosomeValue(row, col), row, col);
-        offspring[0].setChromosomeChildPointer(first_parent->getChromosomeChildPointer(row, col), row, col);
-        offspring[0].setChromosomeParents(first_parent->getChromosomeParents(row, col), row, col);
+    uniform_real_distribution<double> distribution(0.0, 1.0);
 
-        offspring[1].setChromosomeValue(second_parent->getChromosomeValue(row, col), row, col);
-        offspring[1].setChromosomeChildPointer(second_parent->getChromosomeChildPointer(row, col), row, col);
-        offspring[1].setChromosomeParents(second_parent->getChromosomeParents(row, col), row, col);
+    double random_variable;
+
+    for (int i = 0; i < offspring[0].num_cols * offspring[0].num_rows; i++){
+        int row = i / offspring[0].num_cols, col = i % offspring[0].num_cols;
+        random_variable = distribution(generator);
+        if (random_variable < 0.5){
+            offspring[0].setChromosomeValue(offspring[1].getChromosomeValue(row, col), row, col);
+            offspring[1].setChromosomeValue(offspring[0].getChromosomeValue(row, col), row, col);
+        }
     }
-    //update segments
-    offspring[0].genotypeToPhenotypeDecoding();
-    offspring[1].genotypeToPhenotypeDecoding();
-
 }
 
 void Nsga2::mutation(Genotype &individual)

@@ -24,6 +24,8 @@ void Genotype::insertToDominationSet(Genotype &i)
 Genotype::Genotype()
 {
     this->chromosome.resize(1,1);
+    this->num_rows = 1;
+    this->num_cols = 1;
     this->num_objectives = 2;
     this->objective_values.resize(this->num_objectives);
     this->domination_counter = 0;
@@ -35,6 +37,8 @@ Genotype::Genotype()
 Genotype::Genotype(uint16_t num_rows, uint16_t num_cols)
 {
     this->chromosome.resize(num_rows, num_cols);
+    this->num_rows = num_rows;
+    this->num_cols = num_cols;
     this->num_objectives = 2;
     this->objective_values.resize(this->num_objectives);
     this->domination_counter = 0;
@@ -54,7 +58,6 @@ Genotype::Genotype(uint16_t num_rows, uint16_t num_cols,  vector<int> &parents)
     this->rank = 0;
     this->crowding_distance = 0;
 
-    int a = 0;
     for (int row = 0; row < num_rows; row++){
         for (int col = 0; col < num_cols; col++){
             int i = row * num_cols + col;
@@ -86,9 +89,7 @@ Genotype::Genotype(uint16_t num_rows, uint16_t num_cols,  vector<int> &parents)
                 this->chromosome(row, col).child->parents.push_back(&chromosome(row, col));
             }
         }
-        a++;
     }
-    a++;
 
     //for (int i = 0; i < num_pixels; i++) {
 //
@@ -130,8 +131,7 @@ void Genotype::setChromosomeSegment(int segment, int row, int col)
 
 void Genotype::setChromosomeChildPointer(GeneNode *child, int row, int col)
 {
-    if (child != NULL)
-        this->chromosome(row, col).child = child;
+    this->chromosome(row, col).child = child;
 }
 
 
@@ -140,15 +140,9 @@ GeneNode * Genotype::getChromosomeChildPointer(int row, int col)
     return this->chromosome(row, col).child;
 }
 
-void Genotype::setChromosomeParents(vector<GeneNode*> parents, int row, int col)
-{
-    if (!parents.empty())
-        this->chromosome(row, col).parents = parents;
-}
 
-vector<GeneNode*> Genotype::getChromosomeParents(int row, int col)
-{
-    return this->chromosome(row, col).parents;
+GeneNode* Genotype::getChromosomeGeneNode(int row, int col){
+    return &this->chromosome(row, col);
 }
 
 /////////////////////////////////////////////////////////
