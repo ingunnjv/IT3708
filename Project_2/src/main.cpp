@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
 
     // Run evolutionary process
     printf("Starting evolutionary process (NSGA-II algorithm)..\n");
-    ga.runMainLoop(image.r_channel, image.g_channel, image.b_channel, initial_pop);
+    ga.runMainLoop(image.r_channel, image.g_channel, image.b_channel, initial_pop, image.test_image);
 
     // Test decoding and viz
     //ga.population[4].genotypeToPhenotypeDecoding(image.r_channel.rows(), image.r_channel.cols());

@@ -49,13 +49,19 @@ public:
 
     /* Creates a new offspring population using crossover and mutation */
     void makeNewPop(std::vector<Genotype> &parent_pop, std::vector<Genotype> &offspring_pop);
+
+    /// Selects best parents from a tournament of random individuals
     void tournamentSelection(std::vector<Genotype *> &selected_parents);
+
+    /// For each pixel in an offspring, inherit either from first parent or second parent, uniformly distributed
     void uniformCrossover(std::vector<Genotype> &offspring);
+
+    /// Selects a random gene in an individual and sets it to a new value randomly selected from {left, right, up, down, none}
     void mutation(Genotype &individual);
 
     /// Run the main loop of the algorithm
     void runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue,
-                     std::vector<Genotype> &initial_pop);
+                     std::vector<Genotype> &initial_pop, cv::Mat &image);
 };
 
 #endif //PROJECT_2_NSGA_II_H

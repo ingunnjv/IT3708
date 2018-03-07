@@ -166,7 +166,7 @@ void Nsga2::crowdingDistanceAssignment(vector<Genotype*> &front)
 
 /////////////////////////////////////////////////////////
 void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue,
-                        vector<Genotype> &initial_pop) {
+                        vector<Genotype> &initial_pop, cv::Mat &image) {
     uint16_t num_cols = uint16_t(red.cols());
     uint16_t num_rows = uint16_t(red.rows());
 
@@ -180,7 +180,7 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
     for (int i = 0; i < population_size; i++){
         population[i] = &initial_pop[i];
     }
-    //population[5]->visualizeSegments(blue, green, red);
+    population[5]->visualizeEdges(image);
 
     /* Run evolutionary process */
     int generation = 1;
@@ -220,10 +220,10 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
         }
 
         /* Create a new offspring population by crossover and mutation */
-        makeNewPop(parents_pop, offspring_pop); // TODO: Implement this function (+mutation)
+        makeNewPop(parents_pop, offspring_pop);
 
         /* Combine the parent and offspring population */
-        if (generation == 1) {population.resize(population_size*2);}
+        if (generation == 1) { population.resize((unsigned) population_size*2); }
         fronts.clear();
         int j = 0;
         for (i = 0; i < 2*population_size; i+=2){
@@ -235,7 +235,7 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
         generation++;
     }
 
-    // TODO: show solution
+    // TODO: show best solution
     // TODO: get and print PRI of the best solution
 }
 
@@ -386,7 +386,22 @@ void Nsga2::uniformCrossover(vector<Genotype> &offspring)
 
 void Nsga2::mutation(Genotype &individual)
 {
+    unsigned seed = (unsigned)chrono::system_clock::now().time_since_epoch().count();
+    default_random_engine generator (seed);
 
+    // Choose random gene
+    uniform_int_distribution<int> pixel_distribution(0, individual.num_rows * individual.num_cols - 1);
+    int random_pixel = pixel_distribution(generator);
+    int row = random_pixel / individual.num_cols, col = random_pixel % individual.num_cols;
+
+    // Choose random gene value
+    uniform_int_distribution<uint8_t> gene_value_distribution(0, 4);
+    uint8_t gene_value = individual.getChromosomeValue(row, col);
+    uint8_t random_gene_value = gene_value_distribution(generator);
+    while (random_gene_value == gene_value){
+        random_gene_value = gene_value_distribution(generator);
+    }
+    individual.setChromosomeValue(random_gene_value, row, col);
 }
 
 /////////////////////////////////////////////////////////

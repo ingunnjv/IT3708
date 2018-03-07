@@ -276,59 +276,88 @@ void Genotype::visualizeSegments(const Eigen::MatrixXi &blue_ch, const Eigen::Ma
 }
 
 
-void Genotype::visualizeEdges(const Eigen::MatrixXi &blue_ch, const Eigen::MatrixXi &green_ch,
-                                 const Eigen::MatrixXi &red_ch)
+void Genotype::visualizeEdges(cv::Mat test_image)
 {
-    //cv::Mat canny_output;
-    //vector<vector<cv::Point> > contours;
-    //vector<cv::Vec4i> hierarchy;
-    //cv::Canny( segment_cv_image, canny_output, 0, 0, 3 );
-    //cv::findContours( canny_output, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
-//
-    //cv::Mat white_drawing = cv::Mat::ones( canny_output.size(), CV_8UC1 ) * 255;
-    ////cv::Mat test_image_drawing(test_image);
-    //cv::Mat segments = cv::Mat::ones( canny_output.size(), CV_8UC3 ) * 100;
-    //int red = 200, green = 100, blue = 0;
-    //int offset = 50;
-    //for( size_t i = 0; i< contours.size(); i++ )
-    //{
-    //    if (i % 2 == 0 && i > 0){
-    //        if (red + offset < 255)
-    //            red = red + offset;
-    //        else
-    //            red = 0;
-    //    }
-    //    if (i % 3 == 0 && i > 0){
-    //        if (green + offset < 255)
-    //            green = green + offset;
-    //        else
-    //            green = 0;
-    //    }
-    //    if (i % 2 == 1 && i > 0){
-    //        if (blue + offset/2 < 255)
-    //            blue = blue + offset/2;
-    //        else
-    //            blue = 0;
-    //    }
-//
-    //    cv::Scalar segment_color = cv::Scalar(blue, green, red);
-    //    cv::drawContours( segments, contours, (int)i, segment_color, -1, 8, hierarchy, 0, cv::Point() );
-//
-//
-    //    cv::Scalar color = cv::Scalar( 0 );
-    //    cv::drawContours( white_drawing, contours, (int)i, color, 1, 1, hierarchy, 0, cv::Point() );
-//
-    //    color = cv::Scalar( 0, 200, 0 );
-    //    //cv::drawContours( test_image_drawing, contours, (int)i, color, 1, 1, hierarchy, 0, cv::Point() );
-    //}
-    //cv::namedWindow( "Segments", cv::WINDOW_AUTOSIZE );
-    //cv::imshow( "Segments", segments );
-    //cv::namedWindow( "Solution type 2", cv::WINDOW_AUTOSIZE );
-    //cv::imshow( "Solution type 2", white_drawing );
-    ////cv::namedWindow( "Solution type 1", cv::WINDOW_AUTOSIZE );
-    ////cv::imshow( "Solution type 1", test_image_drawing );
-    //cv::waitKey(0); // Wait for a keystroke in the window
+    // Show two images for each solution in the Pareto-optimal set
+    for (int row = 0; row < num_rows; row++){
+        for (int col = 0; col < num_cols; col++){
+            cout << chromosome(row, col).segment;
+        }
+        cout << endl;
+    }
+    // create white image
+    cv::Mat segment_cv_image(num_rows, num_cols, CV_8UC1, cv::Scalar(255));
+
+    // find number of segments
+    vector<int> segment_nums_found;
+    for (int row = 0; row < num_rows; row++) {
+        for (int col = 0; col < num_cols; col++) {
+            int segment_num = chromosome(row,col).segment;
+            if (find(segment_nums_found.begin(), segment_nums_found.end(), segment_num) == segment_nums_found.end()){
+                segment_nums_found.push_back(segment_num);
+            }
+        }
+    }
+    // create grouping of pixels in corresponding segments
+    vector<vector<pixel_t>> pixels_segment_affiliation (segment_nums_found.size());
+    for (int row = 0; row < num_rows; row++) {
+        for (int col = 0; col < num_cols; col++) {
+            int segment_num = chromosome(row,col).segment;
+            pixel_t pixel = {row, col};
+            pixels_segment_affiliation[segment_num].push_back(pixel);
+        }
+    }
+    for (const auto &s: pixels_segment_affiliation) {
+        for (const auto &p: s){
+            // edge pixel?
+            int this_row = p.row;
+            int this_col = p.col;
+            int this_segment = chromosome(this_row, this_col).segment;
+
+            if (isEdgePixel(1, 0, this_col, this_row, this_segment)){
+                segment_cv_image.at<uchar>(this_row, this_col) = 0;
+            }
+            else if (isEdgePixel(-1, 0, this_col, this_row, this_segment)){
+                segment_cv_image.at<uchar>(this_row, this_col) = 0;
+            }
+            else if (isEdgePixel(0, 1, this_col, this_row, this_segment)){
+                segment_cv_image.at<uchar>(this_row, this_col) = 0;
+            }
+            else if (isEdgePixel(0, -1, this_col, this_row, this_segment)){
+                segment_cv_image.at<uchar>(this_row, this_col) = 0;
+            }
+        }
+    }
+    cv::namedWindow("Segments", cv::WINDOW_AUTOSIZE);
+    cv::imshow("Segments", segment_cv_image);
+    cv::waitKey(0);
+
+
+    // thinner edges
+    // dilation:
+    //cv::Mat thinned_edges;
+    //// assume default dilation kernel (3x3)
+    //cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(2, 2), cv::Point(0,0));
+    //cv::dilate(segment_cv_image, thinned_edges, kernel);
+    //cv::namedWindow("Segments 2.0", cv::WINDOW_AUTOSIZE);
+    //cv::imshow("Segments 2.0", thinned_edges);
+    //cv::waitKey(0);
+
+    // invert the edge image
+    cv::Mat inverted_image(num_rows, num_cols, CV_8UC1, cv::Scalar(0));
+    cv::bitwise_not(segment_cv_image, inverted_image);
+
+    // create copy and draw green edges
+    cv::Mat copy = test_image.clone();
+    cv::Mat green_image(num_rows, num_cols, CV_8UC3, cv::Scalar(0, 255, 0));
+    green_image.copyTo(copy, inverted_image);
+    cv::namedWindow("Green", cv::WINDOW_AUTOSIZE);
+    cv::imshow("Green", copy);
+    cv::waitKey(0);
+
 }
+
+
 
 /////////////////////////////////////////////////////////
 void Genotype::calculateObjectives(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue) {
@@ -428,6 +457,17 @@ double Genotype::calcEuclideanRgbDiff(signed short dir_y, signed short dir_x, in
         }
     }
     return diff;
+}
+
+bool Genotype::isEdgePixel(signed short dir_y, signed short dir_x, int this_col, int this_row, int this_segment)
+{
+    if (this_col + dir_x >= 0 && this_col + dir_x < num_cols && this_row + dir_y >= 0 && this_row + dir_y < num_rows) {
+        int segment = chromosome(this_row + dir_y, this_col + dir_x).segment;
+        return (chromosome(this_row + dir_y, this_col + dir_x).segment != this_segment);
+    }
+    else{
+        return false;
+    }
 }
 
 /*
