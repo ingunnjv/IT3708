@@ -33,13 +33,14 @@ int main(int argc, char *argv[]) {
     printf("Initializating a population with %d individuals..\n", population_size);
     ga.initializePopulation(image.r_channel, image.g_channel, image.b_channel, initial_pop);
 
+
     // Run evolutionary process
     printf("Starting evolutionary process (NSGA-II algorithm)..\n");
     ga.runMainLoop(image.r_channel, image.g_channel, image.b_channel, initial_pop);
 
     // Test decoding and viz
     //ga.population[4].genotypeToPhenotypeDecoding(image.r_channel.rows(), image.r_channel.cols());
-    //ga.population[4].visualize(image.b_channel, image.g_channel, image.r_channel, image.r_channel.rows(), image.r_channel.cols());
+    //ga.population[4].visualizeSegments(image.b_channel, image.g_channel, image.r_channel);
 
 
     printf("Exiting program\n");

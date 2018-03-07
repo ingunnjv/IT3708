@@ -180,6 +180,7 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
     for (int i = 0; i < population_size; i++){
         population[i] = &initial_pop[i];
     }
+    //population[5]->visualizeSegments(blue, green, red);
 
     /* Run evolutionary process */
     int generation = 1;
@@ -230,6 +231,7 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
             population[i+1] = &offspring_pop[j];
             j++;
         }
+
         generation++;
     }
 
@@ -330,7 +332,6 @@ void Nsga2::makeNewPop(vector<Genotype> &parent_pop, vector<Genotype> &offspring
             }
             i_offspring++;
         }
-
     }
 }
 

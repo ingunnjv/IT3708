@@ -236,77 +236,98 @@ void Genotype::genotypeToPhenotypeDecoding()
 }
 
 /////////////////////////////////////////////////////////
-void Genotype::visualize(Eigen::MatrixXi &blue_ch, Eigen::MatrixXi &green_ch, Eigen::MatrixXi &red_ch, int num_rows, int num_cols)
-{
-    Eigen::MatrixXi segment_eigen_image(num_rows, num_cols);
+void Genotype::visualizeSegments(const Eigen::MatrixXi &blue_ch, const Eigen::MatrixXi &green_ch,
+                                 const Eigen::MatrixXi &red_ch) {
+    Eigen::MatrixXi segment_eigen_matrix(num_rows, num_cols);
     cv::Mat segment_cv_image(num_rows, num_cols, CV_8UC3, cv::Scalar(0, 0, 0));
-    int current_segment = 0, prev_segment = 0;
-    cv::Vec3b segment_color = cv::Vec3b(uint8_t(blue_ch(0, 0)), uint8_t(green_ch(0, 0)), uint8_t(red_ch(0, 0)));
-    for (int i = 0; i < num_rows; i++){
-        for (int j = 0; j < num_cols; j++){
+
+    vector<int> segments;
+    vector<cv::Vec3b> segment_colors;
+    cv::Vec3b current_segment_color;
+    int current_segment_index = 0;
+    int current_segment = 0;
+
+    for (int i = 0; i < num_rows; i++) {
+        for (int j = 0; j < num_cols; j++) {
             current_segment = this->chromosome(i, j).segment;
-            if (current_segment != prev_segment){
-                prev_segment = current_segment;
-                segment_color = cv::Vec3b(uint8_t(blue_ch(i, j)), uint8_t(green_ch(i, j)), uint8_t(red_ch(i, j)));
+            auto iterator = find(segments.begin(), segments.end(), current_segment);
+            if (iterator != segments.end()) {
+                // current segment has been visited before
+                current_segment_index = distance(segments.begin(), iterator);
+                current_segment_color = segment_colors[current_segment_index];
+            } else {
+                // current segment is visited for the first time
+                current_segment_color = cv::Vec3b(uint8_t(blue_ch(i, j)), uint8_t(green_ch(i, j)),
+                                                  uint8_t(red_ch(i, j)));
+                segment_colors.push_back(current_segment_color);
+
+                current_segment_index = segments.size();
+                segments.push_back(current_segment);
             }
 
-            segment_cv_image.at<cv::Vec3b>(i, j) = segment_color;
-            segment_eigen_image(i, j) = this->chromosome(i, j).segment;
+            segment_cv_image.at<cv::Vec3b>(i, j) = current_segment_color;
+            segment_eigen_matrix(i, j) = current_segment;
         }
     }
-    cout << segment_eigen_image << endl;
-    cv::namedWindow( "Segments", cv::WINDOW_AUTOSIZE );
-    cv::imshow( "Segments", segment_cv_image );
+    cout << segment_eigen_matrix << endl;
+    cv::namedWindow("Segments", cv::WINDOW_AUTOSIZE);
+    cv::imshow("Segments", segment_cv_image);
     cv::waitKey(0);
-    cv::Mat canny_output;
-    vector<vector<cv::Point> > contours;
-    vector<cv::Vec4i> hierarchy;
-    cv::Canny( segment_cv_image, canny_output, 0, 0, 3 );
-    cv::findContours( canny_output, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
-
-    cv::Mat white_drawing = cv::Mat::ones( canny_output.size(), CV_8UC1 ) * 255;
-    //cv::Mat test_image_drawing(test_image);
-    cv::Mat segments = cv::Mat::ones( canny_output.size(), CV_8UC3 ) * 100;
-    int red = 200, green = 100, blue = 0;
-    int offset = 50;
-    for( size_t i = 0; i< contours.size(); i++ )
-    {
-        if (i % 2 == 0 && i > 0){
-            if (red + offset < 255)
-                red = red + offset;
-            else
-                red = 0;
-        }
-        if (i % 3 == 0 && i > 0){
-            if (green + offset < 255)
-                green = green + offset;
-            else
-                green = 0;
-        }
-        if (i % 2 == 1 && i > 0){
-            if (blue + offset/2 < 255)
-                blue = blue + offset/2;
-            else
-                blue = 0;
-        }
-
-        cv::Scalar segment_color = cv::Scalar(blue, green, red);
-        cv::drawContours( segments, contours, (int)i, segment_color, -1, 8, hierarchy, 0, cv::Point() );
+}
 
 
-        cv::Scalar color = cv::Scalar( 0 );
-        cv::drawContours( white_drawing, contours, (int)i, color, 1, 1, hierarchy, 0, cv::Point() );
-
-        color = cv::Scalar( 0, 200, 0 );
-        //cv::drawContours( test_image_drawing, contours, (int)i, color, 1, 1, hierarchy, 0, cv::Point() );
-    }
-    cv::namedWindow( "Segments", cv::WINDOW_AUTOSIZE );
-    cv::imshow( "Segments", segments );
-    cv::namedWindow( "Solution type 2", cv::WINDOW_AUTOSIZE );
-    cv::imshow( "Solution type 2", white_drawing );
-    //cv::namedWindow( "Solution type 1", cv::WINDOW_AUTOSIZE );
-    //cv::imshow( "Solution type 1", test_image_drawing );
-    cv::waitKey(0); // Wait for a keystroke in the window
+void Genotype::visualizeEdges(const Eigen::MatrixXi &blue_ch, const Eigen::MatrixXi &green_ch,
+                                 const Eigen::MatrixXi &red_ch)
+{
+    //cv::Mat canny_output;
+    //vector<vector<cv::Point> > contours;
+    //vector<cv::Vec4i> hierarchy;
+    //cv::Canny( segment_cv_image, canny_output, 0, 0, 3 );
+    //cv::findContours( canny_output, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
+//
+    //cv::Mat white_drawing = cv::Mat::ones( canny_output.size(), CV_8UC1 ) * 255;
+    ////cv::Mat test_image_drawing(test_image);
+    //cv::Mat segments = cv::Mat::ones( canny_output.size(), CV_8UC3 ) * 100;
+    //int red = 200, green = 100, blue = 0;
+    //int offset = 50;
+    //for( size_t i = 0; i< contours.size(); i++ )
+    //{
+    //    if (i % 2 == 0 && i > 0){
+    //        if (red + offset < 255)
+    //            red = red + offset;
+    //        else
+    //            red = 0;
+    //    }
+    //    if (i % 3 == 0 && i > 0){
+    //        if (green + offset < 255)
+    //            green = green + offset;
+    //        else
+    //            green = 0;
+    //    }
+    //    if (i % 2 == 1 && i > 0){
+    //        if (blue + offset/2 < 255)
+    //            blue = blue + offset/2;
+    //        else
+    //            blue = 0;
+    //    }
+//
+    //    cv::Scalar segment_color = cv::Scalar(blue, green, red);
+    //    cv::drawContours( segments, contours, (int)i, segment_color, -1, 8, hierarchy, 0, cv::Point() );
+//
+//
+    //    cv::Scalar color = cv::Scalar( 0 );
+    //    cv::drawContours( white_drawing, contours, (int)i, color, 1, 1, hierarchy, 0, cv::Point() );
+//
+    //    color = cv::Scalar( 0, 200, 0 );
+    //    //cv::drawContours( test_image_drawing, contours, (int)i, color, 1, 1, hierarchy, 0, cv::Point() );
+    //}
+    //cv::namedWindow( "Segments", cv::WINDOW_AUTOSIZE );
+    //cv::imshow( "Segments", segments );
+    //cv::namedWindow( "Solution type 2", cv::WINDOW_AUTOSIZE );
+    //cv::imshow( "Solution type 2", white_drawing );
+    ////cv::namedWindow( "Solution type 1", cv::WINDOW_AUTOSIZE );
+    ////cv::imshow( "Solution type 1", test_image_drawing );
+    //cv::waitKey(0); // Wait for a keystroke in the window
 }
 
 /////////////////////////////////////////////////////////

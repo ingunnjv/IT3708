@@ -42,7 +42,10 @@ public:
     void setRank(int rank);
     void insertToDominationSet(Genotype &i);
     void genotypeToPhenotypeDecoding();
-    void visualize(Eigen::MatrixXi &blue_ch, Eigen::MatrixXi &green_ch, Eigen::MatrixXi &red_ch, int num_rows, int num_cols);
+    void visualizeSegments(const Eigen::MatrixXi &blue_ch, const Eigen::MatrixXi &green_ch,
+                           const Eigen::MatrixXi &red_ch);
+    void visualizeEdges(const Eigen::MatrixXi &blue_ch, const Eigen::MatrixXi &green_ch,
+                        const Eigen::MatrixXi &red_ch);
     void calculateObjectives(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
     double calcEuclideanRgbDiff(signed short dir_y, signed short dir_x, int this_col, int this_row, int this_segment,
                                 const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
