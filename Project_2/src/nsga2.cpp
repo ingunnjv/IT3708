@@ -32,7 +32,7 @@ Nsga2::Nsga2(double mutation_rate, double crossover_rate, uint16_t tournament_si
 
 /////////////////////////////////////////////////////////
 void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue,
-                                             std::vector<Genotype> initial_pop)
+                                 vector<Genotype> &initial_pop)
 {
     uint16_t num_rows = uint16_t(red.rows());
     uint16_t num_cols = uint16_t(red.cols());
@@ -166,7 +166,7 @@ void Nsga2::crowdingDistanceAssignment(vector<Genotype*> &front)
 
 /////////////////////////////////////////////////////////
 void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue,
-                        std::vector<Genotype> initial_pop) {
+                        vector<Genotype> &initial_pop) {
     uint16_t num_cols = uint16_t(red.cols());
     uint16_t num_rows = uint16_t(red.rows());
 
@@ -246,7 +246,7 @@ void Nsga2::makeNewPop(vector<Genotype> &parent_pop, vector<Genotype> &offspring
     //vector<Genotype> offspring(2, Genotype((uint16_t)parent_pop[0].num_rows, (uint16_t)parent_pop[0].num_cols));
     vector<Genotype> offspring(2);
     vector<Genotype *> selected_parents(2);
-    bool new_offspring_generated = false;
+    bool new_offspring_generated;
     printf("+ Make new offspring population...\n");
 
     for (int i = 0; i < offspring_pop.size(); i = i + 2) {
