@@ -13,29 +13,32 @@
 
 
 
-enum genValues {left, right, up, down, none}; // all possible values of a gene
+enum genValues {left = 0, right, up, down, none}; // all possible values of a gene
 
 struct GeneNode {
-    int segment;
+    uint16_t segment;
     uint8_t value;
-    GeneNode* child;
-    std::vector<GeneNode*> parents;
-    GeneNode(){parents.reserve(4), segment = -1, value = 0; child = NULL;};
+    GeneNode(){segment = 0, value = genValues::none;};
 };
 typedef Eigen::Matrix<struct GeneNode, Eigen::Dynamic, Eigen::Dynamic> GeneMatrix;
 
 class Genotype {
 private:
-    GeneMatrix chromosome; // storage the entire set of genes
 
 
 public:
-    int num_cols;
-    int num_rows;
+    GeneMatrix chromosome; // storage the entire set of genes
+
+    uint16_t num_cols;
+    uint16_t num_rows;
+    uint16_t tot_segment_count;
+
     std::vector<Genotype*> dominates; // set of solutions that this dominates
-    int domination_counter; // number of solution that dominates this solution
+    uint16_t domination_counter; // number of solution that dominates this solution
+
     uint16_t rank; // ranges from 0 to maximum of the size of the population
     double crowding_distance; // measure of how far away the genotype is from others in the population
+
     std::vector<double> objective_values; // values of the two objectives that are optimized
     uint8_t num_objectives; // length of objective_values
 
@@ -55,14 +58,11 @@ public:
     Genotype(uint16_t num_rows, uint16_t num_cols);
     Genotype(uint16_t num_rows, uint16_t num_cols,  std::vector<int> &parents);
     void setChromosomeValue(uint8_t value, int row, int col);
+    void findAndAddParentNodesToList(std::vector<std::tuple<int,int>> &connected_nodes_pos, const std::tuple<int,int> &current_node_pos, Eigen::MatrixXi &discovered);
+    void addChildNodeToList(std::vector<std::tuple<int,int>> &connected_nodes_pos, const std::tuple<int,int> &current_node_pos, Eigen::MatrixXi &discovered);
     void setChromosomeSegment(int segment, int row, int col);
-    void setChromosomeChildPointer(GeneNode *child, int row, int col);
-
     GeneNode * getChromosomeGeneNode(int row, int col);
-
     uint8_t getChromosomeValue(int row, int col);
-    GeneNode* getChromosomeChildPointer(int row, int col);
-    //~Genotype() = default;
 
 
     static bool sortByObj1(const Genotype* lhs, const Genotype* rhs);
