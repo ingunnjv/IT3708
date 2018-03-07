@@ -48,7 +48,8 @@ public:
     void crowdingDistanceAssignment(std::vector<Genotype*> &front);
 
     /* Creates a new offspring population using crossover and mutation */
-    void makeNewPop(std::vector<Genotype> &parent_pop, std::vector<Genotype> &offspring_pop);
+    void makeNewPop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue,
+                    std::vector<Genotype> &parent_pop, std::vector<Genotype> &offspring_pop);
     void tournamentSelection(std::vector<Genotype *> &selected_parents);
     void uniformCrossover(std::vector<Genotype> &offspring);
     void mutation(Genotype &individual);
