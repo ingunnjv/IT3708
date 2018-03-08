@@ -7,6 +7,8 @@
 #include <cfloat>
 #include <set>
 #include <iostream>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/opencv.hpp>
 
 
 struct pixel_t {
@@ -42,5 +44,7 @@ void setUserArgs(int argc, char **argv, double &mutation_rate, double &crossover
 void printMST(std::vector<int> &parent, int num_pixels,
               const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
 
+void thinningIteration(cv::Mat& img, int iter);
+void thinning(const cv::Mat& src, cv::Mat& dst);
 
 #endif //PROJECT_2_UTILS_H

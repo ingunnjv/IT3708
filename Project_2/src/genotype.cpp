@@ -63,7 +63,7 @@ Genotype::Genotype(uint16_t num_rows, uint16_t num_cols,  vector<int> &parents)
     for (int row = 0; row < num_rows; row++){
         for (int col = 0; col < num_cols; col++){
             int i = row * num_cols + col;
-            this->chromosome(row, col).segment = -1;
+            //this->chromosome(row, col).segment = -1;
             if (parents[i] == -1){
                 this->chromosome(row, col).value = genValues::none;
             }
@@ -304,28 +304,11 @@ void Genotype::visualizeSegments(const Eigen::MatrixXi &blue_ch, const Eigen::Ma
 
 void Genotype::visualizeEdges(cv::Mat test_image)
 {
-    // Show two images for each solution in the Pareto-optimal set
-    for (int row = 0; row < num_rows; row++){
-        for (int col = 0; col < num_cols; col++){
-            cout << chromosome(row, col).segment;
-        }
-        cout << endl;
-    }
     // create white image
     cv::Mat segment_cv_image(num_rows, num_cols, CV_8UC1, cv::Scalar(255));
 
-    // find number of segments
-    vector<int> segment_nums_found;
-    for (int row = 0; row < num_rows; row++) {
-        for (int col = 0; col < num_cols; col++) {
-            int segment_num = chromosome(row,col).segment;
-            if (find(segment_nums_found.begin(), segment_nums_found.end(), segment_num) == segment_nums_found.end()){
-                segment_nums_found.push_back(segment_num);
-            }
-        }
-    }
     // create grouping of pixels in corresponding segments
-    vector<vector<pixel_t>> pixels_segment_affiliation (segment_nums_found.size());
+    vector<vector<pixel_t>> pixels_segment_affiliation (tot_segment_count);
     for (int row = 0; row < num_rows; row++) {
         for (int col = 0; col < num_cols; col++) {
             int segment_num = chromosome(row,col).segment;
@@ -354,33 +337,25 @@ void Genotype::visualizeEdges(cv::Mat test_image)
             }
         }
     }
-    cv::namedWindow("Segments", cv::WINDOW_AUTOSIZE);
-    cv::imshow("Segments", segment_cv_image);
-    cv::waitKey(0);
-
-
-    // thinner edges
-    // dilation:
-    //cv::Mat thinned_edges;
-    //// assume default dilation kernel (3x3)
-    //cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(2, 2), cv::Point(0,0));
-    //cv::dilate(segment_cv_image, thinned_edges, kernel);
-    //cv::namedWindow("Segments 2.0", cv::WINDOW_AUTOSIZE);
-    //cv::imshow("Segments 2.0", thinned_edges);
-    //cv::waitKey(0);
 
     // invert the edge image
     cv::Mat inverted_image(num_rows, num_cols, CV_8UC1, cv::Scalar(0));
     cv::bitwise_not(segment_cv_image, inverted_image);
 
-    // create copy and draw green edges
+    // thinner edges
+    thinning(inverted_image, inverted_image);
+    cv::bitwise_not(inverted_image, segment_cv_image);
+    cv::namedWindow("Segments 2.0", cv::WINDOW_AUTOSIZE);
+    cv::imshow("Segments 2.0", segment_cv_image);
+    cv::waitKey(0);
+
+    // create copy and draw green edges in original image
     cv::Mat copy = test_image.clone();
     cv::Mat green_image(num_rows, num_cols, CV_8UC3, cv::Scalar(0, 255, 0));
     green_image.copyTo(copy, inverted_image);
     cv::namedWindow("Green", cv::WINDOW_AUTOSIZE);
     cv::imshow("Green", copy);
     cv::waitKey(0);
-
 }
 
 
