@@ -345,16 +345,32 @@ void Genotype::visualizeEdges(cv::Mat test_image)
     // thinner edges
     thinning(inverted_image, inverted_image);
     cv::bitwise_not(inverted_image, segment_cv_image);
-    cv::namedWindow("Segments 2.0", cv::WINDOW_AUTOSIZE);
-    cv::imshow("Segments 2.0", segment_cv_image);
-    cv::waitKey(0);
+//    cv::namedWindow("Segments 2.0", cv::WINDOW_AUTOSIZE);
+//    cv::imshow("Segments 2.0", segment_cv_image);
+//    cv::waitKey(0);
 
     // create copy and draw green edges in original image
     cv::Mat copy = test_image.clone();
     cv::Mat green_image(num_rows, num_cols, CV_8UC3, cv::Scalar(0, 255, 0));
     green_image.copyTo(copy, inverted_image);
-    cv::namedWindow("Green", cv::WINDOW_AUTOSIZE);
-    cv::imshow("Green", copy);
+//    cv::namedWindow("Green", cv::WINDOW_AUTOSIZE);
+//    cv::imshow("Green", copy);
+//    cv::waitKey(0);
+
+    // Create mat for window
+    int width = copy.cols;
+    int height = copy.rows;
+    cv::Mat win_mat(cv::Size(width*3, height), CV_8UC3);
+    cv::Mat segment_cv_image_color(num_rows, num_cols, CV_8UC3);
+    cv::cvtColor(segment_cv_image, segment_cv_image_color, cv::COLOR_GRAY2BGR);
+
+    // Copy small images into big mat
+    test_image.copyTo(win_mat(cv::Rect(  0, 0, width, height)));
+    copy.copyTo(win_mat(cv::Rect(width, 0, width, height)));
+    segment_cv_image_color.copyTo(win_mat(cv::Rect(width*2, 0, width, height)));
+
+    // Display big mat
+    cv::imshow("Result", win_mat);
     cv::waitKey(0);
 }
 

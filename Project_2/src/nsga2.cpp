@@ -198,7 +198,6 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
         population[i] = &initial_pop[i];
         //population[i]->visualizeEdges(image);
     }
-    //population[5]->visualizeEdges(image);
 
 
     /* Run evolutionary process */
