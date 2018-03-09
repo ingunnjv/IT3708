@@ -25,7 +25,6 @@ typedef Eigen::Matrix<struct GeneNode, Eigen::Dynamic, Eigen::Dynamic> GeneMatri
 class Genotype {
 private:
 
-
 public:
     GeneMatrix chromosome; // storage the entire set of genes
 

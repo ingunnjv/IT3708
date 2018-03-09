@@ -13,7 +13,7 @@
 
 class Nsga2 {
 private:
-    std::vector<Genotype*> population;
+    std::vector<Genotype> population;
 
     double mutation_rate;
     double crossover_rate;
@@ -47,7 +47,7 @@ public:
     /// Assigns every genotype in a front a crowding_distance
     void crowdingDistanceAssignment(std::vector<Genotype*> &front);
 
-    /* Creates a new offspring population using crossover and mutation */
+    /// Creates a new offspring population using crossover and mutation
     void makeNewPop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue,
                     std::vector<Genotype> &parent_pop, std::vector<Genotype> &offspring_pop);
     void tournamentSelection(std::vector<Genotype *> &selected_parents, std::vector<Genotype> &parent_pop);
