@@ -71,21 +71,22 @@ void Nsga2::fastNonDominatedSort(vector< vector<Genotype*> > &fronts) {
     // Iterate through the entire population to find who dominates who
     int p_i = 0, q_i = 0;
     for (auto &p: this->population) {
-        p->dominates.clear();
+        p.dominates.clear();
+        p.domination_counter = 0;
         for (auto &q: this->population) {
             if (p_i != q_i){
-                if (*p < *q){ // check if p dominates q
-                    p->insertToDominationSet(*q);
+                if (p < q){ // check if p dominates q
+                    p.insertToDominationSet(q);
                 }
-                else if (*p > *q){ // check if q dominates p
-                    p->domination_counter++;
+                else if (p > q){ // check if q dominates p
+                    p.domination_counter++;
                 }
             }
             q_i++;
         }
-        if (p->domination_counter == 0){ // if p is dominated by no one, it means it belongs to the first rank
-            p->setRank(0);
-            first_front.push_back(&(*p)); // non-dominated solutions belongs to the first front
+        if (p.domination_counter == 0){ // if p is dominated by no one, it means it belongs to the first rank
+            p.setRank(0);
+            first_front.push_back(&p); // non-dominated solutions belongs to the first front
         }
         p_i++;
         q_i = 0;
@@ -106,12 +107,15 @@ void Nsga2::fastNonDominatedSort(vector< vector<Genotype*> > &fronts) {
                     new_front_is_empty = false;
                 }
             }
+            p->dominates.clear();
+            p->domination_counter = 0;
         }
         i++;
         if(!new_front_is_empty) {
             fronts.push_back(new_front);
             new_front_is_empty = true;
         }
+        else{break;}
     }
 }
 
@@ -179,14 +183,16 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
     /* Create and reserve storage space (big objects) */
     printf("+ Allocating memory for population buffers..\n");
     vector< vector<Genotype*> > fronts;//(this->population_size, vector<Genotype*>(this->population_size));
-    vector<Genotype> parents_pop (this->population_size, Genotype(num_rows, num_cols));
-    vector<Genotype> offspring_pop (this->population_size, Genotype(num_rows, num_cols));
-
+    vector<Genotype> parents_pop;
+    parents_pop.reserve(this->population_size);
+    vector<Genotype> offspring_pop;
+    offspring_pop.reserve(this->population_size);
 
     for (int i = 0; i < population_size; i++){
-        population[i] = &initial_pop[i];
+        population[i] = initial_pop[i];
     }
-    population[5]->visualizeEdges(image);
+
+    initial_pop.erase(initial_pop.begin(), initial_pop.end());
 
     /* Run evolutionary process */
     int generation = 1;
@@ -207,7 +213,7 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
         {
             crowdingDistanceAssignment(fronts[front_index]);
             for (const auto &genotype: fronts[front_index]){
-                parents_pop[parent_pop_index] = *genotype;
+                parents_pop.push_back(*genotype);
                 parent_pop_index++;
             }
             front_index++;
@@ -220,7 +226,7 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
         }
         int i = 0;
         while(parent_pop_index < population_size && !fronts[front_index].empty()){
-            parents_pop[parent_pop_index] = *fronts[front_index][i];
+            parents_pop.push_back(*fronts[front_index][i]);
             parent_pop_index++;
             i++;
         }
@@ -229,12 +235,25 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
         makeNewPop(red, green, blue, parents_pop, offspring_pop);
 
         /* Combine the parent and offspring population */
-        this->population.erase(population.begin(), population.end());
+        fronts.clear();
+        population.clear();
+        //if (generation == 1){population.resize(population_size*2);}
         for (i = 0; i < population_size; i++){
-            population.push_back(&parents_pop[i]);
-            population.push_back(&offspring_pop[i]);
+            population.push_back(parents_pop[i]);
+            population.push_back(offspring_pop[i]);
         }
-
+//        int j = 0;
+//        for (i = 0; i < population_size; i++){
+//            population[i] = parents_pop[j];
+//            j++;
+//        }
+//        j = 0;
+//        for (i = population_size; i < 2*population_size; i++){
+//            population[i] = offspring_pop[j];
+//            j++;
+//        }
+        parents_pop.clear();
+        offspring_pop.clear();
         generation++;
     }
 
@@ -243,13 +262,14 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
     parents_pop.erase(parents_pop.begin(), parents_pop.end());
     offspring_pop.erase(offspring_pop.begin(), offspring_pop.end());
     initial_pop.erase(initial_pop.begin(), initial_pop.end());
+
     // TODO: show solution
     // TODO: get and print PRI of the best solution
 }
 
 /////////////////////////////////////////////////////////
 void Nsga2::makeNewPop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue,
-                       vector<Genotype> &parent_pop, vector<Genotype> &offspring_pop) {
+                       const vector<Genotype> &parent_pop, vector<Genotype> &offspring_pop) {
     unsigned seed = (unsigned) chrono::system_clock::now().time_since_epoch().count();
     default_random_engine generator(seed);
     uniform_real_distribution<double> rand_distribution(0.0, 1.0);
@@ -260,7 +280,7 @@ void Nsga2::makeNewPop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
     bool new_offspring_generated;
     printf("\t+ Make new offspring population...\n");
 
-    for (int i = 0; i < offspring_pop.size(); i = i + 2) {
+    for (int i = 0; i < population_size; i = i + 2) {
         new_offspring_generated = false;
         tournamentSelection(selected_parents);
         int j = 0;
@@ -274,7 +294,6 @@ void Nsga2::makeNewPop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
             new_offspring_generated = true;
         }
 
-        int i_offspring = i;
         for (auto &individual: offspring) {
             double mutation_event = rand_distribution(generator);
             if (mutation_event < this->mutation_rate) {
@@ -287,8 +306,7 @@ void Nsga2::makeNewPop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
                 individual.genotypeToPhenotypeDecoding();
                 individual.calculateObjectives(red, green, blue);
             }
-            offspring_pop[i_offspring] = individual;
-            i_offspring++;
+            offspring_pop.push_back(individual);
         }
     }
 }
@@ -316,7 +334,7 @@ void Nsga2::tournamentSelection(vector<Genotype *> &selected_parents)
     selected_parents.clear();
     selected_parents.resize(this->tournament_size);
     for (int i = 0; i < this->tournament_size; i++){
-        selected_parents[i] = this->population[tournament_indices[i]];
+        selected_parents[i] = &this->population[tournament_indices[i]];
     }
     crowdingDistanceSort(selected_parents);
 

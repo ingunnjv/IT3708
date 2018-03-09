@@ -28,14 +28,11 @@ int main(int argc, char *argv[]) {
     // Create GA
     Nsga2 ga = Nsga2(mutation_rate, crossover_rate, tournament_size,
                      time_limit, generation_limit, population_size);
+
     // Initialize a population
     vector<Genotype> initial_pop (population_size);
     printf("Initializating a population with %d individuals..\n", population_size);
     ga.initializePopulation(image.r_channel, image.g_channel, image.b_channel, initial_pop);
-
-
-    // TEST SEGMENT DECODING
-
 
     // Run evolutionary process
     printf("Starting evolutionary process (NSGA-II algorithm)..\n");
