@@ -34,6 +34,13 @@ int main(int argc, char *argv[]) {
     printf("Initializating a population with %d individuals..\n", population_size);
     ga.initializePopulation(image.r_channel, image.g_channel, image.b_channel, initial_pop);
 
+
+    // TEST: Visualize initial segmentation
+//    for(auto &genotype: initial_pop){
+//        genotype.visualizeSegments(image.r_channel, image.g_channel, image.b_channel);
+//    }
+
+
     // Run evolutionary process
     printf("Starting evolutionary process (NSGA-II algorithm)..\n");
     ga.runMainLoop(image.r_channel, image.g_channel, image.b_channel, initial_pop, image.test_image);

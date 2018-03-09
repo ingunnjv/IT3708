@@ -188,16 +188,11 @@ void Nsga2::crowdingDistanceAssignment(vector<Genotype*> &front)
 /////////////////////////////////////////////////////////
 void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue,
                         vector<Genotype> &initial_pop, cv::Mat &image) {
-    uint16_t num_cols = uint16_t(red.cols());
-    uint16_t num_rows = uint16_t(red.rows());
-
     /* Create and reserve storage space (big objects) */
     printf("+ Allocating memory for population buffers..\n");
     vector< vector<Genotype*> > fronts;//(this->population_size, vector<Genotype*>(this->population_size));
     vector<Genotype> parents_pop;
-    parents_pop.reserve(this->population_size);
     vector<Genotype> offspring_pop;
-    offspring_pop.reserve(this->population_size);
 
     for (int i = 0; i < population_size; i++){
         population[i] = initial_pop[i];
@@ -244,6 +239,13 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
 
         /* Create a new offspring population by crossover and mutation */
         makeNewPop(red, green, blue, parents_pop, offspring_pop);
+
+        /* TEST: Visualize segments before termination */
+        if(generation == generation_limit - 1){
+            for(auto &genotype: fronts[0]){
+                genotype->visualizeSegments(red, green, blue);
+            }
+        }
 
         /* Combine the parent and offspring population */
         fronts.clear();
