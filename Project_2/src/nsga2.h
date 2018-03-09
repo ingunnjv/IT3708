@@ -50,7 +50,7 @@ public:
     /// Creates a new offspring population using crossover and mutation
     void makeNewPop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue,
                     const std::vector<Genotype> &parent_pop, std::vector<Genotype> &offspring_pop);
-    void tournamentSelection(std::vector<Genotype *> &selected_parents);
+    void tournamentSelection(std::vector<Genotype *> &selected_parents, std::vector<Genotype> &parent_pop);
 
     /// For each pixel in an offspring, inherit either from first parent or second parent, uniformly distributed
     void uniformCrossover(std::vector<Genotype> &offspring);

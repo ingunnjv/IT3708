@@ -37,25 +37,36 @@ void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::Matrix
     uint16_t num_rows = uint16_t(red.rows());
     uint16_t num_cols = uint16_t(red.cols());
     int num_pixels = num_rows * num_cols;
-    ///In the initialization of
-    ///the ith individual in the population, the (i−1) long links are
-    ///removed from the MST individual.
     vector<int> parent_graph = primMST(red, green, blue);
     set < pair<uint32_t, double>, pairCmpGe > links;
-    //vector<Genotype> initial_population (this->population_size);
 
     pixel_t x, y;
-    for (int i = 1; i < num_pixels; i++) {
+    for (int i = 0; i < num_pixels; i++) {
+        if (parent_graph[i] == -1){
+            continue;
+        }
         x.row = i / num_cols, x.col = i % num_cols;
         y.row = parent_graph[i] / num_cols, y.col = parent_graph[i] % num_cols;
         links.insert(make_pair(i, rgbDistance(y, x, red, green, blue)));
     }
     for (int i = 0; i < population_size; i++){
-        initial_pop[i] = Genotype(num_rows, num_cols, parent_graph);
         //this->population[i] = &initial_pop[i];
-        auto it = links.begin();
-        parent_graph[it->first] = -1;
-        if (!links.empty()) { links.erase(it); }
+        // Remove largest edges
+        //TODO: how many edges??
+        if (i > 0){
+            for(uint8_t removed_links = 0; removed_links < 1; removed_links++){
+                if (!links.empty()){
+                    auto it = links.begin();
+                    parent_graph[it->first] = -1;
+                    links.erase(it);
+                }
+            }
+        }
+
+        initial_pop[i] = Genotype(num_rows, num_cols, parent_graph);
+        if (i > 0) {
+            /// maybe mutation(initial_pop[i]);
+        }
         initial_pop[i].genotypeToPhenotypeDecoding();
         initial_pop[i].calculateObjectives(red, green, blue);
         printf("+ Created genotype with %d segments(s).\n", i+1);
@@ -282,7 +293,7 @@ void Nsga2::makeNewPop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
 
     for (int i = 0; i < population_size; i = i + 2) {
         new_offspring_generated = false;
-        tournamentSelection(selected_parents);
+        tournamentSelection(selected_parents, parent_pop);
         int j = 0;
         for (auto p: selected_parents) {
             offspring[j] = *p;
@@ -311,7 +322,7 @@ void Nsga2::makeNewPop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
     }
 }
 
-void Nsga2::tournamentSelection(vector<Genotype *> &selected_parents)
+void Nsga2::tournamentSelection(vector<Genotype *> &selected_parents, vector<Genotype> &parent_pop)
 {
     unsigned seed = (unsigned)chrono::system_clock::now().time_since_epoch().count();
     default_random_engine generator (seed);
@@ -334,7 +345,7 @@ void Nsga2::tournamentSelection(vector<Genotype *> &selected_parents)
     selected_parents.clear();
     selected_parents.resize(this->tournament_size);
     for (int i = 0; i < this->tournament_size; i++){
-        selected_parents[i] = &this->population[tournament_indices[i]];
+        selected_parents[i] = &parent_pop[tournament_indices[i]];
     }
     crowdingDistanceSort(selected_parents);
 
@@ -365,19 +376,22 @@ void Nsga2::mutation(Genotype &individual)
     unsigned seed = (unsigned)chrono::system_clock::now().time_since_epoch().count();
     default_random_engine generator (seed);
 
-    // Choose random gene
     uniform_int_distribution<int> pixel_distribution(0, individual.num_rows * individual.num_cols - 1);
-    int random_pixel = pixel_distribution(generator);
-    int row = random_pixel / individual.num_cols, col = random_pixel % individual.num_cols;
-
-    // Choose random gene value
     uniform_int_distribution<uint8_t> gene_value_distribution(0, 4);
-    uint8_t gene_value = individual.getChromosomeValue(row, col);
-    uint8_t random_gene_value = gene_value_distribution(generator);
-    while (random_gene_value == gene_value){
-        random_gene_value = gene_value_distribution(generator);
+
+    for (int m = 0; m < (int)0.001*individual.num_rows * individual.num_cols; m++){
+        // Choose random gene
+        int random_pixel = pixel_distribution(generator);
+        int row = random_pixel / individual.num_cols, col = random_pixel % individual.num_cols;
+
+        // Choose random gene value
+        uint8_t gene_value = individual.getChromosomeValue(row, col);
+        uint8_t random_gene_value = gene_value_distribution(generator);
+        while (random_gene_value == gene_value){
+            random_gene_value = gene_value_distribution(generator);
+        }
+        individual.setChromosomeValue(random_gene_value, row, col);
     }
-    individual.setChromosomeValue(random_gene_value, row, col);
 }
 
 /////////////////////////////////////////////////////////
@@ -394,19 +408,22 @@ vector<int> Nsga2::primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &gr
 
     // Initialize all keys as INFINITE
     for (int i = 0; i < num_pixels; i++)
-        key[i] = INT_MAX, mstSet[i] = false;
+        key[i] = DBL_MAX, mstSet[i] = false;
 
-    // Always include first vertex in MST.
-    key[0] = 0;     // Make key 0 so that this vertex is picked as first vertex
-    parent[0] = -1; // First node is always root of MST
-    vertices_considered.insert(make_pair(0, key[0]));
+    // Always include initial random vertex in MST.
+    unsigned seed = (unsigned)chrono::system_clock::now().time_since_epoch().count();
+    default_random_engine generator (seed);
+    uniform_int_distribution<int> vertex_distribution(0, num_rows * num_cols - 1);
+    int random_vertex = vertex_distribution(generator);
+    key[random_vertex] = 0;     // Make key 0 so that this vertex is picked as first vertex
+    parent[random_vertex] = -1; // First node is always root of MST
+    vertices_considered.insert(make_pair(random_vertex, key[random_vertex]));
 
     // The MST will have num_pixels vertices
     for (int count = 0; count < num_pixels - 1; count++) {
         // Pick the minimum key vertex from the set of vertices not yet included in MST
         auto it = vertices_considered.begin();
-        while (mstSet[it->first]){
-            // this pixel has already been added to the tree
+        while (mstSet[it->first]){  // this pixel has already been added to the tree
             vertices_considered.erase(it);
             it = vertices_considered.begin();
         }
