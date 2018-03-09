@@ -301,6 +301,7 @@ void Genotype::visualizeSegments(const Eigen::MatrixXi &blue_ch, const Eigen::Ma
     cv::namedWindow("Segments", cv::WINDOW_AUTOSIZE);
     cv::imshow("Segments", segment_cv_image);
     cv::waitKey(0);
+
 }
 
 /////////////////////////////////////////////////////////
@@ -397,7 +398,7 @@ void Genotype::decodeAndEvaluate(const Eigen::MatrixXi &red, const Eigen::Matrix
 }
 
 /////////////////////////////////////////////////////////
-void Genotype::visualizeEdges(cv::Mat test_image)
+void Genotype::visualizeEdges(cv::Mat test_image, string title)
 {
     // create white image
     cv::Mat segment_cv_image(num_rows, num_cols, CV_8UC1, cv::Scalar(255));
@@ -465,7 +466,7 @@ void Genotype::visualizeEdges(cv::Mat test_image)
     segment_cv_image_color.copyTo(win_mat(cv::Rect(width*2, 0, width, height)));
 
     // Display big mat
-    cv::imshow("Result", win_mat);
+    cv::imshow(title, win_mat);
     cv::waitKey(0);
 }
 
@@ -473,16 +474,6 @@ void Genotype::visualizeEdges(cv::Mat test_image)
 
 /////////////////////////////////////////////////////////
 void Genotype::calculateObjectives(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue) {
-//    // find number of segments
-//    vector<int> segment_nums_found;
-//    for (int row = 0; row < num_rows; row++) {
-//        for (int col = 0; col < num_cols; col++) {
-//            int segment_num = chromosome(row,col).segment;
-//            if (find(segment_nums_found.begin(), segment_nums_found.end(), segment_num) == segment_nums_found.end()){
-//                segment_nums_found.push_back(segment_num);
-//            }
-//        }
-//    }
     // create grouping of pixels in corresponding segments
     vector<vector<pixel_t>> pixels_segment_affiliation (tot_segment_count);
     for (int row = 0; row < num_rows; row++) {

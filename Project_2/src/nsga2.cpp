@@ -54,7 +54,7 @@ void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::Matrix
         // Remove largest edges
         //TODO: how many edges??
         if (i > 0){
-            for(uint8_t removed_links = 0; removed_links < 1; removed_links++){
+            for(uint8_t removed_links = 0; removed_links < 10; removed_links++){
                 if (!links.empty()){
                     auto it = links.begin();
                     parent_graph[it->first] = -1;
@@ -64,13 +64,8 @@ void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::Matrix
         }
 
         initial_pop[i] = Genotype(num_rows, num_cols, parent_graph);
-        if (i > 0) {
-            /// maybe mutation(initial_pop[i]);
-        }
+        initialMutation(initial_pop[i]);
         initial_pop[i].decodeAndEvaluate(red, green, blue);
-        //initial_pop[i].visualizeSegments(red, green, blue);
-        //initial_pop[i].genotypeToPhenotypeDecoding();
-        //initial_pop[i].calculateObjectives(red, green, blue);
         printf("+ Created genotype with %d segments(s).\n", i+1);
     }
 }
@@ -198,6 +193,7 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
 
     for (int i = 0; i < population_size; i++){
         population[i] = initial_pop[i];
+        //population[i].visualizeEdges(image, "Initial segmentation");
     }
 
     initial_pop.erase(initial_pop.begin(), initial_pop.end());
@@ -215,6 +211,10 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
         /* Create the next gen pop by the non-domination principle */
         fronts.clear();
         fastNonDominatedSort(fronts);
+        for (auto &solution: fronts[0]){
+            string title = "Front " + to_string(0) + " - Generation " + to_string(generation);
+            //solution->visualizeSegments(blue, green, red);
+        }
         int front_index = 0;
         int parent_pop_index = 0;
         while (parent_pop_index + fronts[front_index].size() <= population_size && !fronts[front_index].empty())
@@ -280,6 +280,18 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
     }
 
 
+//    fastNonDominatedSort(fronts);
+//    int i_f = 0;
+//    for (auto &front: fronts){
+//        int i_im = 0;
+//        for (auto &solution: front){
+//            i_im++;
+//            string title = "Front " + to_string(i_f)+ " image " + to_string(i_im);
+//            solution->visualizeEdges(image, title);
+//        }
+//        i_f++;
+//    }
+
     this->population.erase(population.begin(), population.end());
     fronts.erase(fronts.begin(), fronts.end());
     parents_pop.erase(parents_pop.begin(), parents_pop.end());
@@ -297,8 +309,7 @@ void Nsga2::makeNewPop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
     default_random_engine generator(seed);
     uniform_real_distribution<double> rand_distribution(0.0, 1.0);
 
-    //vector<Genotype> offspring(2, Genotype((uint16_t)parent_pop[0].num_rows, (uint16_t)parent_pop[0].num_cols));
-    vector<Genotype> offspring(2);
+//    vector<Genotype> offspring(2);
     vector<Genotype *> selected_parents(2);
     bool new_offspring_generated;
     printf("\t+ Make new offspring population...\n");
@@ -306,31 +317,24 @@ void Nsga2::makeNewPop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
     for (int i = 0; i < population_size; i = i + 2) {
         new_offspring_generated = false;
         tournamentSelection(selected_parents, parent_pop);
-        int j = 0;
         for (auto p: selected_parents) {
-            offspring[j] = *p;
-            j++;
+            offspring_pop.push_back(*p);
         }
         double crossover_event = rand_distribution(generator);
         if (crossover_event < this->crossover_rate) {
-            uniformCrossover(offspring);
+            uniformCrossover(offspring_pop[i], offspring_pop[i + 1]);
             new_offspring_generated = true;
         }
 
-        for (auto &individual: offspring) {
+        for (int i_offspring = i; i_offspring < i + 2; i_offspring++){
             double mutation_event = rand_distribution(generator);
-            if (mutation_event < this->mutation_rate) {
-                mutation(individual);
-                new_offspring_generated = true;
+            if (mutation_event < this->mutation_rate || !new_offspring_generated) {
+                mutation(offspring_pop[i_offspring]);
+                //new_offspring_generated = true;
             }
 
-            if (new_offspring_generated){
-                // update segments & objectives
-                individual.decodeAndEvaluate(red, green, blue);
-//                individual.genotypeToPhenotypeDecoding();
-//                individual.calculateObjectives(red, green, blue);
-            }
-            offspring_pop.push_back(individual);
+            // update segments & objectives
+            offspring_pop[i_offspring].decodeAndEvaluate(red, green, blue);
         }
     }
 }
@@ -343,58 +347,120 @@ void Nsga2::tournamentSelection(vector<Genotype *> &selected_parents, vector<Gen
     uniform_int_distribution<int> distribution(0, this->population_size - 1);
 
     vector<int> tournament_indices;
-    while (tournament_indices.size() < this->tournament_size){
-        int random = distribution(generator);
-        if(find(tournament_indices.begin(), tournament_indices.end(), random) != tournament_indices.end()){
-            // tournament_indices contains random already
-            continue;
-        }
-        else{
-            tournament_indices.push_back(random);
-        }
-    }
+    vector<Genotype*> tournament_participants;
+    int num_tournaments = 2;
 
-    // clear parents from previous tournament
-    selected_parents.clear();
-    selected_parents.resize(this->tournament_size);
-    for (int i = 0; i < this->tournament_size; i++){
-        selected_parents[i] = &parent_pop[tournament_indices[i]];
-    }
-    crowdingDistanceSort(selected_parents);
+    for (int i = 0; i < num_tournaments; i++){
+        tournament_indices.clear();
+        tournament_participants.clear();
+        // Choose the participants
+        while (tournament_indices.size() < this->tournament_size){
+            int random = distribution(generator);
+            if(find(tournament_indices.begin(), tournament_indices.end(), random) != tournament_indices.end()){
+                // tournament_indices contains random already
+                continue;
+            }
+            else{
+                tournament_indices.push_back(random);
+                // Add to participants list
+                tournament_participants.push_back(&parent_pop[random]);
+            }
+        }
 
-    // keep only the 2 best individuals
-    selected_parents.resize(2);
+        // Sort and choose the best
+        crowdingDistanceSort(tournament_participants);
+        selected_parents[i] = tournament_participants[0];
+
+    }
+//    while (tournament_indices.size() < this->tournament_size){
+//        int random = distribution(generator);
+//        if(find(tournament_indices.begin(), tournament_indices.end(), random) != tournament_indices.end()){
+//            // tournament_indices contains random already
+//            continue;
+//        }
+//        else{
+//            tournament_indices.push_back(random);
+//        }
+//    }
+
+//    // clear parents from previous tournament
+//    selected_parents.clear();
+//    selected_parents.resize(this->tournament_size);
+//    for (int i = 0; i < this->tournament_size; i++){
+//        selected_parents[i] = &parent_pop[tournament_indices[i]];
+//    }
+//    crowdingDistanceSort(selected_parents);
+//
+//    // keep only the 2 best individuals
+//    selected_parents.resize(2);
 }
 
-void Nsga2::uniformCrossover(vector<Genotype> &offspring)
+void Nsga2::uniformCrossover(Genotype &offspring1, Genotype &offspring2)
 {
     unsigned seed = (unsigned)chrono::system_clock::now().time_since_epoch().count();
     default_random_engine generator(seed);
     uniform_real_distribution<double> distribution(0.0, 1.0);
 
     double random_variable;
-
-    for (int i = 0; i < offspring[0].num_cols * offspring[0].num_rows; i++){
-        int row = i / offspring[0].num_cols, col = i % offspring[0].num_cols;
+    for (int i = 0; i < offspring1.num_cols * offspring1.num_rows; i++){
+        int row = i / offspring1.num_cols, col = i % offspring1.num_cols;
         random_variable = distribution(generator);
-        if (random_variable < 0.5){
-            offspring[0].setChromosomeValue(offspring[1].getChromosomeValue(row, col), row, col);
-            offspring[1].setChromosomeValue(offspring[0].getChromosomeValue(row, col), row, col);
+        if(offspring1.getChromosomeValue(row, col) != offspring2.getChromosomeValue(row, col)){
+            if (random_variable < 0.5){
+                uint8_t value1 = offspring1.getChromosomeValue(row, col);
+                uint8_t value2 = offspring2.getChromosomeValue(row, col);
+                offspring1.setChromosomeValue(value2, row, col);
+                offspring2.setChromosomeValue(value1, row, col);
+            }
         }
     }
 }
 
+void Nsga2::initialMutation(Genotype &individual) {
+    unsigned seed = (unsigned) chrono::system_clock::now().time_since_epoch().count();
+    default_random_engine generator(seed);
+
+
+    uniform_int_distribution<uint8_t> gene_value_distribution(0, 4);
+    uniform_real_distribution<double> rand_distribution(0.0, 1.0);
+
+    for (int row = 0; row < individual.num_rows; row++) {
+        for (int col = 0; col < individual.num_cols; col++) {
+            double mutate = rand_distribution(generator);
+            if (mutate < this->mutation_rate * 0.01) {
+                // Choose random gene value
+                uint8_t gene_value = individual.getChromosomeValue(row, col);
+                uint8_t random_gene_value = gene_value_distribution(generator);
+                while (random_gene_value == gene_value) {
+                    random_gene_value = gene_value_distribution(generator);
+                }
+                individual.setChromosomeValue(random_gene_value, row, col);
+            }
+        }
+    }
+}
 void Nsga2::mutation(Genotype &individual)
 {
-    unsigned seed = (unsigned)chrono::system_clock::now().time_since_epoch().count();
-    default_random_engine generator (seed);
-
+    unsigned seed = (unsigned) chrono::system_clock::now().time_since_epoch().count();
+    default_random_engine generator(seed);
     uniform_int_distribution<int> pixel_distribution(0, individual.num_rows * individual.num_cols - 1);
-    uniform_int_distribution<uint8_t> gene_value_distribution(0, 4);
+    uniform_int_distribution<uint8_t> gene_value_distribution(0, 3);
+    uniform_real_distribution<double> rand_distribution(0.0, 1.0);
 
+    vector<int> mutation_indices;
+    while (mutation_indices.size() < (int)0.001*individual.num_rows * individual.num_cols){
+        int random = pixel_distribution(generator);
+        if(find(mutation_indices.begin(), mutation_indices.end(), random) != mutation_indices.end()){
+            // mutation_indices contains random already
+            continue;
+        }
+        else{
+            mutation_indices.push_back(random);
+        }
+    }
     for (int m = 0; m < (int)0.001*individual.num_rows * individual.num_cols; m++){
         // Choose random gene
-        int random_pixel = pixel_distribution(generator);
+        int random_pixel = mutation_indices[m];
         int row = random_pixel / individual.num_cols, col = random_pixel % individual.num_cols;
 
         // Choose random gene value

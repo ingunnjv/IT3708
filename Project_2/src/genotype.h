@@ -47,7 +47,7 @@ public:
     void visualizeSegments(const Eigen::MatrixXi &blue_ch, const Eigen::MatrixXi &green_ch,
                            const Eigen::MatrixXi &red_ch);
     /// Show two images for each solution in the Pareto-optimal set
-    void visualizeEdges(cv::Mat test_image);
+    void visualizeEdges(cv::Mat test_image, std::string title);
     bool isEdgePixel(signed short dir_y, signed short dir_x, int this_col, int this_row, int this_segment);
     void calculateObjectives(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
     double calcEuclideanRgbDiff(signed short dir_y, signed short dir_x, int this_col, int this_row, int this_segment,

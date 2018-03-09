@@ -25,8 +25,8 @@ int main(int argc, char *argv[]) {
 
     // Load the test image and the solutions
     ImageLoader image = ImageLoader();
-    image.LoadImagesFromFolder(to_string(problem_num));
-    image.ExtractRGBChannels();
+    image.loadImagesFromFolder(to_string(problem_num));
+    image.extractRGBChannels();
 
     // Create GA
     Nsga2 ga = Nsga2(mutation_rate, crossover_rate, tournament_size,

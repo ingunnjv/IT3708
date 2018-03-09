@@ -50,13 +50,16 @@ public:
     /// Creates a new offspring population using crossover and mutation
     void makeNewPop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue,
                     std::vector<Genotype> &parent_pop, std::vector<Genotype> &offspring_pop);
+    /// Two binary tournaments selects two parents
     void tournamentSelection(std::vector<Genotype *> &selected_parents, std::vector<Genotype> &parent_pop);
 
     /// For each pixel in an offspring, inherit either from first parent or second parent, uniformly distributed
-    void uniformCrossover(std::vector<Genotype> &offspring);
+    void uniformCrossover(Genotype &offspring1, Genotype &offspring2);
 
     /// Selects a random gene in an individual and sets it to a new value randomly selected from {left, right, up, down, none}
     void mutation(Genotype &individual);
+
+    void initialMutation(Genotype &individual);
 
     /// Run the main loop of the algorithm
     void runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue,
