@@ -280,7 +280,7 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
 
 /////////////////////////////////////////////////////////
 void Nsga2::makeNewPop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue,
-                       const vector<Genotype> &parent_pop, vector<Genotype> &offspring_pop) {
+                       vector<Genotype> &parent_pop, vector<Genotype> &offspring_pop) {
     unsigned seed = (unsigned) chrono::system_clock::now().time_since_epoch().count();
     default_random_engine generator(seed);
     uniform_real_distribution<double> rand_distribution(0.0, 1.0);
