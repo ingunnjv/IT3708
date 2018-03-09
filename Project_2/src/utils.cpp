@@ -68,7 +68,7 @@ void setUserArgs(int argc, char **argv, double &mutation_rate, double &crossover
 void printMST(std::vector<int> &parent, int num_pixels,
               const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue)
 {
-    pixel_t x, y;
+    pixel_t x(0,0), y(0,0);
     auto cols = uint16_t(red.cols());
     printf("Edge   Weight\n");
     for (int i = 1; i < num_pixels; i++) {

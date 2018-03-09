@@ -16,8 +16,9 @@
 enum genValues {left = 0, right, up, down, none}; // all possible values of a gene
 
 struct GeneNode {
-    uint16_t segment;
+    int16_t segment;
     uint8_t value;
+    GeneNode(){segment = -1; value = 0;};
 };
 typedef Eigen::Matrix<struct GeneNode, Eigen::Dynamic, Eigen::Dynamic> GeneMatrix;
 
@@ -42,6 +43,7 @@ public:
     void setRank(int rank);
     void insertToDominationSet(Genotype &i);
     void genotypeToPhenotypeDecoding();
+    void decodeAndEvaluate(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
     void visualizeSegments(const Eigen::MatrixXi &blue_ch, const Eigen::MatrixXi &green_ch,
                            const Eigen::MatrixXi &red_ch);
     /// Show two images for each solution in the Pareto-optimal set

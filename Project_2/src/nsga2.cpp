@@ -40,7 +40,7 @@ void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::Matrix
     vector<int> parent_graph = primMST(red, green, blue);
     set < pair<uint32_t, double>, pairCmpGe > links;
 
-    pixel_t x, y;
+    pixel_t x(0,0), y(0,0);
     for (int i = 0; i < num_pixels; i++) {
         if (parent_graph[i] == -1){
             continue;
@@ -67,8 +67,10 @@ void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::Matrix
         if (i > 0) {
             /// maybe mutation(initial_pop[i]);
         }
-        initial_pop[i].genotypeToPhenotypeDecoding();
-        initial_pop[i].calculateObjectives(red, green, blue);
+        initial_pop[i].decodeAndEvaluate(red, green, blue);
+        //initial_pop[i].visualizeSegments(red, green, blue);
+        //initial_pop[i].genotypeToPhenotypeDecoding();
+        //initial_pop[i].calculateObjectives(red, green, blue);
         printf("+ Created genotype with %d segments(s).\n", i+1);
     }
 }
@@ -106,7 +108,7 @@ void Nsga2::fastNonDominatedSort(vector< vector<Genotype*> > &fronts) {
     fronts.push_back(first_front);
     bool new_front_is_empty = true;
     int i = 0; // initialize front counter
-    while (!fronts[i].empty()){ // if last iteration gave no new front, the prev front was the last front
+    while (true){ // if last iteration gave no new front, the prev front was the last front
         std::vector<Genotype*> new_front; // to store members of the next front
         new_front.reserve(this->population_size);
         for (auto &p: fronts[i]) {
@@ -240,21 +242,20 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
         /* Create a new offspring population by crossover and mutation */
         makeNewPop(red, green, blue, parents_pop, offspring_pop);
 
-        /* TEST: Visualize segments before termination */
-        if(generation == generation_limit - 1){
-            for(auto &genotype: fronts[0]){
-                genotype->visualizeSegments(red, green, blue);
-            }
-        }
+//        /* TEST: Visualize segments before termination */
+//        if(generation == generation_limit - 1){
+//            for(auto &genotype: fronts[0]){
+//                genotype->visualizeSegments(red, green, blue);
+//            }
+//        }
 
         /* Combine the parent and offspring population */
-        fronts.clear();
         population.clear();
-        //if (generation == 1){population.resize(population_size*2);}
         for (i = 0; i < population_size; i++){
             population.push_back(parents_pop[i]);
             population.push_back(offspring_pop[i]);
         }
+//        if (generation == 1){population.resize(population_size*2);}
 //        int j = 0;
 //        for (i = 0; i < population_size; i++){
 //            population[i] = parents_pop[j];
@@ -265,10 +266,19 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
 //            population[i] = offspring_pop[j];
 //            j++;
 //        }
+
         parents_pop.clear();
         offspring_pop.clear();
         generation++;
     }
+
+    /* TEST: Visualize segments before termination */
+    printf("\t+ Visualizing the final pareto optimal front..");
+    fastNonDominatedSort(fronts);
+    for(auto &genotype: fronts[0]){
+        genotype->visualizeSegments(red, green, blue);
+    }
+
 
     this->population.erase(population.begin(), population.end());
     fronts.erase(fronts.begin(), fronts.end());
@@ -316,8 +326,9 @@ void Nsga2::makeNewPop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
 
             if (new_offspring_generated){
                 // update segments & objectives
-                individual.genotypeToPhenotypeDecoding();
-                individual.calculateObjectives(red, green, blue);
+                individual.decodeAndEvaluate(red, green, blue);
+//                individual.genotypeToPhenotypeDecoding();
+//                individual.calculateObjectives(red, green, blue);
             }
             offspring_pop.push_back(individual);
         }
@@ -406,7 +417,7 @@ vector<int> Nsga2::primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &gr
     double key[num_pixels];   // Key values used to pick minimum weight edge in cut
     bool mstSet[num_pixels];  // To represent set of vertices not yet included in MST
     set <pair <uint32_t, double>, pairCmpLe> vertices_considered;
-    pixel_t x, y;
+    pixel_t x(0,0), y(0,0);
 
     // Initialize all keys as INFINITE
     for (int i = 0; i < num_pixels; i++)

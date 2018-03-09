@@ -12,14 +12,16 @@
 
 
 struct pixel_t {
-    int row;
-    int col;
+    uint16_t row;
+    uint16_t col;
+    pixel_t(uint16_t row, uint16_t col){this->row = row, this->col = col;};
 };
 
 struct rgb_centroid_t{
     double r;
     double g;
     double b;
+    rgb_centroid_t(){r = 0; g = 0; b = 0;};
 };
 
 struct pairCmpLe

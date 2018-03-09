@@ -3,10 +3,13 @@
 #include <Eigen/Dense>
 #include "image_loader.h"
 #include "nsga2.h"
+#include <time.h>
 
 using namespace std;
 
 int main(int argc, char *argv[]) {
+    clock_t t = clock();
+
     // TEST running python script
     string command = "python \"..\\src\\testScript.py\"";
     string args = "";
@@ -35,7 +38,7 @@ int main(int argc, char *argv[]) {
     ga.initializePopulation(image.r_channel, image.g_channel, image.b_channel, initial_pop);
 
 
-    // TEST: Visualize initial segmentation
+//    //TEST: Visualize initial segmentation
 //    for(auto &genotype: initial_pop){
 //        genotype.visualizeSegments(image.r_channel, image.g_channel, image.b_channel);
 //    }
@@ -49,7 +52,8 @@ int main(int argc, char *argv[]) {
     //ga.population[4].genotypeToPhenotypeDecoding(image.r_channel.rows(), image.r_channel.cols());
     //ga.population[4].visualizeSegments(image.b_channel, image.g_channel, image.r_channel);
 
-
+    t = clock() - t;
+    printf ("Time consumed: %d clicks (%f seconds).\n", int(t), ((float)int(t))/CLOCKS_PER_SEC);
     printf("Exiting program\n");
 
     return 0;
