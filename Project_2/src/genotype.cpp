@@ -283,8 +283,8 @@ void Genotype::visualizeSegments(const Eigen::MatrixXi &blue_ch, const Eigen::Ma
                 current_segment_color = segment_colors[current_segment_index];
             } else {
                 // current segment is visited for the first time
-                current_segment_color = cv::Vec3b(uint8_t(blue_ch(i, j)), uint8_t(green_ch(i, j)),
-                                                  uint8_t(red_ch(i, j)));
+                current_segment_color = cv::Vec3b(uint8_t(rand()*255), uint8_t(rand()*255),
+                                                  uint8_t(rand()*255));
                 segment_colors.push_back(current_segment_color);
 
                 current_segment_index = segments.size();

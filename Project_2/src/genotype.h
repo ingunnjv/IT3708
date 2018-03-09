@@ -18,16 +18,14 @@ enum genValues {left = 0, right, up, down, none}; // all possible values of a ge
 struct GeneNode {
     uint16_t segment;
     uint8_t value;
-    GeneNode(){segment = 0, value = genValues::none;};
 };
 typedef Eigen::Matrix<struct GeneNode, Eigen::Dynamic, Eigen::Dynamic> GeneMatrix;
 
 class Genotype {
 private:
-
-public:
     GeneMatrix chromosome; // storage the entire set of genes
 
+public:
     uint16_t num_cols;
     uint16_t num_rows;
     uint16_t tot_segment_count;
