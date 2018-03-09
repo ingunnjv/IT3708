@@ -8,7 +8,7 @@ ImageLoader::ImageLoader()
 
 }
 
-void ImageLoader::LoadImagesFromFolder(string imagefolder)
+void ImageLoader::loadImagesFromFolder(string imagefolder)
 {
     string basefolder = "../Test Images/";
 
@@ -30,11 +30,17 @@ void ImageLoader::LoadImagesFromFolder(string imagefolder)
     }
 }
 
-void ImageLoader::ExtractRGBChannels()
+void ImageLoader::extractRGBChannels()
 {
     cv::Mat planes[3];
+    cv::Mat normalized_planes[3];
     cv::split(test_image, planes);  // BGR: planes[2] is the red channel
-    cv::cv2eigen(planes[0], b_channel);
-    cv::cv2eigen(planes[1], g_channel);
-    cv::cv2eigen(planes[2], r_channel);
+
+    for(int i = 0; i < 3; i++){
+        cv::normalize(planes[i], normalized_planes[i], 0, 255, cv::NORM_MINMAX);
+    }
+    cv::cv2eigen(normalized_planes[0], b_channel);
+    cv::cv2eigen(normalized_planes[1], g_channel);
+    cv::cv2eigen(normalized_planes[2], r_channel);
 }
+

@@ -22,8 +22,8 @@ public:
     Eigen::MatrixXi g_channel;
     Eigen::MatrixXi r_channel;
     ImageLoader();
-    void LoadImagesFromFolder(std::string imagefolder);
-    void ExtractRGBChannels();
+    void loadImagesFromFolder(std::string imagefolder);
+    void extractRGBChannels();
 
 };
 
