@@ -208,10 +208,21 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
         /* Create the next gen pop by the non-domination principle */
         fronts.clear();
         fastNonDominatedSort(fronts);
-//        printf("\t+ Visualizing the final pareto optimal fronts..\n");
-//        for(auto &genotype: fronts[0]){
-//            genotype->visualizeSegments(red, green, blue);
+//        if(generation == generation_limit){
+//            int i_f = 0;
+//            for (auto &front: fronts){
+//                for (auto &solution: front){
+//                    string title = "Front " + to_string(i_f) + " - Generation " + to_string(generation);
+//                    solution->visualizeEdges(image, title);
+//                }
+//                i_f++;
+//            }
 //        }
+        for (auto &solution: fronts[0]){
+            string title = "Front " + to_string(0) + " - Generation " + to_string(generation);
+            solution->visualizeEdges(image, title);
+        }
+
         int front_index = 0;
         int parent_pop_index = 0;
         while (parent_pop_index + fronts[front_index].size() <= population_size && !fronts[front_index].empty())
@@ -275,28 +286,26 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
     printf("\t+ Visualizing the final pareto optimal fronts..\n");
     fronts.clear();
     fastNonDominatedSort(fronts);
-    int front_num = 0;
-    for(auto &front: fronts){
-        printf("\t+ Front: %d\n", front_num);
-        for(auto &genotype: front){
-            genotype->visualizeEdges(image, "...");
-        }
-        front_num++;
-    }
-
-
-
-//    fastNonDominatedSort(fronts);
-//    int i_f = 0;
-//    for (auto &front: fronts){
-//        int i_im = 0;
-//        for (auto &solution: front){
-//            i_im++;
-//            string title = "Front " + to_string(i_f)+ " image " + to_string(i_im);
-//            solution->visualizeEdges(image, title);
+//    int front_num = 0;
+//    for(auto &front: fronts){
+//        printf("\t+ Front: %d\n", front_num);
+//        for(auto &genotype: front){
+//            genotype->visualizeSegments(red, green, blue);
 //        }
-//        i_f++;
+//        front_num++;
 //    }
+
+
+    int i_f = 0;
+    for (auto &front: fronts){
+        int i_im = 0;
+        for (auto &solution: front){
+            i_im++;
+            string title = "Front " + to_string(i_f)+ " image " + to_string(i_im);
+            solution->visualizeEdges(image, title);
+        }
+        i_f++;
+    }
 
     this->population.erase(population.begin(), population.end());
     fronts.erase(fronts.begin(), fronts.end());
@@ -356,10 +365,10 @@ void Nsga2::tournamentSelection(vector<Genotype *> &selected_parents, vector<Gen
     int num_tournaments = 2;
 
     for (int i = 0; i < num_tournaments; i++){
-        tournament_indices.clear();
+        //tournament_indices.clear();
         tournament_participants.clear();
         // Choose the participants
-        while (tournament_indices.size() < this->tournament_size){
+        while (tournament_indices.size() < this->tournament_size*(i+1)){
             int random = distribution(generator);
             if(find(tournament_indices.begin(), tournament_indices.end(), random) != tournament_indices.end()){
                 // tournament_indices contains random already
@@ -407,6 +416,7 @@ void Nsga2::uniformCrossover(Genotype &offspring1, Genotype &offspring2)
     uniform_real_distribution<double> distribution(0.0, 1.0);
 
     double random_variable;
+    int counter = 0;
     for (int i = 0; i < offspring1.num_cols * offspring1.num_rows; i++){
         int row = i / offspring1.num_cols, col = i % offspring1.num_cols;
         random_variable = distribution(generator);
@@ -417,8 +427,11 @@ void Nsga2::uniformCrossover(Genotype &offspring1, Genotype &offspring2)
                 offspring1.setChromosomeValue(value2, row, col);
                 offspring2.setChromosomeValue(value1, row, col);
             }
+            counter++;
         }
     }
+    //cout << "\t- Crossover: " << counter << " genes were different in the two parents\n";
+    printf("\t- Crossover: %d genes were different in the two parents\n", counter);
 }
 
 void Nsga2::initialMutation(Genotype &individual) {
