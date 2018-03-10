@@ -213,7 +213,7 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
         fastNonDominatedSort(fronts);
         for (auto &solution: fronts[0]){
             string title = "Front " + to_string(0) + " - Generation " + to_string(generation);
-            //solution->visualizeSegments(blue, green, red);
+            //solution->visualizeEdges(image, title);
         }
         int front_index = 0;
         int parent_pop_index = 0;
@@ -421,7 +421,7 @@ void Nsga2::initialMutation(Genotype &individual) {
     default_random_engine generator(seed);
 
 
-    uniform_int_distribution<uint8_t> gene_value_distribution(0, 4);
+    uniform_int_distribution<uint8_t> gene_value_distribution(0, 3);
     uniform_real_distribution<double> rand_distribution(0.0, 1.0);
 
     for (int row = 0; row < individual.num_rows; row++) {

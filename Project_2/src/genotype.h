@@ -13,7 +13,7 @@
 
 
 
-enum genValues {left = 0, right, up, down, none}; // all possible values of a gene
+enum genValues {left = 0, right, up, down};//, none}; // all possible values of a gene
 
 struct GeneNode {
     int16_t segment;
