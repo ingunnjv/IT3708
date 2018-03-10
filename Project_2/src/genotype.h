@@ -65,6 +65,8 @@ public:
     uint8_t getChromosomeValue(int row, int col);
 
 
+
+
     static bool sortByObj1(const Genotype* lhs, const Genotype* rhs);
     static bool sortByObj2(const Genotype* lhs, const Genotype* rhs);
     static bool sortByCrowdedComparison(const Genotype* lhs, const Genotype* rhs);

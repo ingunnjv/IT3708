@@ -38,10 +38,10 @@ int main(int argc, char *argv[]) {
     ga.initializePopulation(image.r_channel, image.g_channel, image.b_channel, initial_pop);
 
 
-//    //TEST: Visualize initial segmentation
-//    for(auto &genotype: initial_pop){
-//        genotype.visualizeSegments(image.r_channel, image.g_channel, image.b_channel);
-//    }
+    //TEST: Visualize initial segmentation
+    for(auto &genotype: initial_pop){
+        genotype.visualizeSegments(image.r_channel, image.g_channel, image.b_channel);
+    }
 
 
     // Run evolutionary process

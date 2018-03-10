@@ -197,4 +197,49 @@ void thinning(const cv::Mat& src, cv::Mat& dst)
     dst *= 255;
 }
 
+/////////////////////////////////////////////////////////
+std::tuple<uint16_t, uint16_t> getMostSimilarNeighbourPixel(const uint16_t row, const uint16_t col, const Eigen::MatrixXi &red,
+                                     const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue){
+    uint16_t num_rows = uint16_t(red.rows());
+    uint16_t num_cols = uint16_t(red.cols());
+
+    uint16_t most_simiar_col_num = col, most_similar_row_num = row;
+    double smallest_rgb_dist = DBL_MAX;
+
+    if(row + 1 < num_rows) {
+        double rgb_dist = rgbDistance(pixel_t(row,col), pixel_t(row+1,col), red, green, blue);
+        if (rgb_dist < smallest_rgb_dist){
+            smallest_rgb_dist = rgb_dist;
+            most_simiar_col_num = col;
+            most_similar_row_num = uint16_t(row+1);
+        }
+    }
+    if(row - 1 >= 0) {
+        double rgb_dist = rgbDistance(pixel_t(row,col), pixel_t(row-1,col), red, green, blue);
+        if (rgb_dist < smallest_rgb_dist){
+            smallest_rgb_dist = rgb_dist;
+            most_simiar_col_num = col;
+            most_similar_row_num = uint16_t(row-1);
+        }
+    }
+    if(col + 1 < num_cols) {
+        double rgb_dist = rgbDistance(pixel_t(row,col), pixel_t(row,col+1), red, green, blue);
+        if (rgb_dist < smallest_rgb_dist){
+            smallest_rgb_dist = rgb_dist;
+            most_simiar_col_num = uint16_t(col+1);
+            most_similar_row_num = row;
+        }
+    }
+    if(col - 1 >= 0) {
+        double rgb_dist = rgbDistance(pixel_t(row,col), pixel_t(row,col-1), red, green, blue);
+        if (rgb_dist < smallest_rgb_dist){
+            smallest_rgb_dist = rgb_dist;
+            most_simiar_col_num = uint16_t(col-1);
+            most_similar_row_num = row;
+        }
+    }
+    std::tuple<uint16_t, uint16_t> most_similar_neighbour_pos (most_similar_row_num, most_simiar_col_num);
+    return most_similar_neighbour_pos;
+}
+
 

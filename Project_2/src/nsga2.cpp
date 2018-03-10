@@ -172,11 +172,8 @@ void Nsga2::crowdingDistanceAssignment(vector<Genotype*> &front)
         {
             if (fmin-fmax != 0 && front[i]->crowding_distance != DBL_MAX) {
                 front[i]->crowding_distance +=
-                        (front[i + 1]->objective_values[obj_val_num] - front[i - 1]->objective_values[obj_val_num]) /
-                        (fmax - fmin);
-            }
-            else{ // avoids division by zero
-                front[i]->crowding_distance = DBL_MAX;
+                        abs((front[i + 1]->objective_values[obj_val_num] - front[i - 1]->objective_values[obj_val_num]) /
+                        (fmax - fmin));
             }
         }
     }
@@ -273,11 +270,17 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
     }
 
     /* TEST: Visualize segments before termination */
-    printf("\t+ Visualizing the final pareto optimal front..");
+    printf("\t+ Visualizing the final pareto optimal fronts..\n");
     fastNonDominatedSort(fronts);
-    for(auto &genotype: fronts[0]){
-        genotype->visualizeSegments(red, green, blue);
+    int front_num = 0;
+    for(auto &front: fronts){
+        printf("\t+ Front: %d\n", front_num);
+        for(auto &genotype: front){
+            genotype->visualizeSegments(red, green, blue);
+        }
+        front_num++;
     }
+
 
 
 //    fastNonDominatedSort(fronts);
@@ -325,12 +328,11 @@ void Nsga2::makeNewPop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
             uniformCrossover(offspring_pop[i], offspring_pop[i + 1]);
             new_offspring_generated = true;
         }
-
         for (int i_offspring = i; i_offspring < i + 2; i_offspring++){
             double mutation_event = rand_distribution(generator);
             if (mutation_event < this->mutation_rate || !new_offspring_generated) {
-                mutation(offspring_pop[i_offspring]);
-                //new_offspring_generated = true;
+                mutation(offspring_pop[i_offspring], red, green, blue);
+                new_offspring_generated = true;
             }
 
             // update segments & objectives
@@ -421,13 +423,13 @@ void Nsga2::initialMutation(Genotype &individual) {
     default_random_engine generator(seed);
 
 
-    uniform_int_distribution<uint8_t> gene_value_distribution(0, 4);
+    uniform_int_distribution<uint8_t> gene_value_distribution(0, 3);
     uniform_real_distribution<double> rand_distribution(0.0, 1.0);
 
     for (int row = 0; row < individual.num_rows; row++) {
         for (int col = 0; col < individual.num_cols; col++) {
             double mutate = rand_distribution(generator);
-            if (mutate < this->mutation_rate * 0.01) {
+            if (mutate < 0.0002) {
                 // Choose random gene value
                 uint8_t gene_value = individual.getChromosomeValue(row, col);
                 uint8_t random_gene_value = gene_value_distribution(generator);
@@ -439,7 +441,7 @@ void Nsga2::initialMutation(Genotype &individual) {
         }
     }
 }
-void Nsga2::mutation(Genotype &individual)
+void Nsga2::mutation(Genotype &individual, const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue)
 {
     unsigned seed = (unsigned) chrono::system_clock::now().time_since_epoch().count();
     default_random_engine generator(seed);
@@ -463,13 +465,12 @@ void Nsga2::mutation(Genotype &individual)
         int random_pixel = mutation_indices[m];
         int row = random_pixel / individual.num_cols, col = random_pixel % individual.num_cols;
 
-        // Choose random gene value
-        uint8_t gene_value = individual.getChromosomeValue(row, col);
-        uint8_t random_gene_value = gene_value_distribution(generator);
-        while (random_gene_value == gene_value){
-            random_gene_value = gene_value_distribution(generator);
-        }
-        individual.setChromosomeValue(random_gene_value, row, col);
+        // Choose value based on the neighbouring pixels
+        tuple<uint16_t, uint16_t> most_similar_neighbour_pos = getMostSimilarNeighbourPixel(uint16_t(row), uint16_t(col), red, green, blue);
+        uint16_t most_similar_row = get<0>(most_similar_neighbour_pos);
+        uint16_t most_simiar_col = get<1>(most_similar_neighbour_pos);
+        uint8_t most_similar_value = individual.getChromosomeValue(most_similar_row, most_simiar_col);
+        individual.setChromosomeValue(most_similar_value, row, col);
     }
 }
 

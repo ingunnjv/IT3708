@@ -48,5 +48,7 @@ void printMST(std::vector<int> &parent, int num_pixels,
 
 void thinningIteration(cv::Mat& img, int iter);
 void thinning(const cv::Mat& src, cv::Mat& dst);
+std::tuple<uint16_t, uint16_t> getMostSimilarNeighbourPixel(const uint16_t row, const uint16_t col, const Eigen::MatrixXi &red,
+                                const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
 
 #endif //PROJECT_2_UTILS_H

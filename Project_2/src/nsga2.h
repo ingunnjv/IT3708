@@ -57,7 +57,8 @@ public:
     void uniformCrossover(Genotype &offspring1, Genotype &offspring2);
 
     /// Selects a random gene in an individual and sets it to a new value randomly selected from {left, right, up, down, none}
-    void mutation(Genotype &individual);
+    void mutation(Genotype &individual, const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
+                  const Eigen::MatrixXi &blue);
 
     void initialMutation(Genotype &individual);
 
