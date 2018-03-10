@@ -175,12 +175,6 @@ void Genotype::genotypeToPhenotypeDecoding() {
     int current_node_row = -1, current_node_col = -1;
     GeneNode* current_node;
 
-//    for (int row = 0; row < num_rows; row++) {
-//        for (int col = 0; col < num_cols; col++) {
-//            this->chromosome(row, col).segment = 0;
-//        }
-//    }
-
     for (int row = 0; row < num_rows; row++){
         for (int col = 0; col < num_cols; col++){
             if (!discovered(row,col)){
@@ -346,6 +340,7 @@ void Genotype::decodeAndEvaluate(const Eigen::MatrixXi &red, const Eigen::Matrix
     vector<pixel_t> pixels_in_segment;
     objective_values[0] = 0;
     objective_values[1] = 0;
+    int total_edge_pixels = 0;
     for (int row = 0; row < num_rows; row++){
         for (int col = 0; col < num_cols; col++){
             if (discovered(row,col) == 0){
@@ -354,7 +349,7 @@ void Genotype::decodeAndEvaluate(const Eigen::MatrixXi &red, const Eigen::Matrix
                 current_node->segment = segment_number;
                 discovered(row, col) = 1;
 
-                /*  Caclulate the rgb centroid of the segment */
+                /*  Calculate the rgb centroid of the segment */
                 rgb_centroid_t centroid;
                 int num_pixels = 0;
                 centroid.r += red(row, col);
@@ -367,7 +362,7 @@ void Genotype::decodeAndEvaluate(const Eigen::MatrixXi &red, const Eigen::Matrix
                 pixel_t pixel(row, col);
                 pixels_in_segment.push_back(pixel);
 
-                /* Add it's connected neighbours to the list of nodes to do assigning */
+                /* Add its connected neighbours to the list of nodes to do assigning */
                 current_node_pos = make_tuple(row, col);
                 findAndAddParentNodesToList(connected_nodes_pos, current_node_pos, discovered);
                 addChildNodeToList(connected_nodes_pos, current_node_pos, discovered);
@@ -398,12 +393,13 @@ void Genotype::decodeAndEvaluate(const Eigen::MatrixXi &red, const Eigen::Matrix
                 centroid.b = centroid.b / num_pixels;
 
                 /* Calculate objective values */
+                int segment_pixel_centroid_deviation = 0;
                 for(auto &p: pixels_in_segment){
                     // objective 1
                     double pixel_centroid_deviation = sqrt( pow(red(p.row, p.col) - centroid.r, 2)
                                                             + pow(green(p.row, p.col) - centroid.g, 2)
                                                             + pow(blue(p.row, p.col) - centroid.b, 2));
-                    objective_values[0] += pixel_centroid_deviation;
+                    segment_pixel_centroid_deviation += pixel_centroid_deviation;
                     // objective 2
                     int segment_num = chromosome(p.row, p.col).segment;
                     double segment_boundary_diff = 0;
@@ -412,16 +408,20 @@ void Genotype::decodeAndEvaluate(const Eigen::MatrixXi &red, const Eigen::Matrix
                     segment_boundary_diff -= calcEuclideanRgbDiff(0, -1, p.col, p.row, segment_num, red,green,blue);
                     segment_boundary_diff -= calcEuclideanRgbDiff(0, 1, p.col, p.row, segment_num, red,green,blue);
                     objective_values[1] += segment_boundary_diff;
+                    if (segment_boundary_diff < 0){ total_edge_pixels++; }
                 }
+                objective_values[0] += (segment_pixel_centroid_deviation);// / num_pixels);
                 segment_number++;
                 pixels_in_segment.clear();
                 if (total_pixels_found == num_cols*num_rows){
                     tot_segment_count = segment_number;
+                    objective_values[1] = objective_values[1]/total_edge_pixels;
                     return;
                 }
             }
         }
     }
+    objective_values[1] = objective_values[1]/total_edge_pixels;
     tot_segment_count = segment_number;
 }
 
@@ -620,6 +620,117 @@ bool Genotype::isEdgePixel(signed short dir_y, signed short dir_x, int this_col,
     }
 }
 
+/*
+void Genotype::mergeSegments()
+{
+
+    // assume decoding has been done
+    // create grouping of pixels in corresponding segments
+    vector<vector<pixel_t>> pixels_segment_affiliation (tot_segment_count);
+    for (int row = 0; row < num_rows; row++) {
+        for (int col = 0; col < num_cols; col++) {
+            int segment_num = chromosome(row,col).segment;
+            pixel_t pixel = {row, col};
+            pixels_segment_affiliation[segment_num].push_back(pixel);
+        }
+    }
+    int MAX_SEGMENTS = 40; //test
+    while (tot_segment_count > MAX_SEGMENTS){
+        // should choose smallest segments
+        // choose segment: for testing, choose 0
+        int i_current_segment = 0;
+        vector<pixel_t> current_segment = pixels_segment_affiliation[i_current_segment];
+        Eigen::MatrixXi discovered = Eigen::MatrixXi::Zero(num_rows, num_cols);
+
+        for (const auto &p: current_segment){
+            discovered(p.row, p.col) = 1;
+        }
+
+        // Find neighbouring segments
+        set<int16_t> neighbour_segments;
+        for (const auto &p: current_segment){
+            int this_row = p.row;
+            int this_col = p.col;
+            int16_t this_segment = chromosome(this_row, this_col).segment;
+
+            if (isEdgePixel(1, 0, this_col, this_row, this_segment)){
+                if (neighbour_segments.find(chromosome(this_row + 1, this_col).segment) == neighbour_segments.end()){
+                    neighbour_segments.insert(chromosome(this_row + 1, this_col).segment);
+                    // Try to merge segments
+                    chromosome(this_row, this_col).value = genValues::down;
+
+                    // Find this neighbor segment in list of segments and update
+                    int i_s = 0;
+                    for (const auto &s: pixels_segment_affiliation){
+                        if (chromosome(this_row + 1, this_col).segment == chromosome(s[0].row, s[0].col).segment){
+                            for (const auto &pixel: s){
+                                chromosome(pixel.row, pixel.col).segment = this_segment;
+                                pixels_segment_affiliation[i_current_segment].push_back(pixel);
+                            }
+                            break;
+                        }
+                        i_s++;
+                    }
+                    // remove the "neighbour" segment from the list
+                    pixels_segment_affiliation.erase(pixels_segment_affiliation.begin() + i_s);
+                    tot_segment_count--;
+                }
+            }
+            else if (isEdgePixel(-1, 0, this_col, this_row, this_segment)){
+                neighbour_segments.insert(chromosome(this_row - 1, this_col).segment);
+            }
+            else if (isEdgePixel(0, 1, this_col, this_row, this_segment)){
+                neighbour_segments.insert(chromosome(this_row, this_col + 1).segment);
+            }
+            else if (isEdgePixel(0, -1, this_col, this_row, this_segment)){
+                neighbour_segments.insert(chromosome(this_row, this_col - 1).segment);
+            }
+        }
+        // calculate the rgb centroid for each segment
+        vector<rgb_centroid_t> centroids (tot_segment_count);
+        objective_values[0] = 0;
+        objective_values[1] = 0;
+        int i = 0;
+        for (const auto &s: pixels_segment_affiliation){
+            rgb_centroid_t centroid;
+            double intensity_sum_r = 0;
+            double intensity_sum_g = 0;
+            double intensity_sum_b = 0;
+            int num_pixels = 0;
+            for (const auto &p: s){
+                intensity_sum_r += red(p.row, p.col);
+                intensity_sum_g += green(p.row, p.col);
+                intensity_sum_b += blue(p.row, p.col);
+                num_pixels++;
+            }
+            centroid.r = intensity_sum_r / num_pixels;
+            centroid.g = intensity_sum_g / num_pixels;
+            centroid.b = intensity_sum_b / num_pixels;
+            centroids[i] = centroid;
+            for (const auto &p: s){
+                // objective 1
+                double pixel_centroid_deviation = sqrt( pow(red(p.row, p.col) - centroids[i].r, 2)
+                                                        + pow(green(p.row, p.col) - centroids[i].g, 2)
+                                                        + pow(blue(p.row, p.col) - centroids[i].b, 2));
+                objective_values[0] += pixel_centroid_deviation;
+                // objective 2
+                int this_row = p.row;
+                int this_col = p.col;
+                int this_segment = chromosome(this_row, this_col).segment;
+                double segment_boundary_diff = 0;
+                segment_boundary_diff -= calcEuclideanRgbDiff(-1, 0, this_col, this_row, this_segment, red,green,blue);
+                segment_boundary_diff -= calcEuclideanRgbDiff(1, 0, this_col, this_row, this_segment, red,green,blue);
+                segment_boundary_diff -= calcEuclideanRgbDiff(0, -1, this_col, this_row, this_segment, red,green,blue);
+                segment_boundary_diff -= calcEuclideanRgbDiff(0, 1, this_col, this_row, this_segment, red,green,blue);
+                objective_values[1] += segment_boundary_diff;
+            }
+            i++;
+        }
+
+
+    }
+}
+*/
 /*
 Genotype::~Genotype(){
     cout << "deleted genotype!" << endl;

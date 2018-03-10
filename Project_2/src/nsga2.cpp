@@ -34,27 +34,37 @@ Nsga2::Nsga2(double mutation_rate, double crossover_rate, uint16_t tournament_si
 void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue,
                                  vector<Genotype> &initial_pop)
 {
-    uint16_t num_rows = uint16_t(red.rows());
-    uint16_t num_cols = uint16_t(red.cols());
+    auto num_rows = uint16_t(red.rows());
+    auto num_cols = uint16_t(red.cols());
     int num_pixels = num_rows * num_cols;
-    vector<int> parent_graph = primMST(red, green, blue);
+    vector<int> parent_graph;// = primMST(red, green, blue);
     set < pair<uint32_t, double>, pairCmpGe > links;
 
     pixel_t x(0,0), y(0,0);
-    for (int i = 0; i < num_pixels; i++) {
-        if (parent_graph[i] == -1){
-            continue;
-        }
-        x.row = i / num_cols, x.col = i % num_cols;
-        y.row = parent_graph[i] / num_cols, y.col = parent_graph[i] % num_cols;
-        links.insert(make_pair(i, rgbDistance(y, x, red, green, blue)));
-    }
+//    for (int i = 0; i < num_pixels; i++) {
+//        if (parent_graph[i] == -1){
+//            continue;
+//        }
+//        x.row = i / num_cols, x.col = i % num_cols;
+//        y.row = parent_graph[i] / num_cols, y.col = parent_graph[i] % num_cols;
+//        links.insert(make_pair(i, rgbDistance(y, x, red, green, blue)));
+//    }
     for (int i = 0; i < population_size; i++){
-        //this->population[i] = &initial_pop[i];
+        // create new graph
+        parent_graph = primMST(red, green, blue);
+        links.clear();
+        for (int j = 0; j < num_pixels; j++) {
+            if (parent_graph[j] == -1){
+                continue;
+            }
+            x.row = (uint16_t) j / num_cols, x.col = (uint16_t) j % num_cols;
+            y.row = (uint16_t) parent_graph[j] / num_cols, y.col = (uint16_t) parent_graph[j] % num_cols;
+            links.insert(make_pair(j, rgbDistance(y, x, red, green, blue)));
+        }
         // Remove largest edges
-        //TODO: how many edges??
+        //TODO: how many edges? random number?
         if (i > 0){
-            for(uint8_t removed_links = 0; removed_links < 10; removed_links++){
+            for(uint8_t removed_links = 0; removed_links < 20; removed_links++){
                 if (!links.empty()){
                     auto it = links.begin();
                     parent_graph[it->first] = -1;
@@ -190,7 +200,7 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
 
     for (int i = 0; i < population_size; i++){
         population[i] = initial_pop[i];
-        //population[i].visualizeEdges(image, "Initial segmentation");
+        population[i].visualizeEdges(image, "Initial segmentation");
     }
 
     initial_pop.erase(initial_pop.begin(), initial_pop.end());
@@ -335,17 +345,17 @@ void Nsga2::makeNewPop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
         for (auto p: selected_parents) {
             offspring_pop.push_back(*p);
         }
-        double crossover_event = rand_distribution(generator);
-        if (crossover_event < this->crossover_rate) {
-            uniformCrossover(offspring_pop[i], offspring_pop[i + 1]);
-            new_offspring_generated = true;
-        }
+//        double crossover_event = rand_distribution(generator);
+//        if (crossover_event < this->crossover_rate) {
+        uniformCrossover(offspring_pop[i], offspring_pop[i + 1]);
+        new_offspring_generated = true;
+//        }
         for (int i_offspring = i; i_offspring < i + 2; i_offspring++){
-            double mutation_event = rand_distribution(generator);
-            if (mutation_event < this->mutation_rate || !new_offspring_generated) {
-                mutation(offspring_pop[i_offspring], red, green, blue);
-                new_offspring_generated = true;
-            }
+//            double mutation_event = rand_distribution(generator);
+//            if (mutation_event < this->mutation_rate || !new_offspring_generated) {
+            mutation(offspring_pop[i_offspring], red, green, blue);
+            new_offspring_generated = true;
+//            }
 
             // update segments & objectives
             offspring_pop[i_offspring].decodeAndEvaluate(red, green, blue);
@@ -445,7 +455,7 @@ void Nsga2::initialMutation(Genotype &individual) {
     for (int row = 0; row < individual.num_rows; row++) {
         for (int col = 0; col < individual.num_cols; col++) {
             double mutate = rand_distribution(generator);
-            if (mutate < 0.0001) {
+            if (mutate < 0.0003) {
                 // Choose random gene value
                 uint8_t gene_value = individual.getChromosomeValue(row, col);
                 uint8_t random_gene_value = gene_value_distribution(generator);
@@ -475,7 +485,7 @@ void Nsga2::mutation(Genotype &individual, const Eigen::MatrixXi &red, const Eig
         int row = gene / individual.num_cols, col = gene % individual.num_cols;
 
         double smart_mutation = rand_distribution(generator);
-        if(smart_mutation < 0.75){
+        if(smart_mutation < 0.6){
             // Choose value based on the neighbouring pixels
             tuple<uint16_t, uint16_t> most_similar_neighbour_pos = getMostSimilarNeighbourPixel(uint16_t(row), uint16_t(col), red, green, blue);
             uint16_t most_similar_row = get<0>(most_similar_neighbour_pos);
@@ -573,6 +583,93 @@ vector<int> Nsga2::primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &gr
         //if (!vertices_considered.empty()){ std::cout << "set size: " << vertices_considered.size() << std::endl; }
         //delete[] neighbors;
         //delete[] neighbor_pos;
+    }
+    return parent;
+}
+
+/////////////////////////////////////////////////////////
+vector<int> Nsga2::superMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue) {
+    auto num_rows = uint16_t(red.rows());
+    auto num_cols = uint16_t(red.cols());
+    uint32_t num_pixels = num_rows * num_cols;
+
+    vector<int> parent(num_pixels);   // Array to store constructed MST
+    double key[num_pixels];   // Key values used to pick minimum weight edge in cut
+    bool mstSet[num_pixels];  // To represent set of vertices not yet included in MST
+    set <pair <uint32_t, double>, pairCmpLe> vertices_considered;
+    pixel_t x(0,0), y(0,0);
+
+    // Initialize all keys as INFINITE
+    for (int i = 0; i < num_pixels; i++)
+        key[i] = DBL_MAX, mstSet[i] = false;
+
+    // Always include initial random vertex in MST.
+    unsigned seed = (unsigned)chrono::system_clock::now().time_since_epoch().count();
+    default_random_engine generator (seed);
+    uniform_int_distribution<int> vertex_distribution(0, num_rows * num_cols - 1);
+    int random_vertex = vertex_distribution(generator);
+
+    key[random_vertex] = 0;     // Make key 0 so that this vertex is picked as first vertex
+    parent[random_vertex] = -1; // First node is always root of MST
+    vertices_considered.insert(make_pair(random_vertex, key[random_vertex]));
+
+    // The MST will have num_pixels vertices
+    for (int count = 0; count < num_pixels - 1; count++) {
+        // Pick the minimum key vertex from the set of vertices not yet included in MST
+        auto it = vertices_considered.begin();
+        while (mstSet[it->first]){  // this pixel has already been added to the tree
+            vertices_considered.erase(it);
+            it = vertices_considered.begin();
+        }
+        uint32_t u = it->first;
+        vertices_considered.erase(it);
+
+        // Add the picked vertex to the MST Set
+        mstSet[u] = true;
+
+        x.row = u / num_cols;
+        x.col = u % num_cols;
+        bool neighbors[4] = {false, false, false, false};
+        static uint32_t neighbor_pos[4];
+        if (u % num_cols != 0) {
+            neighbors[0] = true;
+            neighbor_pos[0] = u - 1;
+        }
+        if ((u + 1) % num_cols != 0) {
+            neighbors[1] = true;
+            neighbor_pos[1] = u + 1;
+        }
+        if (u >= num_cols) {
+            neighbors[2] = true;
+            neighbor_pos[2] = u - num_cols;
+        }
+        if (u + num_cols < num_pixels) {
+            neighbors[3] = true;
+            neighbor_pos[3] = u + num_cols;
+        }
+
+        // Update key value and parent index of the adjacent vertices of the picked vertex.
+        uint32_t v;
+        for (uint8_t i = 0; i < 4; i++){
+            v = neighbor_pos[i];
+            // calculate rgbDistance(u, v) only for adjacent vertices of u
+            // mstSet[v] is false for vertices not yet included in MST
+            // update the key only if rgbDistance(u, v) is smaller than key(v)
+            if (neighbors[i] && !mstSet[v]){
+
+                y.row = v / num_cols; // integer division
+                y.col = v % num_cols;
+                double dist = rgbDistance(x, y, red, green, blue);
+                if (dist < key[v]) {
+                    parent[v] = u;
+                    key[v] = dist;
+                }
+                int threshold = 1;
+                if (key[v] < threshold){
+                    vertices_considered.insert(make_pair(v, key[v]));
+                }
+            }
+        }
     }
     return parent;
 }

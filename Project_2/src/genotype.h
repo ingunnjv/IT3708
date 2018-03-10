@@ -64,6 +64,8 @@ public:
     GeneNode * getChromosomeGeneNode(int row, int col);
     uint8_t getChromosomeValue(int row, int col);
 
+    /// Velg ett tilfeldig segment, merge med den naboen som gir størst forbedring
+    //void mergeSegments();
 
 
 

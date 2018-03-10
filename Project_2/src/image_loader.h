@@ -25,6 +25,9 @@ public:
     void loadImagesFromFolder(std::string imagefolder);
     void extractRGBChannels();
 
+    int segmentation();
+    void kMeansClustering();
+
 };
 
 #endif //PROJECT_2_IMAGE_LOADER_H

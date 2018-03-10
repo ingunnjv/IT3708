@@ -27,6 +27,7 @@ int main(int argc, char *argv[]) {
     ImageLoader image = ImageLoader();
     image.loadImagesFromFolder(to_string(problem_num));
     image.extractRGBChannels();
+    image.segmentation();
 
     // Create GA
     Nsga2 ga = Nsga2(mutation_rate, crossover_rate, tournament_size,
