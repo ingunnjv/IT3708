@@ -208,10 +208,10 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
         /* Create the next gen pop by the non-domination principle */
         fronts.clear();
         fastNonDominatedSort(fronts);
-        for (auto &solution: fronts[0]){
-            string title = "Front " + to_string(0) + " - Generation " + to_string(generation);
-            //solution->visualizeEdges(image, title);
-        }
+//        printf("\t+ Visualizing the final pareto optimal fronts..\n");
+//        for(auto &genotype: fronts[0]){
+//            genotype->visualizeSegments(red, green, blue);
+//        }
         int front_index = 0;
         int parent_pop_index = 0;
         while (parent_pop_index + fronts[front_index].size() <= population_size && !fronts[front_index].empty())
@@ -267,16 +267,19 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
         parents_pop.clear();
         offspring_pop.clear();
         generation++;
+
+
     }
 
     /* TEST: Visualize segments before termination */
     printf("\t+ Visualizing the final pareto optimal fronts..\n");
+    fronts.clear();
     fastNonDominatedSort(fronts);
     int front_num = 0;
     for(auto &front: fronts){
         printf("\t+ Front: %d\n", front_num);
         for(auto &genotype: front){
-            genotype->visualizeSegments(red, green, blue);
+            genotype->visualizeEdges(image, "...");
         }
         front_num++;
     }
@@ -429,7 +432,7 @@ void Nsga2::initialMutation(Genotype &individual) {
     for (int row = 0; row < individual.num_rows; row++) {
         for (int col = 0; col < individual.num_cols; col++) {
             double mutate = rand_distribution(generator);
-            if (mutate < 0.0002) {
+            if (mutate < 0.0001) {
                 // Choose random gene value
                 uint8_t gene_value = individual.getChromosomeValue(row, col);
                 uint8_t random_gene_value = gene_value_distribution(generator);
@@ -450,27 +453,28 @@ void Nsga2::mutation(Genotype &individual, const Eigen::MatrixXi &red, const Eig
     uniform_real_distribution<double> rand_distribution(0.0, 1.0);
 
     vector<int> mutation_indices;
-    while (mutation_indices.size() < (int)0.001*individual.num_rows * individual.num_cols){
+    while (mutation_indices.size() < (int)0.01*individual.num_rows * individual.num_cols){
         int random = pixel_distribution(generator);
-        if(find(mutation_indices.begin(), mutation_indices.end(), random) != mutation_indices.end()){
-            // mutation_indices contains random already
-            continue;
+        mutation_indices.push_back(random);
+    }
+    for (auto &gene: mutation_indices){
+        // Choose random gene
+        int row = gene / individual.num_cols, col = gene % individual.num_cols;
+
+        double smart_mutation = rand_distribution(generator);
+        if(smart_mutation < 0.75){
+            // Choose value based on the neighbouring pixels
+            tuple<uint16_t, uint16_t> most_similar_neighbour_pos = getMostSimilarNeighbourPixel(uint16_t(row), uint16_t(col), red, green, blue);
+            uint16_t most_similar_row = get<0>(most_similar_neighbour_pos);
+            uint16_t most_simiar_col = get<1>(most_similar_neighbour_pos);
+            uint8_t most_similar_value = individual.getChromosomeValue(most_similar_row, most_simiar_col);
+            individual.setChromosomeValue(most_similar_value, row, col);
         }
         else{
-            mutation_indices.push_back(random);
+            // Set a random value
+            uint8_t genValue = (uint8_t(3.0*rand_distribution(generator)));
+            individual.setChromosomeValue(genValue, row, col);
         }
-    }
-    for (int m = 0; m < (int)0.001*individual.num_rows * individual.num_cols; m++){
-        // Choose random gene
-        int random_pixel = mutation_indices[m];
-        int row = random_pixel / individual.num_cols, col = random_pixel % individual.num_cols;
-
-        // Choose value based on the neighbouring pixels
-        tuple<uint16_t, uint16_t> most_similar_neighbour_pos = getMostSimilarNeighbourPixel(uint16_t(row), uint16_t(col), red, green, blue);
-        uint16_t most_similar_row = get<0>(most_similar_neighbour_pos);
-        uint16_t most_simiar_col = get<1>(most_similar_neighbour_pos);
-        uint8_t most_similar_value = individual.getChromosomeValue(most_similar_row, most_simiar_col);
-        individual.setChromosomeValue(most_similar_value, row, col);
     }
 }
 
