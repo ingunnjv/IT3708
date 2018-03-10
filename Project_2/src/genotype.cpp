@@ -4,6 +4,7 @@
 #include <opencv2/core/eigen.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgcodecs.hpp>
+#include <chrono>
 
 using namespace std;
 
@@ -63,9 +64,36 @@ Genotype::Genotype(uint16_t num_rows, uint16_t num_cols,  vector<int> &parents)
     for (int row = 0; row < num_rows; row++){
         for (int col = 0; col < num_cols; col++){
             int i = row * num_cols + col;
-            //this->chromosome(row, col).segment = -1;
             if (parents[i] == -1){
-                this->chromosome(row, col).value = genValues::none;
+                //this->chromosome(row, col).value = genValues::none;
+
+                /* Check if neighbouring node points at current node, if it does, point back to neighbour */
+                if(row + 1 < num_rows) {
+                    if (chromosome(row + 1, col).value == genValues::up) {
+                        this->chromosome(row, col).value = genValues::down;
+                    }
+                }
+                else if(row - 1 >= 0) {
+                    if (chromosome(row - 1, col).value == genValues::down) {
+                        this->chromosome(row, col).value = genValues::up;
+                    }
+                }
+                else if(col + 1 < num_cols) {
+                    if (chromosome(row, col + 1).value == genValues::left) {
+                        this->chromosome(row, col).value = genValues::right;
+                    }
+                }
+                else if(col - 1 >= 0) {
+                    if (chromosome(row, col - 1).value == genValues::right) {
+                        this->chromosome(row, col).value = genValues::left;
+                    }
+                }
+                else{
+                    unsigned seed = (unsigned) chrono::system_clock::now().time_since_epoch().count();
+                    default_random_engine generator(seed);
+                    uniform_int_distribution<uint8_t> gene_value_distribution(0, 3);
+                    this->chromosome(row, col).value = (uint8_t) gene_value_distribution(generator);
+                }
             }
             else{
                 if (parents[i] - i == 1) {
@@ -81,7 +109,7 @@ Genotype::Genotype(uint16_t num_rows, uint16_t num_cols,  vector<int> &parents)
                     this->chromosome(row, col).value = genValues::up;
                 }
                 else{
-                    cout << "Error in chromosome initialization" << endl;
+                    printf("Error in chromosome initialization\n");
                 }
             }
         }

@@ -210,7 +210,7 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
         fastNonDominatedSort(fronts);
         for (auto &solution: fronts[0]){
             string title = "Front " + to_string(0) + " - Generation " + to_string(generation);
-            //solution->visualizeSegments(blue, green, red);
+            //solution->visualizeEdges(image, title);
         }
         int front_index = 0;
         int parent_pop_index = 0;
