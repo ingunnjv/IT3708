@@ -28,7 +28,7 @@ void ImageLoader::loadImagesFromFolder(string imagefolder)
             // you probably want to do some preprocessing
             if (i == 0){ gt_images.push_back(im); }
             else if (i == 1){ segment_images.push_back(im); }
-            else {test_image = im;}
+            else {test_image = im; nonmodified_image = im; }
         }
     }
 }
