@@ -17,6 +17,7 @@ private:
 
 public:
     cv::Mat test_image;
+    cv::Mat nonmodified_image;
     Eigen::MatrixXi b_channel;
     Eigen::MatrixXi g_channel;
     Eigen::MatrixXi r_channel;

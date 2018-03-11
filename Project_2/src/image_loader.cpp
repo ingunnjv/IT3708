@@ -223,7 +223,7 @@ void ImageLoader::kMeansClustering(string image_folder){
                 samples.at<float>(y + x*src.rows, z) = src.at<Vec3b>(y,x)[z];
 
 
-    int clusterCount = 3;
+    int clusterCount = 2;
     Mat labels;
     int attempts = 20;
     Mat centers;
@@ -239,6 +239,8 @@ void ImageLoader::kMeansClustering(string image_folder){
             new_image.at<Vec3b>(y,x)[1] = centers.at<float>(cluster_idx, 1);
             new_image.at<Vec3b>(y,x)[2] = centers.at<float>(cluster_idx, 2);
         }
+    test_image = new_image;
+    nonmodified_image = src;
     imshow( "clustered image", new_image );
     waitKey( 0 );
 }

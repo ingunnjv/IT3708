@@ -270,11 +270,15 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
     fronts.clear();
     fastNonDominatedSort(fronts);
     int i_im = 0;
-    for (auto &solution: fronts[0]){
-        string title = "Front_0_image_" + to_string(i_im);
-        solution->visualizeEdges(image, title);
-        i_im++;
+    for(auto &front: fronts){
+        for (auto &solution: front){
+            string title = "Front_0_image_" + to_string(i_im);
+            solution->mergeSegments(red, green, blue);
+            solution->visualizeEdges(image, title);
+            i_im++;
+        }
     }
+
 
     this->population.erase(population.begin(), population.end());
     fronts.erase(fronts.begin(), fronts.end());
@@ -302,7 +306,7 @@ void Nsga2::makeNewPop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
         for (auto p: selected_parents) {
             offspring_pop.push_back(*p);
         }
-        uniformCrossover(offspring_pop[i], offspring_pop[i + 1]);
+        //uniformCrossover(offspring_pop[i], offspring_pop[i + 1]);
         for (int i_offspring = i; i_offspring < i + 2; i_offspring++){
             mutation(offspring_pop[i_offspring], red, green, blue);
 
@@ -426,7 +430,7 @@ void Nsga2::mutation(Genotype &individual, const Eigen::MatrixXi &red, const Eig
     uniform_real_distribution<double> rand_distribution(0.0, 1.0);
 
     vector<int> mutation_indices;
-    while (mutation_indices.size() < (int)0.25*individual.num_rows * individual.num_cols){
+    while (mutation_indices.size() < (int)0.1*individual.num_rows * individual.num_cols){
         int random = pixel_distribution(generator);
         mutation_indices.push_back(random);
     }
