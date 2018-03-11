@@ -12,7 +12,7 @@ def readImage(filename):
 	data = fixData(list(im.getdata()))
 	#get pixel (x,y) by pixel_values[width*y+x]
 	try:
-		return np.uint8(data).reshape((width,height))
+		return np.array(data).reshape((width,height))
 	except:
 		raise Exception("Mo")
 
