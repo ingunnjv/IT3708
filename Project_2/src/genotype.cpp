@@ -571,6 +571,7 @@ void Genotype::calculateObjectives(const Eigen::MatrixXi &red, const Eigen::Matr
         }
         i++;
     }
+    weighted_objectives_sum = objective_values[0]*objective_weights[0] + objective_values[1]*objective_weights[1];
 }
 
 /////////////////////////////////////////////////////////
@@ -657,6 +658,7 @@ void Genotype::mergeSegments(const Eigen::MatrixXi &red, const Eigen::MatrixXi &
         i_segment++;
     }
 
+    GeneNode* current_node;
     int MIN_SEGMENT_SIZE = 400; //test
     int MAX_SEGMENT_NUM = 30;
     while (smallest_segment_size < MIN_SEGMENT_SIZE || tot_segment_count > MAX_SEGMENT_NUM){
@@ -805,7 +807,8 @@ void Genotype::mergeSegments(const Eigen::MatrixXi &red, const Eigen::MatrixXi &
                 centroids[i_current_segment].b = centroids[i_current_segment].b * current_segment.size();
 
                 for (auto &p: smallest_centroid_diff_segment){
-                    chromosome(p.row, p.col).segment = current_segment_num;
+                    current_node = &chromosome(p.row, p.col);
+                    current_node->segment = current_segment_num;
                     pixels_segment_affiliation[i_current_segment].push_back(p);
                     centroids[i_current_segment].r += red(p.row, p.col);
                     centroids[i_current_segment].g += green(p.row, p.col);
@@ -825,7 +828,8 @@ void Genotype::mergeSegments(const Eigen::MatrixXi &red, const Eigen::MatrixXi &
                 centroids[smallest_centroid_diff_i].b = centroids[smallest_centroid_diff_i].b * smallest_centroid_diff_segment.size();
 
                 for (auto &p: current_segment){
-                    chromosome(p.row, p.col).segment = smallest_centroid_diff_segment_num;
+                    current_node = &chromosome(p.row, p.col);
+                    current_node->segment = smallest_centroid_diff_segment_num;
                     pixels_segment_affiliation[smallest_centroid_diff_i].push_back(p);
                     centroids[smallest_centroid_diff_i].r += red(p.row, p.col);
                     centroids[smallest_centroid_diff_i].g += green(p.row, p.col);

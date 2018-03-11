@@ -252,8 +252,8 @@ void ImageLoader::kMeansClustering(int num_clusters, string image_folder){
         }
     test_image = new_image;
     nonmodified_image = src;
-    string title = to_string(num_clusters) + " clusters";
-    imshow(title, new_image );
-    waitKey( 0 );
+//    string title = to_string(num_clusters) + " clusters";
+//    imshow(title, new_image );
+//    waitKey( 0 );
 }
 

@@ -292,16 +292,23 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
 
     }
 
+    /* Merge and decode final solutions */
+    printf("\t+ Decoding of final solutions..\n");
+    for (auto &solution: this->population){
+        solution.mergeSegments(red, green, blue);
+        solution.calculateObjectives(red, green, blue);
+    }
+
     /* TEST: Visualize segments before termination */
     printf("\t+ Visualizing the final pareto optimal fronts..\n");
     fronts.clear();
     fastNonDominatedSort(fronts);
     int i_im = 0;
+    int i_f = 0;
     for (auto &front: fronts){
         for (auto &solution: front){
             printf("\t+ Front[0] solution %d", i_im);
             string title = "Front_0_image_" + to_string(i_im);
-            solution->mergeSegments(red, green, blue);
             solution->visualizeEdges(image, title);
             if(use_weighted_sum){
                 printf(" // Weighted objective sum: %f\n", solution->weighted_objectives_sum);
@@ -311,6 +318,7 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
             }
             i_im++;
         }
+        i_f++;
     }
 
     this->population.erase(population.begin(), population.end());
@@ -319,8 +327,6 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
     offspring_pop.erase(offspring_pop.begin(), offspring_pop.end());
     initial_pop.erase(initial_pop.begin(), initial_pop.end());
 
-    // TODO: show solution
-    // TODO: get and print PRI of the best solution
 }
 
 /////////////////////////////////////////////////////////
