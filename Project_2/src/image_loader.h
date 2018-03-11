@@ -26,7 +26,7 @@ public:
     void extractRGBChannels();
 
     int segmentation();
-    void kMeansClustering();
+    void kMeansClustering(int num_clusters);
 
 };
 

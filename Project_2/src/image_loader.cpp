@@ -57,14 +57,14 @@ int ImageLoader::segmentation(){
 
     //! [load_image]
     // Load the image
-    cv::Mat src = cv::imread("../Test Images/216066/Test image.jpg");
+    cv::Mat src = test_image;
 
     // Check if everything was fine
     if (!src.data)
         return -1;
 
     // Show source image
-    cv::imshow("Source Image", src);
+//    cv::imshow("Source Image", src);
     //! [load_image]
 
     //! [black_bg]
@@ -81,7 +81,7 @@ int ImageLoader::segmentation(){
     }
 
     // Show output image
-    cv::imshow("Black Background Image", src);
+//    cv::imshow("Black Background Image", src);
     //! [black_bg]
 
     //! [sharp]
@@ -115,8 +115,15 @@ int ImageLoader::segmentation(){
     cv::Mat bw;
     cv::cvtColor(src, bw, cv::COLOR_BGR2GRAY);
     cv::threshold(bw, bw, 40, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
-    imshow("Binary Image", bw);
+//    imshow("Binary Image", bw);
     //! [bin]
+
+    /// dilation:
+    cv::Mat dilated;
+    cv::Mat kernel2 = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));//, cv::Point(0,0));
+    cv::morphologyEx(bw, dilated, MORPH_CLOSE, kernel2);
+    //cv::imshow("Closed", dilated);
+    //cv::waitKey(0);
 
     //! [dist]
     // Perform the distance transform algorithm
@@ -126,18 +133,18 @@ int ImageLoader::segmentation(){
     // Normalize the distance image for range = {0.0, 1.0}
     // so we can visualize and threshold it
     cv::normalize(dist, dist, 0, 1., cv::NORM_MINMAX);
-    cv::imshow("Distance Transform Image", dist);
+//    cv::imshow("Distance Transform Image", dist);
     //! [dist]
 
     //! [peaks]
     // Threshold to obtain the peaks
     // This will be the markers for the foreground objects
-    cv::threshold(dist, dist, .4, 1., cv::THRESH_BINARY);
+    cv::threshold(dist, dist, .3, 1., cv::THRESH_BINARY);
 
     // Dilate a bit the dist image
     cv::Mat kernel1 = cv::Mat::ones(3, 3, CV_8UC1);
     cv::dilate(dist, dist, kernel1);
-    imshow("Peaks", dist);
+//    imshow("Peaks", dist);
     //! [peaks]
 
     //! [seeds]
@@ -159,7 +166,7 @@ int ImageLoader::segmentation(){
 
     // Draw the background marker
     cv::circle(markers, cv::Point(5,5), 3, CV_RGB(255,255,255), -1);
-    cv::imshow("Markers", markers*10000);
+//    cv::imshow("Markers", markers*10000);
     //! [seeds]
 
     //! [watershed]
@@ -169,7 +176,7 @@ int ImageLoader::segmentation(){
     cv::Mat mark = cv::Mat::zeros(markers.size(), CV_8UC1);
     markers.convertTo(mark, CV_8UC1);
     cv::bitwise_not(mark, mark);
-    //    imshow("Markers_v2", mark); // uncomment this if you want to see how the mark
+//        imshow("Markers_v2", mark); // uncomment this if you want to see how the mark
     // image looks like at that point
 
     // Generate random colors
@@ -208,7 +215,7 @@ int ImageLoader::segmentation(){
 
 }
 
-void ImageLoader::kMeansClustering(){
+void ImageLoader::kMeansClustering(int num_clusters) {
     Mat src = test_image;
     Mat samples(src.rows * src.cols, 3, CV_32F);
     for( int y = 0; y < src.rows; y++ )
@@ -217,7 +224,7 @@ void ImageLoader::kMeansClustering(){
                 samples.at<float>(y + x*src.rows, z) = src.at<Vec3b>(y,x)[z];
 
 
-    int clusterCount = 3;
+    int clusterCount = num_clusters;
     Mat labels;
     int attempts = 5;
     Mat centers;
@@ -233,7 +240,8 @@ void ImageLoader::kMeansClustering(){
             new_image.at<Vec3b>(y,x)[1] = centers.at<float>(cluster_idx, 1);
             new_image.at<Vec3b>(y,x)[2] = centers.at<float>(cluster_idx, 2);
         }
-    imshow( "clustered image", new_image );
-    waitKey( 0 );
+    string title = to_string(num_clusters) + " clusters";
+    imshow(title, new_image );
+//    waitKey( 0 );
 }
 
