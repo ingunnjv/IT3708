@@ -415,13 +415,13 @@ void Genotype::decodeAndEvaluate(const Eigen::MatrixXi &red, const Eigen::Matrix
                 pixels_in_segment.clear();
                 if (total_pixels_found == num_cols*num_rows){
                     tot_segment_count = segment_number;
-                    objective_values[1] = objective_values[1]/total_edge_pixels;
+                    //objective_values[1] = objective_values[1]/total_edge_pixels;
                     return;
                 }
             }
         }
     }
-    objective_values[1] = objective_values[1]/total_edge_pixels;
+    //objective_values[1] = objective_values[1]/total_edge_pixels;
     tot_segment_count = segment_number;
 }
 
@@ -620,10 +620,9 @@ bool Genotype::isEdgePixel(signed short dir_y, signed short dir_x, int this_col,
     }
 }
 
-/*
-void Genotype::mergeSegments()
-{
 
+void Genotype::mergeSegments(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue)
+{
     // assume decoding has been done
     // create grouping of pixels in corresponding segments
     vector<vector<pixel_t>> pixels_segment_affiliation (tot_segment_count);
@@ -634,20 +633,48 @@ void Genotype::mergeSegments()
             pixels_segment_affiliation[segment_num].push_back(pixel);
         }
     }
-    int MAX_SEGMENTS = 40; //test
-    while (tot_segment_count > MAX_SEGMENTS){
-        // should choose smallest segments
-        // choose segment: for testing, choose 0
-        int i_current_segment = 0;
-        vector<pixel_t> current_segment = pixels_segment_affiliation[i_current_segment];
-        Eigen::MatrixXi discovered = Eigen::MatrixXi::Zero(num_rows, num_cols);
-
-        for (const auto &p: current_segment){
-            discovered(p.row, p.col) = 1;
+    int smallest_segment_size = INT_MAX;
+    int smallest_segment = 0;
+    int i_segment = 0;
+    vector<rgb_centroid_t> centroids(tot_segment_count);
+    for (auto &s: pixels_segment_affiliation){
+        if (s.size() < smallest_segment_size){
+            smallest_segment_size = s.size();
+            smallest_segment =  i_segment;
         }
+        /*  Calculate the rgb centroid of the segment */
+        int num_pixels = 0;
+        for (const auto &p: s){
+            centroids[i_segment].r += red(p.row, p.col);
+            centroids[i_segment].g += green(p.row, p.col);
+            centroids[i_segment].b += blue(p.row, p.col);
+            num_pixels++;
+        }
+        centroids[i_segment].r = centroids[i_segment].r / num_pixels;
+        centroids[i_segment].g = centroids[i_segment].g / num_pixels;
+        centroids[i_segment].b = centroids[i_segment].b / num_pixels;
+        i_segment++;
+    }
+
+    int MIN_SEGMENT_SIZE = 700; //test
+    int MAX_SEGMENT_NUM = 15;
+    while (smallest_segment_size < MIN_SEGMENT_SIZE || tot_segment_count > MAX_SEGMENT_NUM){
+        // choose smallest segment
+        int i_current_segment = smallest_segment;
+        rgb_centroid_t current_centroid = centroids[i_current_segment];
+        vector<pixel_t> current_segment = pixels_segment_affiliation[i_current_segment];
 
         // Find neighbouring segments
         set<int16_t> neighbour_segments;
+        int smallest_neighbour_size = INT_MAX;
+        vector<pixel_t> smallest_neighbour_segment;
+        int smallest_neighbour_i = 0;
+
+        double smallest_centroid_diff = DBL_MAX;
+        vector <pixel_t> smallest_centroid_diff_segment;
+        int smallest_centroid_diff_i = 0;
+        int smallest_centroid_diff_num_pixels = 0;
+
         for (const auto &p: current_segment){
             int this_row = p.row;
             int this_col = p.col;
@@ -656,81 +683,176 @@ void Genotype::mergeSegments()
             if (isEdgePixel(1, 0, this_col, this_row, this_segment)){
                 if (neighbour_segments.find(chromosome(this_row + 1, this_col).segment) == neighbour_segments.end()){
                     neighbour_segments.insert(chromosome(this_row + 1, this_col).segment);
-                    // Try to merge segments
-                    chromosome(this_row, this_col).value = genValues::down;
-
-                    // Find this neighbor segment in list of segments and update
-                    int i_s = 0;
+                    // find size of neighbouring segment, keep track of smallest neighbour
+                    // find centroid of neighbouring segment, keep track of most similar centroid
+                    int i_s = -1;
                     for (const auto &s: pixels_segment_affiliation){
-                        if (chromosome(this_row + 1, this_col).segment == chromosome(s[0].row, s[0].col).segment){
-                            for (const auto &pixel: s){
-                                chromosome(pixel.row, pixel.col).segment = this_segment;
-                                pixels_segment_affiliation[i_current_segment].push_back(pixel);
-                            }
-                            break;
-                        }
                         i_s++;
+                        if (chromosome(this_row + 1, this_col).segment == chromosome(s[0].row, s[0].col).segment) {
+//                            if (s.size() < smallest_neighbour_size) {
+//                                smallest_neighbour_size = s.size();
+//                                smallest_neighbour_segment = s;
+//                                smallest_neighbour_i = i_s;
+//                            }
+                            double diff = sqrt(pow(current_centroid.r - centroids[i_s].r, 2)
+                                  + pow(current_centroid.g - centroids[i_s].g, 2)
+                                  + pow(current_centroid.b - centroids[i_s].b, 2));
+                            if (diff < smallest_centroid_diff){
+                                smallest_centroid_diff = diff;
+                                smallest_centroid_diff_segment = s;
+                                smallest_centroid_diff_i = i_s;
+                            }
+                        }
                     }
-                    // remove the "neighbour" segment from the list
-                    pixels_segment_affiliation.erase(pixels_segment_affiliation.begin() + i_s);
-                    tot_segment_count--;
                 }
             }
             else if (isEdgePixel(-1, 0, this_col, this_row, this_segment)){
-                neighbour_segments.insert(chromosome(this_row - 1, this_col).segment);
+                if (neighbour_segments.find(chromosome(this_row - 1, this_col).segment) == neighbour_segments.end()) {
+                    neighbour_segments.insert(chromosome(this_row - 1, this_col).segment);
+
+                    // find size of neighbouring segment, keep track of smallest neighbour
+                    int i_s = -1;
+                    for (const auto &s: pixels_segment_affiliation){
+                        i_s++;
+                        if (chromosome(this_row - 1, this_col).segment == chromosome(s[0].row, s[0].col).segment) {
+//                            if (s.size() < smallest_neighbour_size) {
+//                                smallest_neighbour_size = s.size();
+//                                smallest_neighbour_segment = s;
+//                                smallest_neighbour_i = i_s;
+//                            }
+                            double diff = sqrt(pow(current_centroid.r - centroids[i_s].r, 2)
+                                               + pow(current_centroid.g - centroids[i_s].g, 2)
+                                               + pow(current_centroid.b - centroids[i_s].b, 2));
+                            if (diff < smallest_centroid_diff){
+                                smallest_centroid_diff = diff;
+                                smallest_centroid_diff_segment = s;
+                                smallest_centroid_diff_i = i_s;
+                            }
+                        }
+                    }
+                }
             }
             else if (isEdgePixel(0, 1, this_col, this_row, this_segment)){
-                neighbour_segments.insert(chromosome(this_row, this_col + 1).segment);
+                if (neighbour_segments.find(chromosome(this_row, this_col + 1).segment) == neighbour_segments.end()) {
+                    neighbour_segments.insert(chromosome(this_row, this_col + 1).segment);
+                    // find size of neighbouring segment, keep track of smallest neighbour
+                    int i_s = -1;
+                    for (const auto &s: pixels_segment_affiliation){
+                        i_s++;
+                        if (chromosome(this_row, this_col + 1).segment == chromosome(s[0].row, s[0].col).segment) {
+//                            if (s.size() < smallest_neighbour_size) {
+//                                smallest_neighbour_size = s.size();
+//                                smallest_neighbour_segment = s;
+//                                smallest_neighbour_i = i_s;
+//                            }
+                            double diff = sqrt(pow(current_centroid.r - centroids[i_s].r, 2)
+                                               + pow(current_centroid.g - centroids[i_s].g, 2)
+                                               + pow(current_centroid.b - centroids[i_s].b, 2));
+                            if (diff < smallest_centroid_diff){
+                                smallest_centroid_diff = diff;
+                                smallest_centroid_diff_segment = s;
+                                smallest_centroid_diff_i = i_s;
+                            }
+                        }
+                    }
+                }
             }
             else if (isEdgePixel(0, -1, this_col, this_row, this_segment)){
-                neighbour_segments.insert(chromosome(this_row, this_col - 1).segment);
+                if (neighbour_segments.find(chromosome(this_row, this_col - 1).segment) == neighbour_segments.end()) {
+                    neighbour_segments.insert(chromosome(this_row, this_col - 1).segment);
+                    // find size of neighbouring segment, keep track of smallest neighbour
+                    int i_s = -1;
+                    for (const auto &s: pixels_segment_affiliation){
+                        i_s++;
+                        if (chromosome(this_row, this_col - 1).segment == chromosome(s[0].row, s[0].col).segment) {
+//                            if (s.size() < smallest_neighbour_size) {
+//                                smallest_neighbour_size = s.size();
+//                                smallest_neighbour_segment = s;
+//                                smallest_neighbour_i = i_s;
+//                            }
+                            double diff = sqrt(pow(current_centroid.r - centroids[i_s].r, 2)
+                                               + pow(current_centroid.g - centroids[i_s].g, 2)
+                                               + pow(current_centroid.b - centroids[i_s].b, 2));
+                            if (diff < smallest_centroid_diff){
+                                smallest_centroid_diff = diff;
+                                smallest_centroid_diff_segment = s;
+                                smallest_centroid_diff_i = i_s;
+                            }
+                        }
+                    }
+                }
             }
         }
-        // calculate the rgb centroid for each segment
-        vector<rgb_centroid_t> centroids (tot_segment_count);
-        objective_values[0] = 0;
-        objective_values[1] = 0;
-        int i = 0;
+
+//        // Smallest neighbour segment found: merge
+//        if (!neighbour_segments.empty()){
+//            int16_t current_segment_num = chromosome(current_segment[0].row, current_segment[0].col).segment;
+//            for (auto &p: smallest_neighbour_segment){
+//                chromosome(p.row, p.col).segment = current_segment_num;
+//                pixels_segment_affiliation[i_current_segment].push_back(p);
+//            }
+//            pixels_segment_affiliation.erase(pixels_segment_affiliation.begin() + smallest_neighbour_i);
+//            tot_segment_count--;
+//        }
+
+        // Smallest centroid diff segment found: merge
+        if (!neighbour_segments.empty()){
+            int16_t current_segment_num = chromosome(current_segment[0].row, current_segment[0].col).segment;
+            centroids[i_current_segment].r = centroids[i_current_segment].r * current_segment.size();
+            centroids[i_current_segment].g = centroids[i_current_segment].g * current_segment.size();
+            centroids[i_current_segment].b = centroids[i_current_segment].b * current_segment.size();
+            for (auto &p: smallest_centroid_diff_segment){
+                chromosome(p.row, p.col).segment = current_segment_num;
+                pixels_segment_affiliation[i_current_segment].push_back(p);
+                centroids[i_current_segment].r += red(p.row, p.col);
+                centroids[i_current_segment].g += green(p.row, p.col);
+                centroids[i_current_segment].b += blue(p.row, p.col);
+            }
+            centroids[i_current_segment].r = centroids[i_current_segment].r / (smallest_centroid_diff_segment.size() + current_segment.size());
+            centroids[i_current_segment].g = centroids[i_current_segment].g / (smallest_centroid_diff_segment.size() + current_segment.size());
+            centroids[i_current_segment].b = centroids[i_current_segment].b / (smallest_centroid_diff_segment.size() + current_segment.size());
+            pixels_segment_affiliation.erase(pixels_segment_affiliation.begin() + smallest_centroid_diff_i);
+            centroids.erase(centroids.begin() + smallest_centroid_diff_i);
+            tot_segment_count--;
+        }
+
+        // update centroids
+        // find new smallest segment
+        smallest_segment_size = INT_MAX;
+        smallest_segment = 0;
+        i_segment = 0;
+        //centroids.resize(tot_segment_count);
         for (const auto &s: pixels_segment_affiliation){
-            rgb_centroid_t centroid;
-            double intensity_sum_r = 0;
-            double intensity_sum_g = 0;
-            double intensity_sum_b = 0;
-            int num_pixels = 0;
-            for (const auto &p: s){
-                intensity_sum_r += red(p.row, p.col);
-                intensity_sum_g += green(p.row, p.col);
-                intensity_sum_b += blue(p.row, p.col);
-                num_pixels++;
+            if (s.size() < smallest_segment_size){
+                smallest_segment_size = s.size();
+                smallest_segment =  i_segment;//chromosome(s[0].row, s[0].col).segment;
             }
-            centroid.r = intensity_sum_r / num_pixels;
-            centroid.g = intensity_sum_g / num_pixels;
-            centroid.b = intensity_sum_b / num_pixels;
-            centroids[i] = centroid;
-            for (const auto &p: s){
-                // objective 1
-                double pixel_centroid_deviation = sqrt( pow(red(p.row, p.col) - centroids[i].r, 2)
-                                                        + pow(green(p.row, p.col) - centroids[i].g, 2)
-                                                        + pow(blue(p.row, p.col) - centroids[i].b, 2));
-                objective_values[0] += pixel_centroid_deviation;
-                // objective 2
-                int this_row = p.row;
-                int this_col = p.col;
-                int this_segment = chromosome(this_row, this_col).segment;
-                double segment_boundary_diff = 0;
-                segment_boundary_diff -= calcEuclideanRgbDiff(-1, 0, this_col, this_row, this_segment, red,green,blue);
-                segment_boundary_diff -= calcEuclideanRgbDiff(1, 0, this_col, this_row, this_segment, red,green,blue);
-                segment_boundary_diff -= calcEuclideanRgbDiff(0, -1, this_col, this_row, this_segment, red,green,blue);
-                segment_boundary_diff -= calcEuclideanRgbDiff(0, 1, this_col, this_row, this_segment, red,green,blue);
-                objective_values[1] += segment_boundary_diff;
-            }
-            i++;
+//            /*  Calculate the rgb centroid of the segment */
+//            centroids[i_segment].r = 0, centroids[i_segment].g = 0, centroids[i_segment].b = 0;
+//            int num_pixels = 0;
+//            for (const auto &p: s){
+//                centroids[i_segment].r += red(p.row, p.col);
+//                centroids[i_segment].g += green(p.row, p.col);
+//                centroids[i_segment].b += blue(p.row, p.col);
+//                num_pixels++;
+//            }
+//            centroids[i_segment].r = centroids[i_segment].r / num_pixels;
+//            centroids[i_segment].g = centroids[i_segment].g / num_pixels;
+//            centroids[i_segment].b = centroids[i_segment].b / num_pixels;
+            i_segment++;
         }
+    }
 
-
+    // Update segment numbers in the range [0, tot_num_segments)
+    i_segment = 0;
+    for (const auto &s: pixels_segment_affiliation){
+        for (const auto &p: s){
+            chromosome(p.row, p.col).segment = i_segment;
+        }
+        i_segment++;
     }
 }
-*/
+
 /*
 Genotype::~Genotype(){
     cout << "deleted genotype!" << endl;
