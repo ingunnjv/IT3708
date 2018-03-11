@@ -25,8 +25,9 @@ public:
     void loadImagesFromFolder(std::string imagefolder);
     void extractRGBChannels();
 
+    void kMeansClustering(int num_clusters, std::string image_folder);
     int segmentation(std::string imagefolder);
-    void kMeansClustering(std::string image_folder);
+
 
 };
 
