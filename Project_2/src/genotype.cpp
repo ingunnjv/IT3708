@@ -811,7 +811,7 @@ void Genotype::mergeSegments(const Eigen::MatrixXi &red, const Eigen::MatrixXi &
 
         // Smallest centroid diff segment found: merge
         if (!neighbour_segments.empty()){
-            if (current_segment.size() < smallest_centroid_diff_segment.size()){
+            if (current_segment.size() > smallest_centroid_diff_segment.size()){
                 int16_t current_segment_num = chromosome(current_segment[0].row, current_segment[0].col).segment;
                 centroids[i_current_segment].r = centroids[i_current_segment].r * current_segment.size();
                 centroids[i_current_segment].g = centroids[i_current_segment].g * current_segment.size();
