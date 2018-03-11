@@ -44,13 +44,13 @@ void Nsga2::initializePopulationFromMst(const Eigen::MatrixXi &red, const Eigen:
     pixel_t x(0,0), y(0,0);
     vector<uint8_t> thresholds(this->population_size);
     // Threshold range: 20, 200
-    uint8_t step = (uint8_t) (150 - 30)/this->population_size;
+    uint8_t step = (uint8_t) (150 - 50)/this->population_size;
     for (uint8_t t = 0; t < this->population_size; t++){
         thresholds[t] = (uint8_t) 20 + t*step;
     }
     for (int i = 0; i < population_size; i++){
         // create new graph
-        parent_graph = primMST(red, green, blue);
+        parent_graph = superMST(thresholds[i], red, green, blue);
         links.clear();
         for (int j = 0; j < num_pixels; j++) {
             if (parent_graph[j] == -1){
@@ -62,18 +62,18 @@ void Nsga2::initializePopulationFromMst(const Eigen::MatrixXi &red, const Eigen:
         }
         // Remove largest edges
         //TODO: how many edges? random number?
-        if (i > 0){
-            for(uint8_t removed_links = 0; removed_links < 10*i; removed_links++){
-                if (!links.empty()){
-                    auto it = links.begin();
-                    parent_graph[it->first] = -1;
-                    links.erase(it);
-                }
-            }
-        }
+//        if (i > 0){
+//            for(uint8_t removed_links = 0; removed_links < 10*i; removed_links++){
+//                if (!links.empty()){
+//                    auto it = links.begin();
+//                    parent_graph[it->first] = -1;
+//                    links.erase(it);
+//                }
+//            }
+//        }
 
         initial_pop[i] = Genotype(num_rows, num_cols, parent_graph);
-        //initialMutation(initial_pop[i]);
+        initialMutation(initial_pop[i]);
         initial_pop[i].decodeAndEvaluate(red, green, blue);
 
         //initial_pop[i].decodeAndEvaluate(red, green, blue);
@@ -212,7 +212,7 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
 
     for (int i = 0; i < population_size; i++){
         population[i] = initial_pop[i];
-        //population[i].visualizeEdges(image, "Initial segmentation");
+        population[i].visualizeEdges(image, "Initial segmentation");
     }
 
     initial_pop.erase(initial_pop.begin(), initial_pop.end());
@@ -277,11 +277,13 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
     fronts.clear();
     fastNonDominatedSort(fronts);
     int i_im = 0;
-    for (auto &solution: fronts[0]){
-        string title = "Front_0_image_" + to_string(i_im);
-        solution->visualizeEdges(image, title);
-        i_im++;
-        solution->mergeSegments(red, green, blue);
+    for (auto &front: fronts){
+        for (auto &solution: front){
+            string title = "Front_0_image_" + to_string(i_im);
+            solution->mergeSegments(red, green, blue);
+            solution->visualizeEdges(image, title);
+            i_im++;
+        }
     }
 
     this->population.erase(population.begin(), population.end());
@@ -700,8 +702,8 @@ vector<int> Nsga2::superMST(uint8_t threshold, const Eigen::MatrixXi &red, const
         x.row = u / num_cols;
         x.col = u % num_cols;
         centroid.r += red(x.row, x.col);
-        centroid.g += green(x.row, x.col);;
-        centroid.b += blue(x.row, x.col);;
+        centroid.g += green(x.row, x.col);
+        centroid.b += blue(x.row, x.col);
 
         bool neighbors[4] = {false, false, false, false};
         static uint32_t neighbor_pos[4];
@@ -757,10 +759,6 @@ vector<int> Nsga2::superMST(uint8_t threshold, const Eigen::MatrixXi &red, const
                 }
             }
         }
-
-
-
-
     }
     return parent;
 }
