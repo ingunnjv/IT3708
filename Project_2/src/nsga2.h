@@ -34,7 +34,8 @@ public:
 
     /// Creates a MST based on the distance in RGB space of a picture as basis for edges
     std::vector<int> primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
-    std::vector<int> superMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
+    std::vector<int> superMST(uint8_t threshold, const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
+                                  const Eigen::MatrixXi &blue);
 
     /// Sorts the population based non-domination fronts
     void fastNonDominatedSort(std::vector<std::vector<Genotype*> > &fronts);

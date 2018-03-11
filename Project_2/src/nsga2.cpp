@@ -49,6 +49,12 @@ void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::Matrix
 //        y.row = parent_graph[i] / num_cols, y.col = parent_graph[i] % num_cols;
 //        links.insert(make_pair(i, rgbDistance(y, x, red, green, blue)));
 //    }
+    vector<uint8_t> thresholds(this->population_size);
+    // Threshold range: 20, 200
+    uint8_t step = (uint8_t) (150 - 30)/this->population_size;
+    for (uint8_t t = 0; t < this->population_size; t++){
+        thresholds[t] = (uint8_t) 20 + t*step;
+    }
     for (int i = 0; i < population_size; i++){
         // create new graph
         parent_graph = primMST(red, green, blue);
@@ -64,7 +70,7 @@ void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::Matrix
         // Remove largest edges
         //TODO: how many edges? random number?
         if (i > 0){
-            for(uint8_t removed_links = 0; removed_links < 20; removed_links++){
+            for(uint8_t removed_links = 0; removed_links < 10*i; removed_links++){
                 if (!links.empty()){
                     auto it = links.begin();
                     parent_graph[it->first] = -1;
@@ -76,6 +82,8 @@ void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::Matrix
         initial_pop[i] = Genotype(num_rows, num_cols, parent_graph);
         initialMutation(initial_pop[i]);
         initial_pop[i].decodeAndEvaluate(red, green, blue);
+
+        //initial_pop[i].decodeAndEvaluate(red, green, blue);
         printf("+ Created genotype with %d segments(s).\n", i+1);
     }
 }
@@ -230,7 +238,7 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
 //        }
         for (auto &solution: fronts[0]){
             string title = "Front " + to_string(0) + " - Generation " + to_string(generation);
-            solution->visualizeEdges(image, title);
+            //solution->visualizeEdges(image, title);
         }
 
         int front_index = 0;
@@ -312,6 +320,9 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
         for (auto &solution: front){
             i_im++;
             string title = "Front " + to_string(i_f)+ " image " + to_string(i_im);
+            solution->visualizeEdges(image, title);
+            solution->mergeSegments(red, green, blue);
+            title = "Front " + to_string(i_f)+ " image " + to_string(i_im);
             solution->visualizeEdges(image, title);
         }
         i_f++;
@@ -455,7 +466,7 @@ void Nsga2::initialMutation(Genotype &individual) {
     for (int row = 0; row < individual.num_rows; row++) {
         for (int col = 0; col < individual.num_cols; col++) {
             double mutate = rand_distribution(generator);
-            if (mutate < 0.0003) {
+            if (mutate < 0.0005) {
                 // Choose random gene value
                 uint8_t gene_value = individual.getChromosomeValue(row, col);
                 uint8_t random_gene_value = gene_value_distribution(generator);
@@ -476,7 +487,7 @@ void Nsga2::mutation(Genotype &individual, const Eigen::MatrixXi &red, const Eig
     uniform_real_distribution<double> rand_distribution(0.0, 1.0);
 
     vector<int> mutation_indices;
-    while (mutation_indices.size() < (int)0.01*individual.num_rows * individual.num_cols){
+    while (mutation_indices.size() < (int)0.001*individual.num_rows * individual.num_cols){
         int random = pixel_distribution(generator);
         mutation_indices.push_back(random);
     }
@@ -485,7 +496,7 @@ void Nsga2::mutation(Genotype &individual, const Eigen::MatrixXi &red, const Eig
         int row = gene / individual.num_cols, col = gene % individual.num_cols;
 
         double smart_mutation = rand_distribution(generator);
-        if(smart_mutation < 0.6){
+        if(smart_mutation < 0.7){
             // Choose value based on the neighbouring pixels
             tuple<uint16_t, uint16_t> most_similar_neighbour_pos = getMostSimilarNeighbourPixel(uint16_t(row), uint16_t(col), red, green, blue);
             uint16_t most_similar_row = get<0>(most_similar_neighbour_pos);
@@ -588,15 +599,19 @@ vector<int> Nsga2::primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &gr
 }
 
 /////////////////////////////////////////////////////////
-vector<int> Nsga2::superMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue) {
+vector<int> Nsga2::superMST(uint8_t threshold, const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
+                            const Eigen::MatrixXi &blue) {
     auto num_rows = uint16_t(red.rows());
     auto num_cols = uint16_t(red.cols());
     uint32_t num_pixels = num_rows * num_cols;
+    int segment_size_threshold = 100;
+    int available_neighbour_vertices;
 
     vector<int> parent(num_pixels);   // Array to store constructed MST
     double key[num_pixels];   // Key values used to pick minimum weight edge in cut
-    bool mstSet[num_pixels];  // To represent set of vertices not yet included in MST
+    vector<bool> mstSet(num_pixels);  // To represent set of vertices not yet included in MST
     set <pair <uint32_t, double>, pairCmpLe> vertices_considered;
+    set <pair <uint32_t, double>, pairCmpLe> next_vertices_considered;
     pixel_t x(0,0), y(0,0);
 
     // Initialize all keys as INFINITE
@@ -613,22 +628,134 @@ vector<int> Nsga2::superMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &g
     parent[random_vertex] = -1; // First node is always root of MST
     vertices_considered.insert(make_pair(random_vertex, key[random_vertex]));
 
+    int segment_size = 0;
+    rgb_centroid_t centroid;
+    centroid.r = 0, centroid.g = 0; centroid.b = 0;
+
     // The MST will have num_pixels vertices
+    uint32_t u = random_vertex;
     for (int count = 0; count < num_pixels - 1; count++) {
+        if (vertices_considered.empty() && segment_size >= segment_size_threshold){
+            // no neighbours with small enough edges, but segment size is large enough
+            // Start new segment
+            segment_size = 0;
+            centroid.r = 0, centroid.g = 0; centroid.b = 0;
+            random_vertex = vertex_distribution(generator);
+            while(mstSet[random_vertex]){
+                random_vertex = vertex_distribution(generator);
+            }
+            key[random_vertex] = 0;     // Make key 0 so that this vertex is picked as first vertex
+            parent[random_vertex] = -1; // First node is always root of MST
+            vertices_considered.insert(make_pair(random_vertex, key[random_vertex]));
+            next_vertices_considered.clear();
+        }
+        else if (vertices_considered.empty() && segment_size < segment_size_threshold){
+            // no neighbours with small enough edges, but segment size is not large enough
+            // Choose cheapest neighbour not already in the tree
+            bool new_vertices_available = true;
+            if (!next_vertices_considered.empty()) {
+                auto it = next_vertices_considered.begin();
+                int i_v = 0;
+                while (mstSet[it->first]) {  // this pixel has already been added to the tree
+                    //next_vertices_considered.erase(it);
+                    ++it;
+                    if (it == next_vertices_considered.end()) { // end of vector
+                        new_vertices_available = false;
+                        break;
+                    }
+                    i_v++;
+                }
+                if (new_vertices_available)
+                    vertices_considered.insert(make_pair(it->first, it->second));
+            }
+            else{
+                new_vertices_available = false;
+            }
+
+            if (!new_vertices_available){
+                // No neighbours not already in tree
+                // combine this node with neighbouring segment
+                x.row = u / num_cols;
+                x.col = u % num_cols;
+                bool neighbors[4] = {false, false, false, false};
+                static uint32_t neighbor_pos[4];
+                if (u % num_cols != 0) {
+                    neighbors[0] = true;
+                    neighbor_pos[0] = u - 1;
+                }
+                if ((u + 1) % num_cols != 0) {
+                    neighbors[1] = true;
+                    neighbor_pos[1] = u + 1;
+                }
+                if (u >= num_cols) {
+                    neighbors[2] = true;
+                    neighbor_pos[2] = u - num_cols;
+                }
+                if (u + num_cols < num_pixels) {
+                    neighbors[3] = true;
+                    neighbor_pos[3] = u + num_cols;
+                }
+                auto cheapest = DBL_MAX;
+                uint32_t cheapest_neighbour = neighbor_pos[0];
+                for (int i = 0; i < 4; i++){
+                    if (neighbors[i]){
+                        uint32_t v = neighbor_pos[i];
+                        y.row = v / num_cols; // integer division
+                        y.col = v % num_cols;
+                        double dist = rgbDistance(x, y, red, green, blue);
+                        if (dist < cheapest){
+                            cheapest = dist;
+                            cheapest_neighbour = v;
+                        }
+                    }
+                }
+                parent[u] = cheapest_neighbour;
+                key[u] = cheapest; // necessary?
+
+                // Start new segment
+                segment_size = 0;
+                centroid.r = 0, centroid.g = 0, centroid.b = 0;
+                random_vertex = vertex_distribution(generator);
+                while(mstSet[random_vertex]){
+                    random_vertex = vertex_distribution(generator);
+                }
+                key[random_vertex] = 0;     // Make key 0 so that this vertex is picked as first vertex
+                parent[random_vertex] = -1; // First node is always root of MST
+                vertices_considered.insert(make_pair(random_vertex, key[random_vertex]));
+                next_vertices_considered.clear();
+            }
+        }
+
         // Pick the minimum key vertex from the set of vertices not yet included in MST
+        available_neighbour_vertices = true;
         auto it = vertices_considered.begin();
         while (mstSet[it->first]){  // this pixel has already been added to the tree
             vertices_considered.erase(it);
-            it = vertices_considered.begin();
+            if (!vertices_considered.empty())
+                it = vertices_considered.begin();
+            else {
+                available_neighbour_vertices = false;
+                break;
+            }
         }
-        uint32_t u = it->first;
+        if (!available_neighbour_vertices){
+            continue;
+        }
+
+
+        u = it->first;
         vertices_considered.erase(it);
 
         // Add the picked vertex to the MST Set
         mstSet[u] = true;
+        segment_size++;
 
         x.row = u / num_cols;
         x.col = u % num_cols;
+        centroid.r += red(x.row, x.col);
+        centroid.g += green(x.row, x.col);;
+        centroid.b += blue(x.row, x.col);;
+
         bool neighbors[4] = {false, false, false, false};
         static uint32_t neighbor_pos[4];
         if (u % num_cols != 0) {
@@ -664,12 +791,29 @@ vector<int> Nsga2::superMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &g
                     parent[v] = u;
                     key[v] = dist;
                 }
-                int threshold = 1;
-                if (key[v] < threshold){
+                centroid.r = centroid.r / segment_size;
+                centroid.g = centroid.g / segment_size;
+                centroid.b = centroid.b / segment_size;
+                double diff = sqrt( pow(red(y.row, y.col) - centroid.r, 2)
+                                    + pow(green(y.row, y.col) - centroid.g, 2)
+                                    + pow(blue(y.row, y.col) - centroid.b, 2));
+                centroid.r = centroid.r * segment_size;
+                centroid.g = centroid.g * segment_size;
+                centroid.b = centroid.b * segment_size;
+
+                if (diff < threshold){
                     vertices_considered.insert(make_pair(v, key[v]));
+                    next_vertices_considered.erase(make_pair(v, key[v]));
+                }
+                else{
+                    next_vertices_considered.insert(make_pair(v, key[v]));
                 }
             }
         }
+
+
+
+
     }
     return parent;
 }
