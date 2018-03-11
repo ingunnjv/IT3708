@@ -247,8 +247,10 @@ void ImageLoader::kMeansClustering(int num_clusters, string image_folder){
             new_image.at<Vec3b>(y,x)[1] = centers.at<float>(cluster_idx, 1);
             new_image.at<Vec3b>(y,x)[2] = centers.at<float>(cluster_idx, 2);
         }
+    test_image = new_image;
+    nonmodified_image = src;
     string title = to_string(num_clusters) + " clusters";
     imshow(title, new_image );
-//    waitKey( 0 );
+    waitKey( 0 );
 }
 

@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
     // Load the test image and the solutions
     ImageLoader image = ImageLoader();
     image.loadImagesFromFolder(to_string(problem_num));
-    //image.segmentation(to_string(problem_num));
+    image.kMeansClustering(2, to_string(problem_num));
     image.extractRGBChannels();
 
     // Create GA
@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
 
     // Run evolutionary process
     printf("Starting evolutionary process (NSGA-II algorithm)..\n");
-    ga.runMainLoop(image.r_channel, image.g_channel, image.b_channel, initial_pop, image.test_image);
+    ga.runMainLoop(image.r_channel, image.g_channel, image.b_channel, initial_pop, image.nonmodified_image);
 
     // Run MPRI score check
     printf("Run MPRI scoring on the solutions..\n");

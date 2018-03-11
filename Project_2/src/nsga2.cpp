@@ -75,16 +75,13 @@ void Nsga2::initializePopulationFromMst(const Eigen::MatrixXi &red, const Eigen:
         initial_pop[i] = Genotype(num_rows, num_cols, parent_graph);
         initialMutation(initial_pop[i]);
         initial_pop[i].decodeAndEvaluate(red, green, blue);
-
-        //initial_pop[i].decodeAndEvaluate(red, green, blue);
         printf("+ Created genotype with %d segments(s).\n", i+1);
     }
 }
 
 /////////////////////////////////////////////////////////
 void Nsga2::initializePopulationFromFilter(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
-                                        const Eigen::MatrixXi &blue,
-                                        vector<Genotype> &initial_pop) {
+                                        const Eigen::MatrixXi &blue, vector<Genotype> &initial_pop) {
     
 
 
@@ -286,6 +283,7 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
         }
     }
 
+
     this->population.erase(population.begin(), population.end());
     fronts.erase(fronts.begin(), fronts.end());
     parents_pop.erase(parents_pop.begin(), parents_pop.end());
@@ -356,27 +354,6 @@ void Nsga2::tournamentSelection(vector<Genotype *> &selected_parents, vector<Gen
         selected_parents[i] = tournament_participants[0];
 
     }
-//    while (tournament_indices.size() < this->tournament_size){
-//        int random = distribution(generator);
-//        if(find(tournament_indices.begin(), tournament_indices.end(), random) != tournament_indices.end()){
-//            // tournament_indices contains random already
-//            continue;
-//        }
-//        else{
-//            tournament_indices.push_back(random);
-//        }
-//    }
-
-//    // clear parents from previous tournament
-//    selected_parents.clear();
-//    selected_parents.resize(this->tournament_size);
-//    for (int i = 0; i < this->tournament_size; i++){
-//        selected_parents[i] = &parent_pop[tournament_indices[i]];
-//    }
-//    crowdingDistanceSort(selected_parents);
-//
-//    // keep only the 2 best individuals
-//    selected_parents.resize(2);
 }
 
 void Nsga2::uniformCrossover(Genotype &offspring1, Genotype &offspring2)
@@ -436,7 +413,7 @@ void Nsga2::mutation(Genotype &individual, const Eigen::MatrixXi &red, const Eig
     uniform_real_distribution<double> rand_distribution(0.0, 1.0);
 
     vector<int> mutation_indices;
-    while (mutation_indices.size() < (int)0.001*individual.num_rows * individual.num_cols){
+    while (mutation_indices.size() < (int)0.1*individual.num_rows * individual.num_cols){
         int random = pixel_distribution(generator);
         mutation_indices.push_back(random);
     }
