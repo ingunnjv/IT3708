@@ -811,23 +811,47 @@ void Genotype::mergeSegments(const Eigen::MatrixXi &red, const Eigen::MatrixXi &
 
         // Smallest centroid diff segment found: merge
         if (!neighbour_segments.empty()){
-            int16_t current_segment_num = chromosome(current_segment[0].row, current_segment[0].col).segment;
-            centroids[i_current_segment].r = centroids[i_current_segment].r * current_segment.size();
-            centroids[i_current_segment].g = centroids[i_current_segment].g * current_segment.size();
-            centroids[i_current_segment].b = centroids[i_current_segment].b * current_segment.size();
-            for (auto &p: smallest_centroid_diff_segment){
-                chromosome(p.row, p.col).segment = current_segment_num;
-                pixels_segment_affiliation[i_current_segment].push_back(p);
-                centroids[i_current_segment].r += red(p.row, p.col);
-                centroids[i_current_segment].g += green(p.row, p.col);
-                centroids[i_current_segment].b += blue(p.row, p.col);
+            if (current_segment.size() < smallest_centroid_diff_segment.size()){
+                int16_t current_segment_num = chromosome(current_segment[0].row, current_segment[0].col).segment;
+                centroids[i_current_segment].r = centroids[i_current_segment].r * current_segment.size();
+                centroids[i_current_segment].g = centroids[i_current_segment].g * current_segment.size();
+                centroids[i_current_segment].b = centroids[i_current_segment].b * current_segment.size();
+
+                for (auto &p: smallest_centroid_diff_segment){
+                    chromosome(p.row, p.col).segment = current_segment_num;
+                    pixels_segment_affiliation[i_current_segment].push_back(p);
+                    centroids[i_current_segment].r += red(p.row, p.col);
+                    centroids[i_current_segment].g += green(p.row, p.col);
+                    centroids[i_current_segment].b += blue(p.row, p.col);
+                }
+                centroids[i_current_segment].r = centroids[i_current_segment].r / (smallest_centroid_diff_segment.size() + current_segment.size());
+                centroids[i_current_segment].g = centroids[i_current_segment].g / (smallest_centroid_diff_segment.size() + current_segment.size());
+                centroids[i_current_segment].b = centroids[i_current_segment].b / (smallest_centroid_diff_segment.size() + current_segment.size());
+                pixels_segment_affiliation.erase(pixels_segment_affiliation.begin() + smallest_centroid_diff_i);
+                centroids.erase(centroids.begin() + smallest_centroid_diff_i);
+                tot_segment_count--;
             }
-            centroids[i_current_segment].r = centroids[i_current_segment].r / (smallest_centroid_diff_segment.size() + current_segment.size());
-            centroids[i_current_segment].g = centroids[i_current_segment].g / (smallest_centroid_diff_segment.size() + current_segment.size());
-            centroids[i_current_segment].b = centroids[i_current_segment].b / (smallest_centroid_diff_segment.size() + current_segment.size());
-            pixels_segment_affiliation.erase(pixels_segment_affiliation.begin() + smallest_centroid_diff_i);
-            centroids.erase(centroids.begin() + smallest_centroid_diff_i);
-            tot_segment_count--;
+            else{
+                int16_t smallest_centroid_diff_segment_num = chromosome(smallest_centroid_diff_segment[0].row, smallest_centroid_diff_segment[0].col).segment;
+                centroids[smallest_centroid_diff_i].r = centroids[smallest_centroid_diff_i].r * smallest_centroid_diff_segment.size();
+                centroids[smallest_centroid_diff_i].g = centroids[smallest_centroid_diff_i].g * smallest_centroid_diff_segment.size();
+                centroids[smallest_centroid_diff_i].b = centroids[smallest_centroid_diff_i].b * smallest_centroid_diff_segment.size();
+
+                for (auto &p: current_segment){
+                    chromosome(p.row, p.col).segment = smallest_centroid_diff_segment_num;
+                    pixels_segment_affiliation[smallest_centroid_diff_i].push_back(p);
+                    centroids[smallest_centroid_diff_i].r += red(p.row, p.col);
+                    centroids[smallest_centroid_diff_i].g += green(p.row, p.col);
+                    centroids[smallest_centroid_diff_i].b += blue(p.row, p.col);
+                }
+                centroids[smallest_centroid_diff_i].r = centroids[smallest_centroid_diff_i].r / (smallest_centroid_diff_segment.size() + current_segment.size());
+                centroids[smallest_centroid_diff_i].g = centroids[smallest_centroid_diff_i].g / (smallest_centroid_diff_segment.size() + current_segment.size());
+                centroids[smallest_centroid_diff_i].b = centroids[smallest_centroid_diff_i].b / (smallest_centroid_diff_segment.size() + current_segment.size());
+                pixels_segment_affiliation.erase(pixels_segment_affiliation.begin() + i_current_segment);
+                centroids.erase(centroids.begin() + i_current_segment);
+                tot_segment_count--;
+            }
+
         }
 
         // update centroids
