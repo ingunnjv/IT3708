@@ -507,6 +507,8 @@ void Genotype::visualizeEdges(cv::Mat test_image, string title)
 
     // Display big mat
     cv::imshow(title, win_mat);
+    string save_as_path_name = "../Solution Images/" + title + ".jpg";
+    cv::imwrite(save_as_path_name, segment_cv_image);
     cv::waitKey(0);
 }
 

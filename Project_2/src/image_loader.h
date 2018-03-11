@@ -15,7 +15,6 @@ private:
     std::vector<cv::Mat> gt_images;
     std::vector<cv::Mat> segment_images;
 
-
 public:
     cv::Mat test_image;
     Eigen::MatrixXi b_channel;
@@ -25,8 +24,9 @@ public:
     void loadImagesFromFolder(std::string imagefolder);
     void extractRGBChannels();
 
-    int segmentation();
-    void kMeansClustering(int num_clusters);
+    void kMeansClustering(int num_clusters, std::string image_folder);
+    int segmentation(std::string imagefolder);
+
 
 };
 

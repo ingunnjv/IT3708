@@ -47,7 +47,7 @@ void ImageLoader::extractRGBChannels()
     cv::cv2eigen(normalized_planes[2], r_channel);
 }
 
-int ImageLoader::segmentation(){
+int ImageLoader::segmentation(string image_folder){
     /**
     * @function Watershed_and_Distance_Transform.cpp
     * @brief Sample code showing how to segment overlapping objects using Laplacian filtering, in addition to Watershed and Distance Transformation
@@ -57,7 +57,7 @@ int ImageLoader::segmentation(){
 
     //! [load_image]
     // Load the image
-    cv::Mat src = test_image;
+    cv::Mat src = cv::imread("../Test Images/" + image_folder + "/Test image.jpg");
 
     // Check if everything was fine
     if (!src.data)
@@ -86,7 +86,10 @@ int ImageLoader::segmentation(){
 
     //! [sharp]
     // Create a kernel that we will use for accuting/sharpening our image
-    cv::Mat kernel = (Mat_<float>(3,3) << 1, 1, 1,  1, -8, 1,  1, 1, 1); // an approximation of second derivative, a quite strong kernel
+    cv::Mat kernel = (Mat_<float>(3,3) <<
+            1, 1, 1,
+            1, -8, 1,
+            1, 1, 1); // an approximation of second derivative, a quite strong kernel
 
     // do the laplacian filtering as it is
     // well, we need to convert everything in something more deeper then CV_8U
@@ -128,7 +131,7 @@ int ImageLoader::segmentation(){
     //! [dist]
     // Perform the distance transform algorithm
     cv::Mat dist;
-    cv::distanceTransform(bw, dist, cv::DIST_L2, 3);
+    cv::distanceTransform(bw, dist, cv::DIST_LABEL_PIXEL, 3);
 
     // Normalize the distance image for range = {0.0, 1.0}
     // so we can visualize and threshold it
@@ -142,7 +145,7 @@ int ImageLoader::segmentation(){
     cv::threshold(dist, dist, .3, 1., cv::THRESH_BINARY);
 
     // Dilate a bit the dist image
-    cv::Mat kernel1 = cv::Mat::ones(3, 3, CV_8UC1);
+    cv::Mat kernel1 = cv::Mat::ones(2, 2, CV_8UC1);
     cv::dilate(dist, dist, kernel1);
 //    imshow("Peaks", dist);
     //! [peaks]
@@ -211,12 +214,16 @@ int ImageLoader::segmentation(){
     //! [watershed]
 
     cv::waitKey(0);
+
+
+    test_image = dst;
     return 0;
 
 }
 
-void ImageLoader::kMeansClustering(int num_clusters) {
-    Mat src = test_image;
+
+void ImageLoader::kMeansClustering(int num_clusters, string image_folder){
+    cv::Mat src = cv::imread("../Test Images/" + image_folder + "/Test image.jpg");
     Mat samples(src.rows * src.cols, 3, CV_32F);
     for( int y = 0; y < src.rows; y++ )
         for( int x = 0; x < src.cols; x++ )
@@ -226,9 +233,9 @@ void ImageLoader::kMeansClustering(int num_clusters) {
 
     int clusterCount = num_clusters;
     Mat labels;
-    int attempts = 5;
+    int attempts = 20;
     Mat centers;
-    kmeans(samples, clusterCount, labels, TermCriteria(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 10, 1.0), attempts, KMEANS_PP_CENTERS, centers );
+    kmeans(samples, clusterCount, labels, TermCriteria(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 10, 1), attempts, KMEANS_PP_CENTERS, centers );
 
 
     Mat new_image( src.size(), src.type() );

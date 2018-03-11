@@ -31,8 +31,9 @@ Nsga2::Nsga2(double mutation_rate, double crossover_rate, uint16_t tournament_si
 }
 
 /////////////////////////////////////////////////////////
-void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue,
-                                 vector<Genotype> &initial_pop)
+void Nsga2::initializePopulationFromMst(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
+                                        const Eigen::MatrixXi &blue,
+                                        vector<Genotype> &initial_pop)
 {
     auto num_rows = uint16_t(red.rows());
     auto num_cols = uint16_t(red.cols());
@@ -41,14 +42,6 @@ void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::Matrix
     set < pair<uint32_t, double>, pairCmpGe > links;
 
     pixel_t x(0,0), y(0,0);
-//    for (int i = 0; i < num_pixels; i++) {
-//        if (parent_graph[i] == -1){
-//            continue;
-//        }
-//        x.row = i / num_cols, x.col = i % num_cols;
-//        y.row = parent_graph[i] / num_cols, y.col = parent_graph[i] % num_cols;
-//        links.insert(make_pair(i, rgbDistance(y, x, red, green, blue)));
-//    }
     vector<uint8_t> thresholds(this->population_size);
     // Threshold range: 20, 200
     uint8_t step = (uint8_t) (150 - 30)/this->population_size;
@@ -80,13 +73,24 @@ void Nsga2::initializePopulation(const Eigen::MatrixXi &red, const Eigen::Matrix
         }
 
         initial_pop[i] = Genotype(num_rows, num_cols, parent_graph);
-        initialMutation(initial_pop[i]);
+        //initialMutation(initial_pop[i]);
         initial_pop[i].decodeAndEvaluate(red, green, blue);
 
         //initial_pop[i].decodeAndEvaluate(red, green, blue);
         printf("+ Created genotype with %d segments(s).\n", i+1);
     }
 }
+
+/////////////////////////////////////////////////////////
+void Nsga2::initializePopulationFromFilter(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
+                                        const Eigen::MatrixXi &blue,
+                                        vector<Genotype> &initial_pop) {
+    
+
+
+}
+
+
 
 /////////////////////////////////////////////////////////
 void Nsga2::fastNonDominatedSort(vector< vector<Genotype*> > &fronts) {
@@ -208,7 +212,7 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
 
     for (int i = 0; i < population_size; i++){
         population[i] = initial_pop[i];
-        population[i].visualizeEdges(image, "Initial segmentation");
+        //population[i].visualizeEdges(image, "Initial segmentation");
     }
 
     initial_pop.erase(initial_pop.begin(), initial_pop.end());
@@ -226,20 +230,6 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
         /* Create the next gen pop by the non-domination principle */
         fronts.clear();
         fastNonDominatedSort(fronts);
-//        if(generation == generation_limit){
-//            int i_f = 0;
-//            for (auto &front: fronts){
-//                for (auto &solution: front){
-//                    string title = "Front " + to_string(i_f) + " - Generation " + to_string(generation);
-//                    solution->visualizeEdges(image, title);
-//                }
-//                i_f++;
-//            }
-//        }
-        for (auto &solution: fronts[0]){
-            string title = "Front " + to_string(0) + " - Generation " + to_string(generation);
-            //solution->visualizeEdges(image, title);
-        }
 
         int front_index = 0;
         int parent_pop_index = 0;
@@ -268,30 +258,12 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
         /* Create a new offspring population by crossover and mutation */
         makeNewPop(red, green, blue, parents_pop, offspring_pop);
 
-//        /* TEST: Visualize segments before termination */
-//        if(generation == generation_limit - 1){
-//            for(auto &genotype: fronts[0]){
-//                genotype->visualizeSegments(red, green, blue);
-//            }
-//        }
-
         /* Combine the parent and offspring population */
         population.clear();
         for (i = 0; i < population_size; i++){
             population.push_back(parents_pop[i]);
             population.push_back(offspring_pop[i]);
         }
-//        if (generation == 1){population.resize(population_size*2);}
-//        int j = 0;
-//        for (i = 0; i < population_size; i++){
-//            population[i] = parents_pop[j];
-//            j++;
-//        }
-//        j = 0;
-//        for (i = population_size; i < 2*population_size; i++){
-//            population[i] = offspring_pop[j];
-//            j++;
-//        }
 
         parents_pop.clear();
         offspring_pop.clear();
@@ -304,28 +276,12 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
     printf("\t+ Visualizing the final pareto optimal fronts..\n");
     fronts.clear();
     fastNonDominatedSort(fronts);
-//    int front_num = 0;
-//    for(auto &front: fronts){
-//        printf("\t+ Front: %d\n", front_num);
-//        for(auto &genotype: front){
-//            genotype->visualizeSegments(red, green, blue);
-//        }
-//        front_num++;
-//    }
-
-
-    int i_f = 0;
-    for (auto &front: fronts){
-        int i_im = 0;
-        for (auto &solution: front){
-            i_im++;
-            string title = "Front " + to_string(i_f)+ " image " + to_string(i_im);
-            solution->visualizeEdges(image, title);
-            solution->mergeSegments(red, green, blue);
-            title = "Front " + to_string(i_f)+ " image " + to_string(i_im);
-            solution->visualizeEdges(image, title);
-        }
-        i_f++;
+    int i_im = 0;
+    for (auto &solution: fronts[0]){
+        string title = "Front_0_image_" + to_string(i_im);
+        solution->visualizeEdges(image, title);
+        i_im++;
+        solution->mergeSegments(red, green, blue);
     }
 
     this->population.erase(population.begin(), population.end());
@@ -347,26 +303,17 @@ void Nsga2::makeNewPop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
 
 //    vector<Genotype> offspring(2);
     vector<Genotype *> selected_parents(2);
-    bool new_offspring_generated;
     printf("\t+ Make new offspring population...\n");
 
     for (int i = 0; i < population_size; i = i + 2) {
-        new_offspring_generated = false;
         tournamentSelection(selected_parents, parent_pop);
         for (auto p: selected_parents) {
             offspring_pop.push_back(*p);
         }
-//        double crossover_event = rand_distribution(generator);
-//        if (crossover_event < this->crossover_rate) {
         uniformCrossover(offspring_pop[i], offspring_pop[i + 1]);
-        new_offspring_generated = true;
-//        }
         for (int i_offspring = i; i_offspring < i + 2; i_offspring++){
-//            double mutation_event = rand_distribution(generator);
-//            if (mutation_event < this->mutation_rate || !new_offspring_generated) {
             mutation(offspring_pop[i_offspring], red, green, blue);
-            new_offspring_generated = true;
-//            }
+
 
             // update segments & objectives
             offspring_pop[i_offspring].decodeAndEvaluate(red, green, blue);
