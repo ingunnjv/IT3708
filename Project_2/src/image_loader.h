@@ -22,7 +22,7 @@ public:
     Eigen::MatrixXi g_channel;
     Eigen::MatrixXi r_channel;
     ImageLoader();
-    void loadImagesFromFolder(std::string imagefolder);
+    void loadImagesFromFolder(std::string imagefolder, uint8_t data_aug);
     void extractRGBChannels();
 
     void kMeansClustering(int num_clusters, std::string image_folder);

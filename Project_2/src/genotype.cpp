@@ -29,6 +29,10 @@ Genotype::Genotype()
     this->num_cols = 1;
     this->num_objectives = 2;
     this->objective_values.resize(this->num_objectives);
+    this->weighted_objectives_sum = 0;
+    this->objective_weights.resize(this->num_objectives);
+    this->objective_weights[0] = 1;
+    this->objective_weights[1] = 5;
     this->domination_counter = 0;
     this->rank = 0;
     this->crowding_distance = 0;
@@ -43,6 +47,10 @@ Genotype::Genotype(uint16_t num_rows, uint16_t num_cols)
     this->num_cols = num_cols;
     this->num_objectives = 2;
     this->objective_values.resize(this->num_objectives);
+    this->weighted_objectives_sum = 0;
+    this->objective_weights.resize(this->num_objectives);
+    this->objective_weights[0] = 1;
+    this->objective_weights[1] = 5;
     this->domination_counter = 0;
     this->rank = 0;
     this->crowding_distance = 0;
@@ -57,6 +65,10 @@ Genotype::Genotype(uint16_t num_rows, uint16_t num_cols,  vector<int> &parents)
     this->num_cols = num_cols;
     this->num_objectives = 2;
     this->objective_values.resize(this->num_objectives);
+    this->weighted_objectives_sum = 0;
+    this->objective_weights.resize(this->num_objectives);
+    this->objective_weights[0] = 1;
+    this->objective_weights[1] = 5;
     this->domination_counter = 0;
     this->rank = 0;
     this->crowding_distance = 0;
@@ -414,14 +426,14 @@ void Genotype::decodeAndEvaluate(const Eigen::MatrixXi &red, const Eigen::Matrix
                 segment_number++;
                 pixels_in_segment.clear();
                 if (total_pixels_found == num_cols*num_rows){
+                    weighted_objectives_sum = objective_values[0]*objective_weights[0] + objective_values[1]*objective_weights[1];
                     tot_segment_count = segment_number;
-                    //objective_values[1] = objective_values[1]/total_edge_pixels;
                     return;
                 }
             }
         }
     }
-    //objective_values[1] = objective_values[1]/total_edge_pixels;
+    weighted_objectives_sum = objective_values[0]*objective_weights[0] + objective_values[1]*objective_weights[1];
     tot_segment_count = segment_number;
 }
 
@@ -481,17 +493,11 @@ void Genotype::visualizeEdges(cv::Mat test_image, string title)
     // thinner edges
     thinning(inverted_image, inverted_image);
     cv::bitwise_not(inverted_image, segment_cv_image);
-//    cv::namedWindow("Segments 2.0", cv::WINDOW_AUTOSIZE);
-//    cv::imshow("Segments 2.0", segment_cv_image);
-//    cv::waitKey(0);
 
     // create copy and draw green edges in original image
     cv::Mat copy = test_image.clone();
     cv::Mat green_image(num_rows, num_cols, CV_8UC3, cv::Scalar(0, 255, 0));
     green_image.copyTo(copy, inverted_image);
-//    cv::namedWindow("Green", cv::WINDOW_AUTOSIZE);
-//    cv::imshow("Green", copy);
-//    cv::waitKey(0);
 
     // Create mat for window
     int width = copy.cols;
@@ -509,7 +515,7 @@ void Genotype::visualizeEdges(cv::Mat test_image, string title)
     cv::imshow(title, win_mat);
     string save_as_path_name = "../Solution Images/" + title + ".jpg";
     cv::imwrite(save_as_path_name, segment_cv_image);
-    cv::waitKey(0);
+    cv::waitKey();
 }
 
 
@@ -565,29 +571,6 @@ void Genotype::calculateObjectives(const Eigen::MatrixXi &red, const Eigen::Matr
         }
         i++;
     }
-    // calculate objective 1 and 2
-
-//    i = 0;
-//    for (const auto &s: pixels_segment_affiliation) {
-//        for (const auto &p: s){
-//            // objective 1
-//            double pixel_centroid_deviation = sqrt( pow(red(p.row, p.col) - centroids[i].r, 2)
-//                                                    + pow(green(p.row, p.col) - centroids[i].g, 2)
-//                                                    + pow(blue(p.row, p.col) - centroids[i].b, 2));
-//            objective_values[0] += pixel_centroid_deviation;
-//            // objective 2
-//            int this_row = p.row;
-//            int this_col = p.col;
-//            int this_segment = chromosome(this_row, this_col).segment;
-//            double segment_boundary_diff = 0;
-//            segment_boundary_diff -= calcEuclideanRgbDiff(-1, 0, this_col, this_row, this_segment, red,green,blue);
-//            segment_boundary_diff -= calcEuclideanRgbDiff(1, 0, this_col, this_row, this_segment, red,green,blue);
-//            segment_boundary_diff -= calcEuclideanRgbDiff(0, -1, this_col, this_row, this_segment, red,green,blue);
-//            segment_boundary_diff -= calcEuclideanRgbDiff(0, 1, this_col, this_row, this_segment, red,green,blue);
-//            objective_values[1] += segment_boundary_diff;
-//            }
-//        i++;
-//    }
 }
 
 /////////////////////////////////////////////////////////
@@ -595,6 +578,10 @@ bool Genotype::sortByObj1(const Genotype* lhs, const Genotype* rhs) { return lhs
 
 /////////////////////////////////////////////////////////
 bool Genotype::sortByObj2(const Genotype* lhs, const Genotype* rhs) { return lhs->objective_values[1] < rhs->objective_values[1]; }
+
+/////////////////////////////////////////////////////////
+bool Genotype::sortByWeightedSum(const Genotype* lhs, const Genotype* rhs) { return lhs->weighted_objectives_sum < rhs->weighted_objectives_sum; }
+
 
 /////////////////////////////////////////////////////////
 bool Genotype::sortByCrowdedComparison(const Genotype* lhs, const Genotype* rhs) {

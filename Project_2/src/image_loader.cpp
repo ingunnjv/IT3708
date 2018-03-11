@@ -11,7 +11,7 @@ ImageLoader::ImageLoader()
 
 }
 
-void ImageLoader::loadImagesFromFolder(string imagefolder)
+void ImageLoader::loadImagesFromFolder(string imagefolder, uint8_t data_aug)
 {
     string basefolder = "../Test Images/";
 
@@ -28,8 +28,11 @@ void ImageLoader::loadImagesFromFolder(string imagefolder)
             // you probably want to do some preprocessing
             if (i == 0){ gt_images.push_back(im); }
             else if (i == 1){ segment_images.push_back(im); }
-            else {test_image = im; nonmodified_image = im; }
+            else {test_image = im; nonmodified_image = im;}
         }
+    }
+    if(data_aug){
+        kMeansClustering(2, imagefolder);
     }
 }
 

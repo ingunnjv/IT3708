@@ -14,7 +14,7 @@ double rgbDistance(pixel_t x, pixel_t y, const Eigen::MatrixXi &red, const Eigen
 /////////////////////////////////////////////////////////
 void setUserArgs(int argc, char **argv, double &mutation_rate, double &crossover_rate,
                  uint16_t &tournament_size, double &time_limit, uint16_t &generation_limit, uint16_t &population_size,
-                 int &problem_num)
+                 int &problem_num, uint8_t &use_weighted_sum, uint8_t &data_aug)
 {
     mutation_rate = 0;
     crossover_rate = 0;
@@ -59,6 +59,16 @@ void setUserArgs(int argc, char **argv, double &mutation_rate, double &crossover
         else if(!strcmp("problem_num", arg_name))
         {
             problem_num = int(arg_val);
+            continue;
+        }
+        else if(!strcmp("use_weighted_sum", arg_name))
+        {
+            use_weighted_sum = uint8_t(arg_val);
+            continue;
+        }
+        else if(!strcmp("data_aug", arg_name))
+        {
+            data_aug = uint8_t(arg_val);
             continue;
         }
     }

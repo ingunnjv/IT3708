@@ -38,6 +38,8 @@ public:
     double crowding_distance; // measure of how far away the genotype is from others in the population
 
     std::vector<double> objective_values; // values of the two objectives that are optimized
+    double weighted_objectives_sum;
+    std::vector<double> objective_weights;
     uint8_t num_objectives; // length of objective_values
 
     void setRank(int rank);
@@ -56,7 +58,7 @@ public:
 
     Genotype();
     Genotype(uint16_t num_rows, uint16_t num_cols);
-    Genotype(uint16_t num_rows, uint16_t num_cols,  std::vector<int> &parents);
+    Genotype(uint16_t num_rows, uint16_t num_cols,   std::vector<int> &parents);
     void setChromosomeValue(uint8_t value, int row, int col);
     void findAndAddParentNodesToList(std::vector<std::tuple<int,int>> &connected_nodes_pos, const std::tuple<int,int> &current_node_pos, Eigen::MatrixXi &discovered);
     void addChildNodeToList(std::vector<std::tuple<int,int>> &connected_nodes_pos, const std::tuple<int,int> &current_node_pos, Eigen::MatrixXi &discovered);
@@ -64,13 +66,11 @@ public:
     GeneNode * getChromosomeGeneNode(int row, int col);
     uint8_t getChromosomeValue(int row, int col);
 
-    /// Velg ett tilfeldig segment, merge med den naboen som gir størst forbedring
     void mergeSegments(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
-
-
 
     static bool sortByObj1(const Genotype* lhs, const Genotype* rhs);
     static bool sortByObj2(const Genotype* lhs, const Genotype* rhs);
+    static bool sortByWeightedSum(const Genotype* lhs, const Genotype* rhs);
     static bool sortByCrowdedComparison(const Genotype* lhs, const Genotype* rhs);
 
     bool operator<(const Genotype &rhs) const;

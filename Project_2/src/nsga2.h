@@ -21,12 +21,13 @@ private:
     uint16_t tournament_size;
     uint16_t generation_limit;
     uint16_t population_size;
+    uint8_t use_weighted_sum;
 
 public:
     // Constructors
     Nsga2();
     Nsga2(double mutation_rate, double crossover_rate, uint16_t tournament_size, double time_limit,
-          uint16_t generation_limit, uint16_t population_size);
+          uint16_t generation_limit, uint16_t population_size, uint8_t use_weighted_sum);
 
     /// Initializes a population using a MST as the basis for gene encoding
     void initializePopulationFromMst(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
@@ -47,7 +48,7 @@ public:
     void fastNonDominatedSort(std::vector<std::vector<Genotype*> > &fronts);
 
     /// Sorts a vector of genotypes based on the objective number i's value
-    std::tuple<double, double> objectiveValueSort(std::vector<Genotype*> &front, uint8_t obj_val_i);
+    std::tuple<double, double> objectiveValueSort(std::vector<Genotype*> &front, int8_t obj_val_i);
 
     /// Sorts a front of genotypes based on their crowding distance (best to worst -> greatest to lowest)
     void crowdingDistanceSort(std::vector<Genotype*> &front);

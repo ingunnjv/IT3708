@@ -19,7 +19,7 @@ Nsga2::Nsga2()
 
 /////////////////////////////////////////////////////////
 Nsga2::Nsga2(double mutation_rate, double crossover_rate, uint16_t tournament_size, double time_limit,
-             uint16_t generation_limit, uint16_t population_size)
+             uint16_t generation_limit, uint16_t population_size, uint8_t use_weighted_sum)
 {
     this->mutation_rate = mutation_rate;
     this->crossover_rate = crossover_rate;
@@ -28,6 +28,7 @@ Nsga2::Nsga2(double mutation_rate, double crossover_rate, uint16_t tournament_si
     this->generation_limit = generation_limit;
     this->population_size = population_size;
     this->population.resize(population_size);
+    this->use_weighted_sum = use_weighted_sum;
 }
 
 /////////////////////////////////////////////////////////
@@ -60,22 +61,10 @@ void Nsga2::initializePopulationFromMst(const Eigen::MatrixXi &red, const Eigen:
             y.row = (uint16_t) parent_graph[j] / num_cols, y.col = (uint16_t) parent_graph[j] % num_cols;
             links.insert(make_pair(j, rgbDistance(y, x, red, green, blue)));
         }
-        // Remove largest edges
-        //TODO: how many edges? random number?
-//        if (i > 0){
-//            for(uint8_t removed_links = 0; removed_links < 10*i; removed_links++){
-//                if (!links.empty()){
-//                    auto it = links.begin();
-//                    parent_graph[it->first] = -1;
-//                    links.erase(it);
-//                }
-//            }
-//        }
 
         initial_pop[i] = Genotype(num_rows, num_cols, parent_graph);
-        initialMutation(initial_pop[i]);
         initial_pop[i].decodeAndEvaluate(red, green, blue);
-        printf("+ Created genotype with %d segments(s).\n", i+1);
+        printf("+ Created genotype %d.\n", i+1);
     }
 }
 
@@ -102,11 +91,21 @@ void Nsga2::fastNonDominatedSort(vector< vector<Genotype*> > &fronts) {
         p.domination_counter = 0;
         for (auto &q: this->population) {
             if (p_i != q_i){
-                if (p < q){ // check if p dominates q
-                    p.insertToDominationSet(q);
+                if (use_weighted_sum){
+                    if (p.weighted_objectives_sum < q.weighted_objectives_sum){ // check if p dominates q
+                        p.insertToDominationSet(q);
+                    }
+                    else if (p.weighted_objectives_sum > q.weighted_objectives_sum){ // check if q dominates p
+                        p.domination_counter++;
+                    }
                 }
-                else if (p > q){ // check if q dominates p
-                    p.domination_counter++;
+                else{
+                    if (p < q){ // check if p dominates q
+                        p.insertToDominationSet(q);
+                    }
+                    else if (p > q){ // check if q dominates p
+                        p.domination_counter++;
+                    }
                 }
             }
             q_i++;
@@ -147,7 +146,7 @@ void Nsga2::fastNonDominatedSort(vector< vector<Genotype*> > &fronts) {
 }
 
 /////////////////////////////////////////////////////////
-tuple<double, double> Nsga2::objectiveValueSort(std::vector<Genotype*> &front, uint8_t obj_val_i)
+tuple<double, double> Nsga2::objectiveValueSort(std::vector<Genotype*> &front, int8_t obj_val_i)
 {
     if (obj_val_i == 0){
         sort(front.begin(), front.end(), Genotype::sortByObj1);
@@ -163,6 +162,13 @@ tuple<double, double> Nsga2::objectiveValueSort(std::vector<Genotype*> &front, u
         tuple<double, double> extreme_vals (make_tuple(fmin, fmax));
         return extreme_vals;
     }
+    else if (obj_val_i == -1) {
+        sort(front.begin(), front.end(), Genotype::sortByWeightedSum);
+        double fmin = front[0]->weighted_objectives_sum;
+        double fmax = front.back()->weighted_objectives_sum;
+        tuple<double, double> extreme_vals (make_tuple(fmin, fmax));
+        return extreme_vals;
+    }
 }
 
 /////////////////////////////////////////////////////////
@@ -172,27 +178,45 @@ void Nsga2::crowdingDistanceSort(std::vector<Genotype*> &front)
 }
 
 /////////////////////////////////////////////////////////
-void Nsga2::crowdingDistanceAssignment(vector<Genotype*> &front)
-{
+void Nsga2::crowdingDistanceAssignment(vector<Genotype*> &front) {
     vector<Genotype>::size_type front_size = front.size(); // number of solutions in the front
     uint8_t num_objectives = front[0]->num_objectives; // number of objectives in problem
-    for (auto &genotype: front){ // initialize all crowding distances to zero
+    for (auto &genotype: front) { // initialize all crowding distances to zero
         genotype->crowding_distance = 0;
     }
-    for (uint8_t obj_val_num = 0; obj_val_num != num_objectives; obj_val_num++){
+    if (!use_weighted_sum){
+        for (uint8_t obj_val_num = 0; obj_val_num != num_objectives; obj_val_num++) {
+            // sort on objective value number and return min and max of the objective
+            tuple<double, double> extreme_vals = objectiveValueSort(front, obj_val_num);
+            double fmin = get<0>(extreme_vals);
+            double fmax = get<1>(extreme_vals);
+            // set first and last genotypes distance to inf such that boundary points are always selected
+            front[0]->crowding_distance = DBL_MAX;
+            front.back()->crowding_distance = DBL_MAX;
+            for (vector<Genotype>::size_type i = 1; i < front_size - 1; i++) {
+                if (fmin - fmax != 0 && front[i]->crowding_distance != DBL_MAX) {
+                    front[i]->crowding_distance +=
+                            abs((front[i + 1]->objective_values[obj_val_num] -
+                                 front[i - 1]->objective_values[obj_val_num]) /
+                                (fmax - fmin));
+                }
+            }
+        }
+    }
+    else{
         // sort on objective value number and return min and max of the objective
-        tuple<double, double> extreme_vals = objectiveValueSort(front, obj_val_num);
+        tuple<double, double> extreme_vals = objectiveValueSort(front, -1);
         double fmin = get<0>(extreme_vals);
         double fmax = get<1>(extreme_vals);
         // set first and last genotypes distance to inf such that boundary points are always selected
         front[0]->crowding_distance = DBL_MAX;
         front.back()->crowding_distance = DBL_MAX;
-        for (vector<Genotype>::size_type i = 1; i < front_size - 1; i++)
-        {
-            if (fmin-fmax != 0 && front[i]->crowding_distance != DBL_MAX) {
+        for (vector<Genotype>::size_type i = 1; i < front_size - 1; i++) {
+            if (fmin - fmax != 0 && front[i]->crowding_distance != DBL_MAX) {
                 front[i]->crowding_distance +=
-                        abs((front[i + 1]->objective_values[obj_val_num] - front[i - 1]->objective_values[obj_val_num]) /
-                        (fmax - fmin));
+                        abs((front[i + 1]->weighted_objectives_sum -
+                             front[i - 1]->weighted_objectives_sum) /
+                            (fmax - fmin));
             }
         }
     }
@@ -209,7 +233,6 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
 
     for (int i = 0; i < population_size; i++){
         population[i] = initial_pop[i];
-        population[i].visualizeEdges(image, "Initial segmentation");
     }
 
     initial_pop.erase(initial_pop.begin(), initial_pop.end());
@@ -276,13 +299,19 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
     int i_im = 0;
     for (auto &front: fronts){
         for (auto &solution: front){
+            printf("\t+ Front[0] solution %d", i_im);
             string title = "Front_0_image_" + to_string(i_im);
             solution->mergeSegments(red, green, blue);
             solution->visualizeEdges(image, title);
+            if(use_weighted_sum){
+                printf(" // Weighted objective sum: %f\n", solution->weighted_objectives_sum);
+            }
+            else{
+                printf(" // Objectives [OD,EV]: [%f, %f]\n", solution->objective_values[0], solution->objective_values[1]);
+            }
             i_im++;
         }
     }
-
 
     this->population.erase(population.begin(), population.end());
     fronts.erase(fronts.begin(), fronts.end());
@@ -313,8 +342,6 @@ void Nsga2::makeNewPop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
         uniformCrossover(offspring_pop[i], offspring_pop[i + 1]);
         for (int i_offspring = i; i_offspring < i + 2; i_offspring++){
             mutation(offspring_pop[i_offspring], red, green, blue);
-
-
             // update segments & objectives
             offspring_pop[i_offspring].decodeAndEvaluate(red, green, blue);
         }
@@ -368,7 +395,7 @@ void Nsga2::uniformCrossover(Genotype &offspring1, Genotype &offspring2)
         int row = i / offspring1.num_cols, col = i % offspring1.num_cols;
         random_variable = distribution(generator);
         if(offspring1.getChromosomeValue(row, col) != offspring2.getChromosomeValue(row, col)){
-            if (random_variable < 0.5){
+            if (random_variable < 0.0005){
                 uint8_t value1 = offspring1.getChromosomeValue(row, col);
                 uint8_t value2 = offspring2.getChromosomeValue(row, col);
                 offspring1.setChromosomeValue(value2, row, col);
@@ -413,7 +440,7 @@ void Nsga2::mutation(Genotype &individual, const Eigen::MatrixXi &red, const Eig
     uniform_real_distribution<double> rand_distribution(0.0, 1.0);
 
     vector<int> mutation_indices;
-    while (mutation_indices.size() < (int)0.1*individual.num_rows * individual.num_cols){
+    while (mutation_indices.size() < (int)0.001*individual.num_rows * individual.num_cols){
         int random = pixel_distribution(generator);
         mutation_indices.push_back(random);
     }
@@ -422,7 +449,7 @@ void Nsga2::mutation(Genotype &individual, const Eigen::MatrixXi &red, const Eig
         int row = gene / individual.num_cols, col = gene % individual.num_cols;
 
         double smart_mutation = rand_distribution(generator);
-        if(smart_mutation < 0.7){
+        if(smart_mutation < 1){
             // Choose value based on the neighbouring pixels
             tuple<uint16_t, uint16_t> most_similar_neighbour_pos = getMostSimilarNeighbourPixel(uint16_t(row), uint16_t(col), red, green, blue);
             uint16_t most_similar_row = get<0>(most_similar_neighbour_pos);
