@@ -29,8 +29,14 @@ public:
           uint16_t generation_limit, uint16_t population_size);
 
     /// Initializes a population using a MST as the basis for gene encoding
-    void initializePopulation(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue,
-                              std::vector<Genotype> &initial_pop);
+    void initializePopulationFromMst(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
+                                     const Eigen::MatrixXi &blue,
+                                     std::vector<Genotype> &initial_pop);
+
+    ///
+    void initializePopulationFromFilter(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
+                                               const Eigen::MatrixXi &blue,
+                                               std::vector<Genotype> &initial_pop);
 
     /// Creates a MST based on the distance in RGB space of a picture as basis for edges
     std::vector<int> primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);

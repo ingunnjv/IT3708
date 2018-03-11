@@ -10,12 +10,6 @@ using namespace std;
 int main(int argc, char *argv[]) {
     clock_t t = clock();
 
-    // TEST running python script
-    string command = "python \"..\\src\\testScript.py\"";
-    string args = "";
-    command += args;
-    system(command.c_str());
-
     // Set hyper parameters
     double mutation_rate, crossover_rate, time_limit;
     uint16_t tournament_size, generation_limit, population_size;
@@ -26,8 +20,9 @@ int main(int argc, char *argv[]) {
     // Load the test image and the solutions
     ImageLoader image = ImageLoader();
     image.loadImagesFromFolder(to_string(problem_num));
+    image.segmentation(to_string(problem_num));
     image.extractRGBChannels();
-    image.segmentation();
+    //image.kMeansClustering(to_string(problem_num));
 
     // Create GA
     Nsga2 ga = Nsga2(mutation_rate, crossover_rate, tournament_size,
@@ -36,22 +31,18 @@ int main(int argc, char *argv[]) {
     // Initialize a population
     vector<Genotype> initial_pop (population_size);
     printf("Initializating a population with %d individuals..\n", population_size);
-    ga.initializePopulation(image.r_channel, image.g_channel, image.b_channel, initial_pop);
-
-
-    //TEST: Visualize initial segmentation
-//    for(auto &genotype: initial_pop){
-//        genotype.visualizeSegments(image.r_channel, image.g_channel, image.b_channel);
-//    }
-
+    ga.initializePopulationFromMst(image.r_channel, image.g_channel, image.b_channel, initial_pop);
 
     // Run evolutionary process
     printf("Starting evolutionary process (NSGA-II algorithm)..\n");
     ga.runMainLoop(image.r_channel, image.g_channel, image.b_channel, initial_pop, image.test_image);
 
-    // Test decoding and viz
-    //ga.population[4].genotypeToPhenotypeDecoding(image.r_channel.rows(), image.r_channel.cols());
-    //ga.population[4].visualizeSegments(image.b_channel, image.g_channel, image.r_channel);
+    // Run MPRI score check
+    printf("Run MPRI scoring on the solutions..\n");
+    string command = "python \"..\\src\\run.py\"";
+    string args = " " + to_string(problem_num);
+    command += args;
+    system(command.c_str());
 
     t = clock() - t;
     printf ("Time consumed: %d clicks (%f seconds).\n", int(t), ((float)int(t))/CLOCKS_PER_SEC);
