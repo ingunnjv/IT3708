@@ -461,6 +461,18 @@ void Genotype::visualizeEdges(cv::Mat test_image, string title)
             }
         }
     }
+    for (int col = 0; col < num_cols; col = col + (num_cols - 1)){
+        for (int row = 0; row < num_rows; row++){
+            // First and last column:
+            segment_cv_image.at<uchar>(row, col) = 0;
+        }
+    }
+    for (int row = 0; row < num_rows; row = row + (num_rows - 1)){
+        for (int col = 0; col < num_cols; col++){
+            // First and last row:
+            segment_cv_image.at<uchar>(row, col) = 0;
+        }
+    }
 
     // invert the edge image
     cv::Mat inverted_image(num_rows, num_cols, CV_8UC1, cv::Scalar(0));
@@ -656,8 +668,8 @@ void Genotype::mergeSegments(const Eigen::MatrixXi &red, const Eigen::MatrixXi &
         i_segment++;
     }
 
-    int MIN_SEGMENT_SIZE = 700; //test
-    int MAX_SEGMENT_NUM = 15;
+    int MIN_SEGMENT_SIZE = 400; //test
+    int MAX_SEGMENT_NUM = 30;
     while (smallest_segment_size < MIN_SEGMENT_SIZE || tot_segment_count > MAX_SEGMENT_NUM){
         // choose smallest segment
         int i_current_segment = smallest_segment;
