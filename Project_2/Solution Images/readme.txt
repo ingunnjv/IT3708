@@ -1,0 +1,1 @@
+Final solutions (edge images) are saved to this folder

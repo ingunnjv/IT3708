@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
     // Load the test image and the solutions
     ImageLoader image = ImageLoader();
     image.loadImagesFromFolder(to_string(problem_num));
-    image.kMeansClustering(to_string(problem_num));
+    image.kMeansClustering(2, to_string(problem_num));
     image.extractRGBChannels();
 
     // Create GA
