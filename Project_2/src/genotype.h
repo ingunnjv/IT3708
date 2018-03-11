@@ -65,7 +65,7 @@ public:
     uint8_t getChromosomeValue(int row, int col);
 
     /// Velg ett tilfeldig segment, merge med den naboen som gir størst forbedring
-    //void mergeSegments();
+    void mergeSegments(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
 
 
 
