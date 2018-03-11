@@ -17,9 +17,6 @@ def readFilesFromFolder(directory, folderNum):
 		if filename.endswith(".jpg") or filename.endswith(".png"):
 			filename = os.path.join(path, filename)
 			allFiles.append(readImage(filename))
-		elif filename.endswith(".txt"):
-			filename = os.path.join(path, filename)
-			allFiles.append(readTextFile(filename))
 	return allFiles
 
 

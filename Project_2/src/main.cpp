@@ -15,18 +15,18 @@ int main(int argc, char *argv[]) {
     double mutation_rate, crossover_rate, time_limit;
     uint16_t tournament_size, generation_limit, population_size;
     int problem_num;
+    uint8_t use_weighted_sum, data_aug;
     setUserArgs(argc, argv, mutation_rate, crossover_rate, tournament_size,
-                time_limit, generation_limit, population_size, problem_num);
+                time_limit, generation_limit, population_size, problem_num, use_weighted_sum, data_aug);
 
     // Load the test image and the solutions
     ImageLoader image = ImageLoader();
-    image.loadImagesFromFolder(to_string(problem_num));
-    image.kMeansClustering(2, to_string(problem_num));
+    image.loadImagesFromFolder(to_string(problem_num), data_aug);
     image.extractRGBChannels();
 
     // Create GA
     Nsga2 ga = Nsga2(mutation_rate, crossover_rate, tournament_size,
-                     time_limit, generation_limit, population_size);
+                     time_limit, generation_limit, population_size, use_weighted_sum);
 
     // Initialize a population
     vector<Genotype> initial_pop (population_size);
