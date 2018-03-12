@@ -45,9 +45,9 @@ void Nsga2::initializePopulationFromMst(const Eigen::MatrixXi &red, const Eigen:
     pixel_t x(0,0), y(0,0);
     vector<uint8_t> thresholds(this->population_size);
     // Threshold range: 20, 200
-    uint8_t step = (uint8_t) (150 - 50)/this->population_size;
+    uint8_t step = (uint8_t) (180 - 40)/this->population_size;
     for (uint8_t t = 0; t < this->population_size; t++){
-        thresholds[t] = (uint8_t) 20 + t*step;
+        thresholds[t] = (uint8_t) 40 + t*step;
     }
     for (int i = 0; i < population_size; i++){
         // create new graph
@@ -67,15 +67,6 @@ void Nsga2::initializePopulationFromMst(const Eigen::MatrixXi &red, const Eigen:
         printf("+ Created genotype %d.\n", i+1);
     }
 }
-
-/////////////////////////////////////////////////////////
-void Nsga2::initializePopulationFromFilter(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
-                                        const Eigen::MatrixXi &blue, vector<Genotype> &initial_pop) {
-    
-
-
-}
-
 
 
 /////////////////////////////////////////////////////////
@@ -294,9 +285,11 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
 
     /* Merge and decode final solutions */
     printf("\t+ Decoding of final solutions..\n");
+    int i_m = 0;
     for (auto &solution: this->population){
         solution.mergeSegments(red, green, blue);
         solution.calculateObjectives(red, green, blue);
+        i_m++;
     }
 
     /* TEST: Visualize segments before termination */
