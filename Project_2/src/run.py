@@ -36,16 +36,17 @@ def comparePics(studentPic, optimalSegmentPic):
 			if color1 < blackValueThreshold:
 				#black color
 				numberOfBlackPixels +=1
-				if(int(color1) == int(color2)):
+				if(color1 - colorValueSlackRange< color2  and color2 < colorValueSlackRange + color1):
+				#if(int(color1) == int(color2)):
 					counter +=1
 					continue
 				elif checkEightSurroundingPixels:
 					#check surroundings
 					correctFound = False
-					for w2 in range(w-pixelRangeCheck, w + pixelRangeCheck):
+					for w2 in range(w-pixelRangeCheck, w + pixelRangeCheck + 1):
 						if(correctFound):
 							break
-						for h2 in range(h - pixelRangeCheck, h + pixelRangeCheck):
+						for h2 in range(h - pixelRangeCheck, h + pixelRangeCheck + 1):
 							if(w2 >=0 and h2 >= 0 and w2 < width and h2 < height):
 
 								color2 = optimalSegmentPic[w2][h2]
