@@ -614,7 +614,6 @@ double Genotype::calcEuclideanRgbDiff(signed short dir_y, signed short dir_x, in
 bool Genotype::isEdgePixel(signed short dir_y, signed short dir_x, int this_col, int this_row, int this_segment)
 {
     if (this_col + dir_x >= 0 && this_col + dir_x < num_cols && this_row + dir_y >= 0 && this_row + dir_y < num_rows) {
-        int segment = chromosome(this_row + dir_y, this_col + dir_x).segment;
         return (chromosome(this_row + dir_y, this_col + dir_x).segment != this_segment);
     }
     else{
@@ -658,8 +657,7 @@ void Genotype::mergeSegments(const Eigen::MatrixXi &red, const Eigen::MatrixXi &
         i_segment++;
     }
 
-    GeneNode* current_node;
-    int MIN_SEGMENT_SIZE = 400; //test
+    int MIN_SEGMENT_SIZE = 600; //test
     int MAX_SEGMENT_NUM = 30;
     while (smallest_segment_size < MIN_SEGMENT_SIZE || tot_segment_count > MAX_SEGMENT_NUM){
         // choose smallest segment
@@ -692,11 +690,6 @@ void Genotype::mergeSegments(const Eigen::MatrixXi &red, const Eigen::MatrixXi &
                     for (const auto &s: pixels_segment_affiliation){
                         i_s++;
                         if (chromosome(this_row + 1, this_col).segment == chromosome(s[0].row, s[0].col).segment) {
-//                            if (s.size() < smallest_neighbour_size) {
-//                                smallest_neighbour_size = s.size();
-//                                smallest_neighbour_segment = s;
-//                                smallest_neighbour_i = i_s;
-//                            }
                             double diff = sqrt(pow(current_centroid.r - centroids[i_s].r, 2)
                                   + pow(current_centroid.g - centroids[i_s].g, 2)
                                   + pow(current_centroid.b - centroids[i_s].b, 2));
@@ -718,11 +711,6 @@ void Genotype::mergeSegments(const Eigen::MatrixXi &red, const Eigen::MatrixXi &
                     for (const auto &s: pixels_segment_affiliation){
                         i_s++;
                         if (chromosome(this_row - 1, this_col).segment == chromosome(s[0].row, s[0].col).segment) {
-//                            if (s.size() < smallest_neighbour_size) {
-//                                smallest_neighbour_size = s.size();
-//                                smallest_neighbour_segment = s;
-//                                smallest_neighbour_i = i_s;
-//                            }
                             double diff = sqrt(pow(current_centroid.r - centroids[i_s].r, 2)
                                                + pow(current_centroid.g - centroids[i_s].g, 2)
                                                + pow(current_centroid.b - centroids[i_s].b, 2));
@@ -743,11 +731,6 @@ void Genotype::mergeSegments(const Eigen::MatrixXi &red, const Eigen::MatrixXi &
                     for (const auto &s: pixels_segment_affiliation){
                         i_s++;
                         if (chromosome(this_row, this_col + 1).segment == chromosome(s[0].row, s[0].col).segment) {
-//                            if (s.size() < smallest_neighbour_size) {
-//                                smallest_neighbour_size = s.size();
-//                                smallest_neighbour_segment = s;
-//                                smallest_neighbour_i = i_s;
-//                            }
                             double diff = sqrt(pow(current_centroid.r - centroids[i_s].r, 2)
                                                + pow(current_centroid.g - centroids[i_s].g, 2)
                                                + pow(current_centroid.b - centroids[i_s].b, 2));
@@ -768,11 +751,6 @@ void Genotype::mergeSegments(const Eigen::MatrixXi &red, const Eigen::MatrixXi &
                     for (const auto &s: pixels_segment_affiliation){
                         i_s++;
                         if (chromosome(this_row, this_col - 1).segment == chromosome(s[0].row, s[0].col).segment) {
-//                            if (s.size() < smallest_neighbour_size) {
-//                                smallest_neighbour_size = s.size();
-//                                smallest_neighbour_segment = s;
-//                                smallest_neighbour_i = i_s;
-//                            }
                             double diff = sqrt(pow(current_centroid.r - centroids[i_s].r, 2)
                                                + pow(current_centroid.g - centroids[i_s].g, 2)
                                                + pow(current_centroid.b - centroids[i_s].b, 2));
@@ -787,17 +765,6 @@ void Genotype::mergeSegments(const Eigen::MatrixXi &red, const Eigen::MatrixXi &
             }
         }
 
-//        // Smallest neighbour segment found: merge
-//        if (!neighbour_segments.empty()){
-//            int16_t current_segment_num = chromosome(current_segment[0].row, current_segment[0].col).segment;
-//            for (auto &p: smallest_neighbour_segment){
-//                chromosome(p.row, p.col).segment = current_segment_num;
-//                pixels_segment_affiliation[i_current_segment].push_back(p);
-//            }
-//            pixels_segment_affiliation.erase(pixels_segment_affiliation.begin() + smallest_neighbour_i);
-//            tot_segment_count--;
-//        }
-
         // Smallest centroid diff segment found: merge
         if (!neighbour_segments.empty()){
             if (current_segment.size() > smallest_centroid_diff_segment.size()){
@@ -807,8 +774,7 @@ void Genotype::mergeSegments(const Eigen::MatrixXi &red, const Eigen::MatrixXi &
                 centroids[i_current_segment].b = centroids[i_current_segment].b * current_segment.size();
 
                 for (auto &p: smallest_centroid_diff_segment){
-                    current_node = &chromosome(p.row, p.col);
-                    current_node->segment = current_segment_num;
+                    chromosome(p.row, p.col).segment = current_segment_num;
                     pixels_segment_affiliation[i_current_segment].push_back(p);
                     centroids[i_current_segment].r += red(p.row, p.col);
                     centroids[i_current_segment].g += green(p.row, p.col);
@@ -828,8 +794,7 @@ void Genotype::mergeSegments(const Eigen::MatrixXi &red, const Eigen::MatrixXi &
                 centroids[smallest_centroid_diff_i].b = centroids[smallest_centroid_diff_i].b * smallest_centroid_diff_segment.size();
 
                 for (auto &p: current_segment){
-                    current_node = &chromosome(p.row, p.col);
-                    current_node->segment = smallest_centroid_diff_segment_num;
+                    chromosome(p.row, p.col).segment = smallest_centroid_diff_segment_num;
                     pixels_segment_affiliation[smallest_centroid_diff_i].push_back(p);
                     centroids[smallest_centroid_diff_i].r += red(p.row, p.col);
                     centroids[smallest_centroid_diff_i].g += green(p.row, p.col);
@@ -845,29 +810,17 @@ void Genotype::mergeSegments(const Eigen::MatrixXi &red, const Eigen::MatrixXi &
 
         }
 
+
         // update centroids
         // find new smallest segment
         smallest_segment_size = INT_MAX;
         smallest_segment = 0;
         i_segment = 0;
-        //centroids.resize(tot_segment_count);
         for (const auto &s: pixels_segment_affiliation){
             if (s.size() < smallest_segment_size){
                 smallest_segment_size = s.size();
                 smallest_segment =  i_segment;//chromosome(s[0].row, s[0].col).segment;
             }
-//            /*  Calculate the rgb centroid of the segment */
-//            centroids[i_segment].r = 0, centroids[i_segment].g = 0, centroids[i_segment].b = 0;
-//            int num_pixels = 0;
-//            for (const auto &p: s){
-//                centroids[i_segment].r += red(p.row, p.col);
-//                centroids[i_segment].g += green(p.row, p.col);
-//                centroids[i_segment].b += blue(p.row, p.col);
-//                num_pixels++;
-//            }
-//            centroids[i_segment].r = centroids[i_segment].r / num_pixels;
-//            centroids[i_segment].g = centroids[i_segment].g / num_pixels;
-//            centroids[i_segment].b = centroids[i_segment].b / num_pixels;
             i_segment++;
         }
     }
@@ -882,7 +835,3 @@ void Genotype::mergeSegments(const Eigen::MatrixXi &red, const Eigen::MatrixXi &
     }
 }
 
-/*
-Genotype::~Genotype(){
-    cout << "deleted genotype!" << endl;
-}*/

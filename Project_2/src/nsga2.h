@@ -34,11 +34,6 @@ public:
                                      const Eigen::MatrixXi &blue,
                                      std::vector<Genotype> &initial_pop);
 
-    ///
-    void initializePopulationFromFilter(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
-                                               const Eigen::MatrixXi &blue,
-                                               std::vector<Genotype> &initial_pop);
-
     /// Creates a MST based on the distance in RGB space of a picture as basis for edges
     std::vector<int> primMST(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green, const Eigen::MatrixXi &blue);
     std::vector<int> superMST(uint8_t threshold, const Eigen::MatrixXi &red, const Eigen::MatrixXi &green,
