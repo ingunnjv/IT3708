@@ -210,7 +210,6 @@ void Nsga2::crowdingDistanceAssignment(vector<Genotype*> &front) {
         double fmax = get<1>(extreme_vals);
         // set first and last genotypes distance to inf such that boundary points are always selected
         front[0]->crowding_distance = DBL_MAX;
-        front.back()->crowding_distance = DBL_MAX;
         for (vector<Genotype>::size_type i = 1; i < front_size - 1; i++) {
             if (fmin - fmax != 0 && front[i]->crowding_distance != DBL_MAX) {
                 front[i]->crowding_distance +=
