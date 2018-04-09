@@ -3,7 +3,6 @@
 #include <Eigen/Dense>
 #include "image_loader.h"
 #include "nsga2.h"
-#include "segmentation.h"
 #include <time.h>
 
 using namespace std;
