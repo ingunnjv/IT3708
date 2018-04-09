@@ -299,7 +299,7 @@ void Nsga2::runMainLoop(const Eigen::MatrixXi &red, const Eigen::MatrixXi &green
     int i_f = 0;
     for (auto &front: fronts){
         for (auto &solution: front){
-            printf("\t+ Front[0] solution %d", i_im);
+            printf("\t+ Front[0] solution %d, total segments: %d", i_im, solution->tot_segment_count);
             string title = "Front_0_image_" + to_string(i_im);
             solution->visualizeEdges(image, title);
             if(use_weighted_sum){
