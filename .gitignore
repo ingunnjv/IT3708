@@ -205,3 +205,5 @@ Project_3/cmake-build-debug/Makefile
 Project_3/cmake-build-debug/Project_2\.cbp
 
 Project_3/cmake-build-debug/Project_3\.exe
+
+*.obj
