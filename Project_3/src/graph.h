@@ -1,5 +1,5 @@
-#ifndef PROJECT_2_GRAPH_H
-#define PROJECT_2_GRAPH_H
+#ifndef PROJECT_3_GRAPH_H
+#define PROJECT_3_GRAPH_H
 
 #include <vector>
 
@@ -13,6 +13,7 @@ private:
     int machine_no;
     int process_time;
 public:
+    Node();
     Node(int id, int machine_no, int process_time);
     int getMachineNo();
     int getProcessTime();
@@ -26,6 +27,7 @@ private:
     std::vector<Node*> nodes;
     double pheromone;
 public:
+    Edge();
     Edge(int id, double initial_pheromone);
     void setPheromone(double pheromone);
     double getPheromone();
@@ -39,4 +41,4 @@ public:
 
 
 
-#endif //PROJECT_2_GRAPH_H
+#endif //PROJECT_3_GRAPH_H

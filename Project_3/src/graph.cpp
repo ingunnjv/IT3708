@@ -3,6 +3,11 @@
 using namespace std;
 
 /* Node implementation */
+Node::Node(){
+    this->id = 0;
+    this->machine_no = 0;
+    this->process_time = 0;
+}
 Node::Node(int id, int machine_no, int process_time){
     this->id = id;
     this->machine_no = machine_no;
@@ -23,6 +28,10 @@ int Node::getId(){
 
 
 /* Edge implementation */
+Edge::Edge(){
+    this->id = 0;
+    this->pheromone = 0;
+};
 Edge::Edge(int id, double initial_pheromone){
     this->id = id;
     this->pheromone = initial_pheromone;

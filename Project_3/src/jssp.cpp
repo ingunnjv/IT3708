@@ -13,10 +13,10 @@ int JSSP::readInputData(std::string problem_no){
     if (file.is_open()){
         getline(file, line);
         stringstream stream(line);
-        stream >> this->jobs;
-        stream >> this->machines;
+        stream >> this->num_jobs;
+        stream >> this->num_machines;
         int job_i = 0;
-        this->job_matrix.resize(this->jobs);
+        this->job_matrix.resize(this->num_jobs);
         while(getline(file,line)){
             stringstream stream(line);
             while(1){
