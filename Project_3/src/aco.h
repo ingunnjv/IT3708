@@ -7,15 +7,13 @@
 class ACO {
 private:
     JSSP* jssp;
-    Node source;
-    std::vector<std::vector<Node>> nodes;
-    std::vector<Edge> edges;
 
     int swarm_size;
     double initial_pheromone;
+    std::vector<std::vector<double>> pheromone_trails;
 public:
     ACO(JSSP &jssp, int swarm_size, double initial_pheromone);
-    void createJobGraph();
+    void initializePheromoneTrails();
 
 };
 

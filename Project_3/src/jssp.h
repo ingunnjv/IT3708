@@ -8,22 +8,36 @@
 #include <vector>
 #include <utility>
 
-typedef std::vector<std::vector<std::pair<int, int>>> int_pair_matrix;
+struct task{
+    int task_id;
+    int job_id;
+    int machine_no;
+    int process_time;
+    task(int task_id, int job_id, int machine_no, int process_time){
+        this->task_id = task_id;
+        this->job_id = job_id;
+        this->machine_no = machine_no;
+        this->process_time = process_time;
+    }
+};
+typedef std::vector<std::vector<task>> task_matrix;
+
 
 class JSSP{
 private:
     int num_jobs;
+    int num_tasks;
     int num_machines;
-
-
 public:
     JSSP();
 
     int readInputData(std::string problem_no);
     int getNumJobs() { return this->num_jobs; }
+    int getNumTasks() { return this->num_tasks; }
     int getNumMachines() { return this->num_machines; }
 
-    int_pair_matrix job_matrix;
+    task_matrix jobs;
+    task_matrix machine_tasks;
 };
 
 

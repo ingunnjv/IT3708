@@ -6,66 +6,33 @@ ACO::ACO(JSSP &jssp, int swarm_size, double initial_pheromone){
     this->jssp = &jssp;
     this->swarm_size = swarm_size;
     this->initial_pheromone = initial_pheromone;
-    this->source = Node(0, -1, -1);
+    this->pheromone_trails.resize(jssp.getNumTasks(), vector<double>(jssp.getNumTasks()));
 }
 
-void ACO::createJobGraph(){
-    // Create nodes
-    int id = 1;
-    for (const auto &jobs: jssp->job_matrix){
-        vector<Node> job_nodes;
-        for (const auto &task: jobs){
-            Node node = Node(id, task.first, task.second);
-            job_nodes.push_back(node);
-            id++;
-        }
-        nodes.push_back(job_nodes);
-    }
-
-    // Create machine tasks matrix
-    vector<vector<Node*>> machine_tasks;
-    machine_tasks.resize(jssp->getNumMachines());
-    for (auto &jobs: nodes){
-        for (auto &task: jobs){
-            machine_tasks[task.getMachineNo()].push_back(&task);
+void ACO::initializePheromoneTrails(){
+    // Set all elements to zero (including diagonals)
+    for (int row = 0; row < jssp->getNumTasks(); row++) {
+        for (int col = 0; col < jssp->getNumTasks(); col++) {
+            pheromone_trails[row][col] = -1;
         }
     }
-
-
-    id = 0;
-    for (int job = 0; job < jssp->getNumJobs(); job++){
-        Edge edge = Edge(id, initial_pheromone);
-        edge.addNode(nodes[job][0]);
-        edges.push_back(edge);
-        source.addEdge(edge);
-        id++;
-    }
-
-
-    // Create unidirectional edges
-    for (int job = 0; job < nodes.size(); job++){
-        for (int task = 0; task < nodes[job].size(); task++){
-            if (task < nodes[job].size()) {
-                Edge edge = Edge(id, initial_pheromone);
-                edge.addNode(nodes[job][task + 1]);
-                edges.push_back(edge);
-                nodes[job][task].addEdge(edges.back());
-                id++;
-            }
+    // Set unidirectional edges
+    for (int row = 0; row < jssp->jobs.size(); row++) {
+        for (int i = 0; i < jssp->jobs[row].size() - 1; i++) {
+            int task_id_row = jssp->jobs[row][i].task_id;
+            int task_id_col = jssp->jobs[row][i+1].task_id;
+            pheromone_trails[task_id_row][task_id_col] = initial_pheromone;
+            pheromone_trails[task_id_col][task_id_row] = -1;
         }
     }
-    // Create bidirectional edges
-    for (int machine = 0; machine < machine_tasks.size(); machine++){
-        for (int task_i = 0; task_i < machine_tasks[machine].size() - 1; task_i++){
-            for (int task_j = task_i + 1; task_j < machine_tasks[machine].size(); task_j++){
-                Edge edge = Edge(id, initial_pheromone);
-                edges.push_back(edge);
-                edges.back().addNode(*machine_tasks[machine][task_i]);
-                edges.back().addNode(*machine_tasks[machine][task_j]);
-
-                machine_tasks[machine][task_i]->addEdge(edges.back());
-                machine_tasks[machine][task_j]->addEdge(edges.back());
-                id++;
+    // Set bidirectional edges
+    for (int machine = 0; machine < jssp->machine_tasks.size(); machine++){
+        for (int task_i = 0; task_i < jssp->machine_tasks[machine].size() - 1; task_i ++){
+            for (int task_j = task_i + 1; task_j < jssp->machine_tasks[machine].size(); task_j ++){
+                int task_id_i = jssp->machine_tasks[machine][task_i].task_id;
+                int task_id_j = jssp->machine_tasks[machine][task_j].task_id;
+                pheromone_trails[task_id_i][task_id_j] = initial_pheromone;
+                pheromone_trails[task_id_j][task_id_i] = initial_pheromone;
             }
         }
     }
