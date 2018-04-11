@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9)
-project(Project_2)
+project(Project_3)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
