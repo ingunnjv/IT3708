@@ -36,7 +36,7 @@ public:
     int getNumTasks() { return this->num_tasks; }
     int getNumMachines() { return this->num_machines; }
 
-    task_matrix jobs;
+    task_matrix job_tasks;
     task_matrix machine_tasks;
 };
 

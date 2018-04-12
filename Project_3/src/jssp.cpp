@@ -14,7 +14,7 @@ int JSSP::readInputData(std::string problem_no){
         stringstream stream(line);
         stream >> this->num_jobs;
         stream >> this->num_machines;
-        this->jobs.resize(this->num_jobs);
+        this->job_tasks.resize(this->num_jobs);
         int task_id = 0;
         int job_id = 0;
         while(getline(file,line)){
@@ -27,7 +27,7 @@ int JSSP::readInputData(std::string problem_no){
                     break;
                 }
                 task task_desc = task(task_id, job_id, machine_no, process_time);
-                this->jobs[job_id].push_back(task_desc);
+                this->job_tasks[job_id].push_back(task_desc);
                 task_id++;
             }
         }
@@ -36,7 +36,7 @@ int JSSP::readInputData(std::string problem_no){
 
         // Create machine tasks matrix
         machine_tasks.resize(num_machines);
-        for (auto &jobs: this->jobs){
+        for (auto &jobs: this->job_tasks){
             for (auto &task: jobs){
                 machine_tasks[task.machine_no].push_back(task);
             }

@@ -17,10 +17,10 @@ void ACO::initializePheromoneTrails(){
         }
     }
     // Set unidirectional edges
-    for (int row = 0; row < jssp->jobs.size(); row++) {
-        for (int i = 0; i < jssp->jobs[row].size() - 1; i++) {
-            int task_id_row = jssp->jobs[row][i].task_id;
-            int task_id_col = jssp->jobs[row][i+1].task_id;
+    for (int row = 0; row < jssp->job_tasks.size(); row++) {
+        for (int i = 0; i < jssp->job_tasks[row].size() - 1; i++) {
+            int task_id_row = jssp->job_tasks[row][i].task_id;
+            int task_id_col = jssp->job_tasks[row][i+1].task_id;
             pheromone_trails[task_id_row][task_id_col] = initial_pheromone;
             pheromone_trails[task_id_col][task_id_row] = -1;
         }
