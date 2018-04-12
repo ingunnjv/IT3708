@@ -37,3 +37,53 @@ void ACO::initializePheromoneTrails(){
         }
     }
 }
+
+void ACO::printPheromoneTrailsTable(){
+    for(const auto &trails: pheromone_trails){
+        for(const auto &trail: trails){
+            printf("%d\t", int(trail));
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
+void ACO::runOptimization() {
+/* AFTER ANTS HAVE ACQUIRED PATHS:
+ *
+ * current_cycles_best = INF
+ * for every ant
+ *  decode path to schedule
+ *  find schedule length
+ *  save ants schedule
+ *  if schedule solution better than all_time_best
+ *      save it as best
+ *      save ant as elite
+ *  if schedule better (or equal) than current_cycles_best
+ *      save ant as elite
+ * for every ant not elite
+ *  delta t += ant pheromone contribution to edges w/ eq 3
+ * for every ant elite
+ *  delta t += ant pheromone contribution to edges w/ eq 4
+ * for every edge
+ *  eq 2
+ * */
+
+}
+
+vector<task*> ACO::getPossibleStates(vector<vector<int>> visited_states){
+
+
+}
+
+std::vector<double> ACO::getStateTransitionProbs(vector<task*> possibleStates){
+
+}
+
+void ACO::addAntPheromoneContribution(vector<vector<double>> pheromone_accumulator){
+
+}
+
+void ACO::updatePheromoneTrails(vector<vector<double>> pheromone_accumulator){
+
+}

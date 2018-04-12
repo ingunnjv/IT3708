@@ -9,19 +9,24 @@
 #include <utility>
 
 struct task{
-    int task_id;
-    int job_id;
-    int machine_no;
-    int process_time;
-    task(int task_id, int job_id, int machine_no, int process_time){
+    uint16_t task_id;
+    uint16_t job_id;
+    uint16_t machine_no;
+    double process_time;
+    task(uint16_t task_id, uint16_t job_id, uint16_t machine_no, double process_time){
         this->task_id = task_id;
         this->job_id = job_id;
         this->machine_no = machine_no;
         this->process_time = process_time;
     }
 };
-typedef std::vector<std::vector<task>> task_matrix;
 
+struct schedule_block{
+    task task;
+    double start_time;
+};
+
+typedef std::vector<std::vector<task>> task_matrix;
 
 class JSSP{
 private:
