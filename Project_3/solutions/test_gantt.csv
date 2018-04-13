@@ -1,0 +1,19 @@
+﻿Task,Start,Finish,Job,Description
+
+Machine 0,0,1,Job 1,J1
+
+Machine 0,1,2,Job 2,J2
+
+Machine 0,2,3,Job 3,J3
+
+Machine 1,0,1,Job 2,J2
+
+Machine 1,1,2,Job 3,J3
+
+Machine 1,2,3,Job 1,J1
+
+Machine 2,0,1,Job 3,J3
+
+Machine 2,1,2,Job 1,J1
+
+Machine 2,2,3,Job 2,J2

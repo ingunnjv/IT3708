@@ -22,8 +22,12 @@ int main(int argc, char *argv[]) {
     aco.initializePheromoneTrails();
     aco.printPheromoneTrailsTable();
 
-
-
+    string solutionFile = "test_gantt";
+    printf("Print Gantt chart of solution..\n");
+    string command = "python \"..\\src\\run_gantt.py\"";
+    string args = " " + solutionFile;
+    command += args;
+    system(command.c_str());
 
     t = clock() - t;
     printf("Time consumed: %d clicks (%f seconds).\n", int(t), ((float)int(t))/CLOCKS_PER_SEC);
