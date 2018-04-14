@@ -4,6 +4,14 @@
 #include "jssp.h"
 #include "graph.h"
 
+struct ant{
+    std::vector<std::pair<task,task>> path;
+    std::string decidability_rule;
+    ant(uint16_t num_tasks, std::string rule){
+        this->path.resize(num_tasks);
+        this->decidability_rule = rule;
+    }
+};
 
 class ACO {
 private:
