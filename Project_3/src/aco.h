@@ -30,7 +30,8 @@ public:
     void initializePheromoneTrails();
     void printPheromoneTrailsTable();
     std::vector <std::pair<task *, task *>> getStateTransitions(const std::vector<std::vector<int>> &tabu);
-    std::vector<double> getStateTransitionProbs(std::vector<std::pair<task *, task*>> possible_edges);
+    std::vector<double>
+    getStateTransitionProbs(std::vector<std::pair<task *, task *>> state_transitions, uint8_t decidability_rule);
     void addAntPheromoneContribution(std::vector<std::vector<double>> pheromone_accumulator);
     void updatePheromoneTrails(std::vector<std::vector<double>> pheromone_accumulator);
 

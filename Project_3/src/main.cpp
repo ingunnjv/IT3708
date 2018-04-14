@@ -18,9 +18,13 @@ int main(int argc, char *argv[]) {
     /* Create ant colony optimization object */
     int swarm_size = 10;
     int cycles = 1000;
-    ACO aco = ACO(jssp, swarm_size, cycles, 0.2, 0.8, 0.7, 0.1);
-    aco.runOptimization();
+    double alpha = 0.2;
+    double beta = 0.8;
+    double rho = 0.7;
+    double initial_pheromone = 0.1;
+    ACO aco = ACO(jssp, swarm_size, cycles, alpha, beta, rho, initial_pheromone);
     aco.printPheromoneTrailsTable();
+    aco.runOptimization();
 
 //    string solutionFile = "test_gantt";
 //    printf("Print Gantt chart of solution..\n");

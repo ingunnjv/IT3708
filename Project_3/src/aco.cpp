@@ -23,11 +23,10 @@ void ACO::initializePheromoneTrails(){
         }
     }
     // Set edges from source to first tasks
-    for (int i = 1; i < jssp->getNumJobs() + 1; i++){
+    for (int i = 1; i < this->pheromone_trails.size(); i += jssp->getNumJobs()){
         pheromone_trails[0][i] = initial_pheromone;
         pheromone_trails[i][0] = initial_pheromone;
     }
-
     // Set unidirectional edges
     for (int row = 0; row < jssp->job_tasks.size(); row++) {
         for (int i = 0; i < jssp->job_tasks[row].size() - 1; i++) {
@@ -64,7 +63,6 @@ void ACO::runOptimization() {
     vector<vector<int>> tabu(jssp->job_tasks.size(), vector<int>(jssp->job_tasks[0].size()));
     vector<vector<double>> pheromone_accumulator(jssp->getNumTasks()+1, vector<double>(jssp->getNumTasks()+1));
     vector<ant> ants(this->swarm_size, ant(0));
-    task source = task(0, 0, 0, 0);
     initializePheromoneTrails();
 
     int cycle = 0;
@@ -86,44 +84,42 @@ void ACO::runOptimization() {
             while(!isTabuFull(tabu)){
 
                 /* Determine the set of operations achievable from the current state */
-                vector<pair<task*, task*>> possible_edges = getStateTransitions(tabu);
+                vector<pair<task*, task*>> state_transitions = getStateTransitions(tabu);
 
                 /* Select next state according to equation 1 */
-                vector<double> state_transistion_probs = getStateTransitionProbs(possible_edges);
+                vector<double> state_transistion_probs = getStateTransitionProbs(state_transitions, ants[k].decidability_rule);
                 int next_edge_index = chooseNextState(state_transistion_probs);
-                pair<task*, task*> next_edge = possible_edges[next_edge_index];
+                pair<task*, task*> next_edge = state_transitions[next_edge_index];
 
                 /* Move ant to selected state */
                 ants[k].path.push_back(next_edge);
 
                 /* Save selected state in tabu */
                 updateTabu(tabu, next_edge.second);
+                int dummy = 0;
             }
         }
         cycle++;
     }
-
-
-/* AFTER ANTS HAVE ACQUIRED PATHS:
- *
- * current_cycles_best = INF
- * for every ant
- *  decode path to schedule
- *  find schedule length
- *  save ants schedule
- *  if schedule solution better than all_time_best
- *      save it as best
- *      save ant as elite
- *  if schedule better (or equal) than current_cycles_best
- *      save ant as elite
- * for every ant not elite
- *  delta t += ant pheromone contribution to edges w/ eq 3
- * for every ant elite
- *  delta t += ant pheromone contribution to edges w/ eq 4
- * for every edge
- *  eq 2
- * */
-
+    /* AFTER ANTS HAVE ACQUIRED PATHS:
+     *
+     * current_cycles_best = INF
+     * for every ant
+     *  decode path to schedule
+     *  find schedule length
+     *  save ants schedule
+     *  if schedule solution better than all_time_best
+     *      save it as best
+     *      save ant as elite
+     *  if schedule better (or equal) than current_cycles_best
+     *      save ant as elite
+     * for every ant not elite
+     *  delta t += ant pheromone contribution to edges w/ eq 3
+     * for every ant elite
+     *  delta t += ant pheromone contribution to edges w/ eq 4
+     * for every edge
+     *  eq 2
+     * */
 }
 
 template<typename T>
@@ -174,39 +170,79 @@ void ACO::updateTabu(vector<vector<int>> &tabu, task* next_task){
 }
 
 vector<pair<task *, task *>> ACO::getStateTransitions(const vector<vector<int>> &tabu){
-    vector<pair<task *, task *>> possible_edges;
+    vector<pair<task *, task *>> state_transitions;
     vector<task*> fronts;
-
+    // Find edges to next available task within a job
     for(int i = 0; i < tabu.size(); i++){
         for (int j = 0; j < tabu[i].size(); j++){
             if (tabu[i][j] == 0){
                 if (j == 0)
-                    possible_edges.push_back(make_pair(&jssp->source_task, &jssp->job_tasks[i][j]));
+                    state_transitions.push_back(make_pair(&jssp->source_task, &jssp->job_tasks[i][j]));
                 else {
-                    possible_edges.push_back(make_pair(&jssp->job_tasks[i][j - 1], &jssp->job_tasks[i][j]));
-                    fronts.push_back(&jssp->job_tasks[i][j - 1]);
+                    state_transitions.push_back(make_pair(&jssp->job_tasks[i][j - 1], &jssp->job_tasks[i][j]));
+
                 }
                 break;
             }
+            else if(tabu[i][j] == 1){
+                fronts.push_back(&jssp->job_tasks[i][j]);
+            }
         }
     }
+    // Find edges to available tasks within machines
     for(auto &front: fronts) {
         for (int i = 0; i < jssp->machine_tasks[front->machine_no].size(); i++) {
             if (front->task_id != jssp->machine_tasks[front->machine_no][i].task_id) {
-                int col = jssp->machine_tasks[front->machine_no][i].task_id % jssp->getNumMachines();
+                int col = (jssp->machine_tasks[front->machine_no][i].task_id - 1) % jssp->getNumMachines();
                 int row = jssp->machine_tasks[front->machine_no][i].job_id;
-                if (tabu[row][col - 1] == 1) {
-                    possible_edges.push_back(make_pair(front, &jssp->machine_tasks[front->machine_no][i]));
+                if (tabu[row][col] == 0) {
+                    if(col == 0){
+                        state_transitions.push_back(make_pair(front, &jssp->machine_tasks[front->machine_no][i]));
+                    }
+                    else if(tabu[row][col - 1] == 1){
+                        state_transitions.push_back(make_pair(front, &jssp->machine_tasks[front->machine_no][i]));
+                    }
                 }
             }
         }
     }
-    return possible_edges;
+    return state_transitions;
 
 }
 
-std::vector<double> ACO::getStateTransitionProbs(vector<pair<task *, task *>> possible_edges){
-
+std::vector<double> ACO::getStateTransitionProbs(vector<pair<task *, task *>> state_transitions, uint8_t decidability_rule) {
+    vector<double> state_transitions_probs;
+    double pheromone_and_process_time_sum = 0;
+    for(auto &transition: state_transitions){
+        double edge_pheromone = 0;
+        double task_process_time = 0;
+        task* task_i = transition.first;
+        task* task_j = transition.second;
+        edge_pheromone = pheromone_trails[task_i->task_id][task_j->task_id];
+        if(decidability_rule == decidability_rules::SPT){
+            task_process_time = 1/task_j->process_time;
+        }
+        else if(decidability_rule == decidability_rules::LPT){
+            task_process_time = task_j->process_time;
+        }
+        pheromone_and_process_time_sum += pow(edge_pheromone, alpha)*pow(task_process_time, beta);
+    }
+    for(auto &transition: state_transitions){
+        double edge_pheromone = 0;
+        double task_process_time = 0;
+        task* task_i = transition.first;
+        task* task_j = transition.second;
+        edge_pheromone = pheromone_trails[task_i->task_id][task_j->task_id];
+        if(decidability_rule == decidability_rules::SPT){
+            task_process_time = 1/task_j->process_time;
+        }
+        else if(decidability_rule == decidability_rules::LPT){
+            task_process_time = task_j->process_time;
+        }
+        double state_transitions_prob = (pow(edge_pheromone, alpha)*pow(task_process_time, beta))/pheromone_and_process_time_sum;
+        state_transitions_probs.push_back(state_transitions_prob);
+    }
+    return state_transitions_probs;
 }
 
 void ACO::addAntPheromoneContribution(vector<vector<double>> pheromone_accumulator){
