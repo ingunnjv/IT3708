@@ -13,6 +13,12 @@ struct task{
     uint16_t job_id;
     uint16_t machine_no;
     double process_time;
+    task(){
+        this->task_id = 0;
+        this->job_id = 0;
+        this->machine_no = 0;
+        this->process_time = 0;
+    };
     task(uint16_t task_id, uint16_t job_id, uint16_t machine_no, double process_time){
         this->task_id = task_id;
         this->job_id = job_id;
@@ -43,6 +49,7 @@ public:
 
     task_matrix job_tasks;
     task_matrix machine_tasks;
+    task source_task;
 };
 
 

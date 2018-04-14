@@ -2,7 +2,7 @@
 using namespace std;
 
 JSSP::JSSP(){
-
+    this->source_task = task();
 }
 
 int JSSP::readInputData(std::string problem_no){
@@ -15,7 +15,7 @@ int JSSP::readInputData(std::string problem_no){
         stream >> this->num_jobs;
         stream >> this->num_machines;
         this->job_tasks.resize(this->num_jobs);
-        int task_id = 0;
+        int task_id = 1;
         int job_id = 0;
         while(getline(file,line)){
             stringstream stream(line);
@@ -31,7 +31,7 @@ int JSSP::readInputData(std::string problem_no){
                 task_id++;
             }
         }
-        this->num_tasks = task_id;
+        this->num_tasks = task_id - 1;
         file.close();
 
         // Create machine tasks matrix

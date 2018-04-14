@@ -16,8 +16,10 @@ int main(int argc, char *argv[]) {
     if(jssp.readInputData("test_3x3")) return 1;
 
     /* Create ant colony optimization object */
-    ACO aco = ACO(jssp, 0, 0);
-    aco.initializePheromoneTrails();
+    int swarm_size = 10;
+    int cycles = 1000;
+    ACO aco = ACO(jssp, swarm_size, cycles, 0.2, 0.8, 0.7, 0.1);
+    aco.runOptimization();
     aco.printPheromoneTrailsTable();
 
 //    string solutionFile = "test_gantt";
