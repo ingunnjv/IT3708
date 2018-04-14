@@ -4,6 +4,7 @@
 #include "jssp.h"
 #include "graph.h"
 
+
 class ACO {
 private:
     JSSP* jssp;
@@ -11,7 +12,7 @@ private:
     double alpha; // influence weight of pheromone
     double beta; // influence weight of heuristic
     double rho; // evaporation rate of pheromone
-    double cycles; // iterations of the algorithm
+    int cycles; // iterations of the algorithm
     double initial_pheromone; // initial pheromone for all edges
     std::vector<std::vector<double>> pheromone_trails; // pheromone on all edges
 
@@ -25,6 +26,10 @@ public:
     void updatePheromoneTrails(std::vector<std::vector<double>> pheromone_accumulator);
 
     void runOptimization();
+
+    template<typename T>
+    void setMatrixToZero(std::vector<std::vector<T>> &matrix);
+    bool isTabuFull(std::vector<std::vector<int>> &tabu);
 
 };
 

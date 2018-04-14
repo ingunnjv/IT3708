@@ -49,6 +49,41 @@ void ACO::printPheromoneTrailsTable(){
 }
 
 void ACO::runOptimization() {
+    vector<vector<int>> tabu(jssp->job_tasks.size(), vector<int>(jssp->job_tasks[0].size()));
+    vector<vector<double>> pheromone_accumulator(jssp->getNumTasks(), vector<double>(jssp->getNumTasks()));
+
+    initializePheromoneTrails();
+
+    int cycle = 0;
+    while(cycle < cycles){
+        setMatrixToZero(pheromone_accumulator);
+
+        for (int k = 0; k < this->swarm_size; k++){
+            setMatrixToZero(tabu);
+            /* Random assignment of the first operation */
+            //int start = 0;
+            //path.push_back(jssp->job_tasks[start][0]);
+
+            /* Define decidability rule for each ant k */
+            // Either eta = process_time or eta = 1/process_time
+
+            while(!isTabuFull(tabu)){
+
+                /* Determine the set of operations achievable from the current state */
+
+                /* Select next state according to equation 1 */
+
+                /* Move ant to selected state */
+
+                /* Save selected state in tabu */
+            }
+        }
+
+
+        cycle++;
+    }
+
+
 /* AFTER ANTS HAVE ACQUIRED PATHS:
  *
  * current_cycles_best = INF
@@ -69,6 +104,26 @@ void ACO::runOptimization() {
  *  eq 2
  * */
 
+}
+
+template<typename T>
+void ACO::setMatrixToZero(vector<vector<T>> &matrix){
+    for (int i = 0; i < matrix.size(); i++){
+        for (int j = 0; j < matrix[i].size(); j++){
+            matrix[i][j] = 0;
+        }
+    }
+}
+
+bool ACO::isTabuFull(vector<vector<int>> &tabu){
+    for (int i = 0; i < tabu.size(); i++){
+        for (int j = 0; j < tabu[i].size(); j++){
+            if (tabu[i][j] == 0){
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 vector<task*> ACO::getPossibleStates(vector<vector<int>> visited_states){
