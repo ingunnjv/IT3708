@@ -14,6 +14,13 @@ struct ant{
     }
 };
 
+struct schedule{
+    ant* ant;
+    double makespan;
+    std::string filename;
+    std::vector<std::vector<schedule_block>> machine_schedules;
+};
+
 class ACO {
 private:
     JSSP* jssp;
@@ -42,7 +49,8 @@ public:
     bool isTabuFull(std::vector<std::vector<int>> &tabu);
     int chooseNextState(std::vector<double> &state_transistion_probs);
     void updateTabu(std::vector<std::vector<int>> &tabu, task* next_task);
-
+    void buildSchedule(schedule &schedule, int k);
+    void saveScheduleAsCSV(schedule &schedule);
 };
 
 

@@ -28,8 +28,9 @@ struct task{
 };
 
 struct schedule_block{
-    task task;
+    task* task;
     double start_time;
+    int path_index;
 };
 
 typedef std::vector<std::vector<task>> task_matrix;

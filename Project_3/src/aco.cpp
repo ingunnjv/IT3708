@@ -1,6 +1,9 @@
 #include "aco.h"
 #include <chrono>
 #include <random>
+#include <climits>
+#include <cfloat>
+#include <fstream>
 
 using namespace std;
 
@@ -99,27 +102,70 @@ void ACO::runOptimization() {
                 int dummy = 0;
             }
         }
+
+        int current_cycles_best_makespan = INT_MAX;
+        int all_time_best_makespan = INT_MAX;
+        // all_time_best_schedule;
+        // cycles_best_schedule;
+        vector<ant> elites;
+        vector<ant> not_elites;
+        vector <schedule> schedules(this->swarm_size);
+        for (int k = 0; k < this->swarm_size; k++){
+            /* Build schedule */
+            schedules[k].ant = &ants[k];
+            buildSchedule(schedules[k], k);
+            saveScheduleAsCSV(schedules[k]);
+
+
+            if (schedules[k].makespan < all_time_best_makespan){
+                continue;
+            }
+            if (schedules[k].makespan == current_cycles_best_makespan){
+                elites.push_back(ants[k]);
+            }
+            else if (schedules[k].makespan < current_cycles_best_makespan){
+                elites.clear();
+                elites.push_back(ants[k]);
+            }
+
+        }
+
+        for (auto & schedule: schedules){
+            // if schedule->ant in elites
+                /* for (auto &edge: schedule->ant.path){
+                 *    task* task_i = edge.first;
+                 *    task* task_j = edge.second;
+                 *    pheromone_accumulator[task_i->task_id][task_j->task_id] = Q/current_cycles_best_makespan * elites.size()
+                 *
+                 *
+                 *
+                 * */
+        }
+
+        /* AFTER ANTS HAVE ACQUIRED PATHS:
+         *
+         * current_cycles_best = INF
+         * for every ant
+         *  decode path to schedule
+         *  find schedule length
+         *  save ants schedule
+         *  if schedule solution better than all_time_best
+         *      save it as best
+         *      save ant as elite
+         *  if schedule better (or equal) than current_cycles_best
+         *      save ant as elite
+         * for every ant not elite
+         *  delta t += ant pheromone contribution to edges w/ eq 3
+         * for every ant elite
+         *  delta t += ant pheromone contribution to edges w/ eq 4
+         * for every edge
+         *  eq 2
+         * */
+
+
         cycle++;
     }
-    /* AFTER ANTS HAVE ACQUIRED PATHS:
-     *
-     * current_cycles_best = INF
-     * for every ant
-     *  decode path to schedule
-     *  find schedule length
-     *  save ants schedule
-     *  if schedule solution better than all_time_best
-     *      save it as best
-     *      save ant as elite
-     *  if schedule better (or equal) than current_cycles_best
-     *      save ant as elite
-     * for every ant not elite
-     *  delta t += ant pheromone contribution to edges w/ eq 3
-     * for every ant elite
-     *  delta t += ant pheromone contribution to edges w/ eq 4
-     * for every edge
-     *  eq 2
-     * */
+
 }
 
 template<typename T>
@@ -252,3 +298,92 @@ void ACO::addAntPheromoneContribution(vector<vector<double>> pheromone_accumulat
 void ACO::updatePheromoneTrails(vector<vector<double>> pheromone_accumulator){
 
 }
+
+void ACO::buildSchedule(schedule &schedule, int k) {
+    schedule.filename = "Schedule_" + to_string(k);
+
+    // Add tasks to machines in correct order
+    schedule.machine_schedules.resize(jssp->getNumMachines());
+    int edge_count = 0;
+    for (auto &edge: schedule.ant->path){
+        task* task = edge.second;
+        schedule_block block;
+        block.task = task;
+        if (schedule.machine_schedules[task->machine_no].empty()){
+            block.start_time = 0;
+        }
+        else{
+            block.start_time = schedule.machine_schedules[task->machine_no].back().start_time + schedule.machine_schedules[task->machine_no].back().task->process_time;
+        }
+        block.path_index = edge_count;
+        schedule.machine_schedules[task->machine_no].push_back(block);
+        edge_count++;
+    }
+
+    // Avoid collisions between jobs in different machines
+    for (int machine_no_i = 0; machine_no_i < jssp->getNumMachines(); machine_no_i++){
+        int block_no_i = 0;
+        for (auto &machine_schedule_block_i: schedule.machine_schedules[machine_no_i]){
+
+            for (int machine_no_j = 0; machine_no_j < jssp->getNumMachines(); machine_no_j++){
+                if (machine_no_i != machine_no_j){
+                    int block_no_j = 0;
+                    for (auto &machine_schedule_block_j: schedule.machine_schedules[machine_no_j]){
+
+                        if (machine_schedule_block_i.task->job_id == machine_schedule_block_j.task->job_id){
+                            task* task_i = machine_schedule_block_i.task;
+                            double start_i = machine_schedule_block_i.start_time;
+                            task* task_j = machine_schedule_block_j.task;
+                            double start_j = machine_schedule_block_j.start_time;
+                            if  (!(start_i + task_i->process_time <= start_j or start_j + task_j->process_time <= start_i)){
+                                // collision
+                                if (machine_schedule_block_i.path_index < machine_schedule_block_j.path_index){
+                                    // shift start time of block j and subsequent blocks in machine j
+                                    for (int block_no = block_no_j; block_no < schedule.machine_schedules[machine_no_j].size(); block_no++){
+                                        schedule.machine_schedules[machine_no_j][block_no].start_time += ((start_i + task_i->process_time) - start_j);
+                                    }
+                                }
+                                else{
+                                    // shift start time of block i and subsequent blocks in machine i
+                                    for (int block_no = block_no_i; block_no < schedule.machine_schedules[machine_no_i].size(); block_no++){
+                                        schedule.machine_schedules[machine_no_i][block_no].start_time += ((start_j + task_j->process_time) - start_i);
+                                    }
+                                }
+                            }
+                        }
+                        block_no_j++;
+                    }
+                }
+            }
+            block_no_i++;
+        }
+    }
+
+    // Find makespan of schedule
+    double earliest_finish = DBL_MAX;
+    for (auto &machine: schedule.machine_schedules){
+        schedule_block last_task = machine.back();
+        if (last_task.start_time + last_task.task->process_time < earliest_finish){
+            earliest_finish = last_task.start_time + last_task.task->process_time;
+        }
+    }
+    schedule.makespan = earliest_finish;
+}
+
+void ACO::saveScheduleAsCSV(schedule &schedule) {
+    ofstream file;
+    file.open ("../solutions/" + schedule.filename + ".csv");
+    file << "Task,Start,Finish,Job,Description\n";
+
+    for (auto &machine_schedule: schedule.machine_schedules){
+        for (auto &schedule_block: machine_schedule){
+            file << "Machine " << schedule_block.task->machine_no << ",";
+            file << schedule_block.start_time << "," << schedule_block.start_time + schedule_block.task->process_time << ",";
+            file << "Job " << schedule_block.task->job_id << ",J" << schedule_block.task->job_id << "\n";
+        }
+    }
+    file.close();
+}
+
+
+
