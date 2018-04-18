@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
 
     /* Create ant colony optimization object */
     int swarm_size = 10;
-    int cycles = 1000;
+    int cycles = 1;
     double alpha = 0.2;
     double beta = 0.8;
     double rho = 0.7;
@@ -34,12 +34,14 @@ int main(int argc, char *argv[]) {
     }
     aco.runOptimization();
 
-//    string solutionFile = "Schedule_9";
-//    printf("Print Gantt chart of solution..\n");
-//    string command = "python \"..\\src\\run_gantt.py\"";
-//    string args = " " + solutionFile;
-//    command += args;
-//    system(command.c_str());
+    for (int k = 0; k < swarm_size; k++) {
+        string solutionFile = "Schedule_" + to_string(k);
+        printf("Print Gantt chart of solution %d..\n", k);
+        string command = "python \"..\\src\\run_gantt.py\"";
+        string args = " " + solutionFile;
+        command += args;
+        system(command.c_str());
+    }
 
     t = clock() - t;
     printf("Time consumed: %d clicks (%f seconds).\n", int(t), ((float)int(t))/CLOCKS_PER_SEC);

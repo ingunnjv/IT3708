@@ -68,6 +68,8 @@ void ACO::runOptimization() {
     vector<ant> ants(this->swarm_size, ant(0));
     initializePheromoneTrails();
 
+    schedule all_time_best_schedule;
+    all_time_best_schedule.makespan = DBL_MAX;
     int cycle = 0;
     while(cycle < cycles){
         setMatrixToZero(pheromone_accumulator);
@@ -103,11 +105,11 @@ void ACO::runOptimization() {
             }
         }
 
-        int current_cycles_best_makespan = INT_MAX;
-        int all_time_best_makespan = INT_MAX;
-        // all_time_best_schedule;
-        // cycles_best_schedule;
-        vector<ant> elites;
+
+        schedule current_cycles_best_schedule;
+        current_cycles_best_schedule.makespan = DBL_MAX;
+
+        vector<ant*> elites;
         vector<ant> not_elites;
         vector <schedule> schedules(this->swarm_size);
         for (int k = 0; k < this->swarm_size; k++){
@@ -117,15 +119,16 @@ void ACO::runOptimization() {
             saveScheduleAsCSV(schedules[k]);
 
 
-            if (schedules[k].makespan < all_time_best_makespan){
-                continue;
+            if (schedules[k].makespan < all_time_best_schedule.makespan){
+                all_time_best_schedule = schedules[k];
             }
-            if (schedules[k].makespan == current_cycles_best_makespan){
-                elites.push_back(ants[k]);
+            if (schedules[k].makespan == current_cycles_best_schedule.makespan){
+                elites.push_back(&ants[k]);
             }
-            else if (schedules[k].makespan < current_cycles_best_makespan){
+            else if (schedules[k].makespan < current_cycles_best_schedule.makespan){
                 elites.clear();
-                elites.push_back(ants[k]);
+                elites.push_back(&ants[k]);
+                current_cycles_best_schedule = schedules[k];
             }
 
         }
@@ -304,7 +307,6 @@ void ACO::buildSchedule(schedule &schedule, int k) {
 
     // Add tasks to machines in correct order
     schedule.machine_schedules.resize(jssp->getNumMachines());
-    int edge_count = 0;
     for (auto &edge: schedule.ant->path){
         task* task = edge.second;
         schedule_block block;
@@ -315,59 +317,49 @@ void ACO::buildSchedule(schedule &schedule, int k) {
         else{
             block.start_time = schedule.machine_schedules[task->machine_no].back().start_time + schedule.machine_schedules[task->machine_no].back().task->process_time;
         }
-        block.path_index = edge_count;
         schedule.machine_schedules[task->machine_no].push_back(block);
-        edge_count++;
+
+
     }
 
-    // Avoid collisions between jobs in different machines
-    for (int machine_no_i = 0; machine_no_i < jssp->getNumMachines(); machine_no_i++){
-        int block_no_i = 0;
-        for (auto &machine_schedule_block_i: schedule.machine_schedules[machine_no_i]){
+    // Avoid collisions between tasks in the same job
+    for (auto &edge: schedule.ant->path){
+        task* current_task = edge.second;
 
-            for (int machine_no_j = 0; machine_no_j < jssp->getNumMachines(); machine_no_j++){
-                if (machine_no_i != machine_no_j){
-                    int block_no_j = 0;
-                    for (auto &machine_schedule_block_j: schedule.machine_schedules[machine_no_j]){
+        double job_end_time = 0;
+        double machine_end_time = 0;
+        for (int block_no = 0; block_no < schedule.machine_schedules[current_task->machine_no].size(); block_no++){
+            if (schedule.machine_schedules[current_task->machine_no][block_no].task->task_id == current_task->task_id){
 
-                        if (machine_schedule_block_i.task->job_id == machine_schedule_block_j.task->job_id){
-                            task* task_i = machine_schedule_block_i.task;
-                            double start_i = machine_schedule_block_i.start_time;
-                            task* task_j = machine_schedule_block_j.task;
-                            double start_j = machine_schedule_block_j.start_time;
-                            if  (!(start_i + task_i->process_time <= start_j or start_j + task_j->process_time <= start_i)){
-                                // collision
-                                if (machine_schedule_block_i.path_index < machine_schedule_block_j.path_index){
-                                    // shift start time of block j and subsequent blocks in machine j
-                                    for (int block_no = block_no_j; block_no < schedule.machine_schedules[machine_no_j].size(); block_no++){
-                                        schedule.machine_schedules[machine_no_j][block_no].start_time += ((start_i + task_i->process_time) - start_j);
-                                    }
-                                }
-                                else{
-                                    // shift start time of block i and subsequent blocks in machine i
-                                    for (int block_no = block_no_i; block_no < schedule.machine_schedules[machine_no_i].size(); block_no++){
-                                        schedule.machine_schedules[machine_no_i][block_no].start_time += ((start_j + task_j->process_time) - start_i);
-                                    }
-                                }
-                            }
-                        }
-                        block_no_j++;
-                    }
+                // If there are tasks that come before the current task in this job
+                if ((schedule.machine_schedules[current_task->machine_no][block_no].task->task_id - 1) % jssp->getNumMachines() > 0){
+                    // Save when the preceding task ended
+                    pair<int, int> job_position = findJobInMachineSchedules(schedule.machine_schedules[current_task->machine_no][block_no].task->task_id - 1, schedule.machine_schedules);
+                    job_end_time = schedule.machine_schedules[job_position.first][job_position.second].start_time +
+                                   schedule.machine_schedules[job_position.first][job_position.second].task->process_time;
                 }
+                // If there ar tasks that come before the current task in this machine
+                if (block_no > 0){
+                    // Save when the preceding task ended
+                    machine_end_time = schedule.machine_schedules[current_task->machine_no][block_no - 1].start_time +
+                                       schedule.machine_schedules[current_task->machine_no][block_no - 1].task->process_time;
+                }
+                // Adjust the start time of the current task
+                schedule.machine_schedules[current_task->machine_no][block_no].start_time = max(job_end_time, machine_end_time);
             }
-            block_no_i++;
         }
+
     }
 
     // Find makespan of schedule
-    double earliest_finish = DBL_MAX;
+    double latest_finish = 0;
     for (auto &machine: schedule.machine_schedules){
         schedule_block last_task = machine.back();
-        if (last_task.start_time + last_task.task->process_time < earliest_finish){
-            earliest_finish = last_task.start_time + last_task.task->process_time;
+        if (last_task.start_time + last_task.task->process_time > latest_finish){
+            latest_finish = last_task.start_time + last_task.task->process_time;
         }
     }
-    schedule.makespan = earliest_finish;
+    schedule.makespan = latest_finish;
 }
 
 void ACO::saveScheduleAsCSV(schedule &schedule) {
@@ -379,11 +371,23 @@ void ACO::saveScheduleAsCSV(schedule &schedule) {
         for (auto &schedule_block: machine_schedule){
             file << "Machine " << schedule_block.task->machine_no << ",";
             file << schedule_block.start_time << "," << schedule_block.start_time + schedule_block.task->process_time << ",";
-            file << "Job " << schedule_block.task->job_id << ",J" << schedule_block.task->job_id << "\n";
+            file << "Job " << schedule_block.task->job_id << ",J" << schedule_block.task->job_id << (schedule_block.task->task_id - 1) % jssp->getNumMachines() << "\n";
         }
     }
     file.close();
 }
 
+
+pair<int, int> ACO::findJobInMachineSchedules(int task_id, const vector<vector<schedule_block>> &machine_schedules) {
+    // Returns the position of task_id in machine_schedules
+    for (int machine_no = 0; machine_no < machine_schedules.size(); machine_no++){
+        for (int block_no = 0; block_no < machine_schedules[machine_no].size(); block_no++){
+            if (machine_schedules[machine_no][block_no].task->task_id == task_id){
+                pair<int,int> position = make_pair(machine_no, block_no);
+                return position;
+            }
+        }
+    }
+}
 
 
