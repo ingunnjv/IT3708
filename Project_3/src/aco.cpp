@@ -5,16 +5,18 @@
 #include <cfloat>
 #include <fstream>
 #include "scheduleBuilder.h"
+#include "utils.h"
 
 using namespace std;
 
-ACO::ACO(JSSP &jssp, int swarm_size, int cycles, double alpha, double beta, double rho, double initial_pheromone){
+ACO::ACO(JSSP &jssp, int swarm_size, int cycles, double alpha, double beta, double rho, double initial_pheromone, double Q){
     this->jssp = &jssp;
     this->swarm_size = swarm_size;
     this->cycles = cycles;
     this->alpha = alpha;
     this->beta = beta;
     this->rho = rho;
+    this->Q = Q;
     this->initial_pheromone = initial_pheromone;
     this->pheromone_trails.resize(jssp.getNumTasks()+1, vector<double>(jssp.getNumTasks()+1));
 }
@@ -110,40 +112,33 @@ void ACO::runOptimization() {
         schedule current_cycles_best_schedule;
         current_cycles_best_schedule.makespan = DBL_MAX;
 
-        vector<ant*> elites;
-        vector<ant> not_elites;
+        vector<int> elites;
         vector <schedule> schedules(this->swarm_size);
         for (int k = 0; k < this->swarm_size; k++){
             /* Build schedule */
-            buildSchedule(schedules[k], ants[k].path, k, jssp);
-            saveScheduleAsCSV(schedules[k], jssp);
-
+            schedules[k].ant_nr = k;
+            buildSchedule(schedules[k], ants[k].path, jssp);
 
             if (schedules[k].makespan < all_time_best_schedule.makespan){
                 all_time_best_schedule = schedules[k];
             }
             if (schedules[k].makespan == current_cycles_best_schedule.makespan){
-                elites.push_back(&ants[k]);
+                elites.push_back(k);
             }
             else if (schedules[k].makespan < current_cycles_best_schedule.makespan){
                 elites.clear();
-                elites.push_back(&ants[k]);
+                elites.push_back(k);
                 current_cycles_best_schedule = schedules[k];
+//                string filename = "Cycle_" + to_string(cycle);
+//                saveScheduleAsCSV(schedules[k], filename, jssp);
             }
 
         }
 
         for (auto & schedule: schedules){
-            // if schedule->ant in elites
-                /* for (auto &edge: schedule->ant.path){
-                 *    task* task_i = edge.first;
-                 *    task* task_j = edge.second;
-                 *    pheromone_accumulator[task_i->task_id][task_j->task_id] = Q/current_cycles_best_makespan * elites.size()
-                 *
-                 *
-                 *
-                 * */
+            addAntPheromoneContribution(pheromone_accumulator, elites, ants[schedule.ant_nr], schedule.ant_nr, schedule.makespan);
         }
+        updatePheromoneTrails(pheromone_accumulator);
 
         /* AFTER ANTS HAVE ACQUIRED PATHS:
          *
@@ -168,7 +163,7 @@ void ACO::runOptimization() {
 
         cycle++;
     }
-
+    saveScheduleAsCSV(all_time_best_schedule, "Best", jssp);
 }
 
 template<typename T>
@@ -294,12 +289,32 @@ std::vector<double> ACO::getStateTransitionProbs(vector<pair<task *, task *>> st
     return state_transitions_probs;
 }
 
-void ACO::addAntPheromoneContribution(vector<vector<double>> pheromone_accumulator){
-
+void ACO::addAntPheromoneContribution(vector<vector<double>> &pheromone_accumulator,
+                                      vector<int> elites,
+                                      const ant &ant, const int ant_nr, double cost) {
+    if (isElementInVector(ant_nr, elites)){
+        for (auto &edge: ant.path){
+            task* task_i= edge.first;
+            task* task_j = edge.second;
+            pheromone_accumulator[task_i->task_id][task_j->task_id] += Q / cost * elites.size();
+            // holder med ene veien?
+        }
+    }
+    else{
+        for (auto &edge: ant.path){
+            task* task_i= edge.first;
+            task* task_j = edge.second;
+            pheromone_accumulator[task_i->task_id][task_j->task_id] += Q / cost;
+        }
+    }
 }
 
-void ACO::updatePheromoneTrails(vector<vector<double>> pheromone_accumulator){
-
+void ACO::updatePheromoneTrails(const vector<vector<double>> &pheromone_accumulator){
+    for (int row = 0; row < this->pheromone_trails.size(); row++) {
+        for (int col = 0; col < this->pheromone_trails[row].size(); col++) {
+            pheromone_trails[row][col] = rho * pheromone_trails[row][col] + pheromone_accumulator[row][col];
+        }
+    }
 }
 
 

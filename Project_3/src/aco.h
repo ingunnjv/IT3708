@@ -3,6 +3,7 @@
 
 #include "jssp.h"
 #include "graph.h"
+#include "scheduleBuilder.h"
 
 enum decidability_rules{ SPT = 0, LPT };
 
@@ -24,18 +25,21 @@ private:
     double alpha; // influence weight of pheromone
     double beta; // influence weight of heuristic
     double rho; // evaporation rate of pheromone
+    double Q; // constant factor in ant pheromone contribution
     double initial_pheromone; // initial pheromone for all edges
     std::vector<std::vector<double>> pheromone_trails; // pheromone on all edges
 
 public:
-    ACO(JSSP &jssp, int swarm_size, int cycles, double alpha, double beta, double rho, double initial_pheromone);
+    ACO(JSSP &jssp, int swarm_size, int cycles, double alpha, double beta, double rho, double initial_pheromone, double Q);
     void initializePheromoneTrails();
     void printPheromoneTrailsTable();
     std::vector <std::pair<task *, task *>> getStateTransitions(const std::vector<std::vector<int>> &tabu);
     std::vector<double>
     getStateTransitionProbs(std::vector<std::pair<task *, task *>> state_transitions, uint8_t decidability_rule);
-    void addAntPheromoneContribution(std::vector<std::vector<double>> pheromone_accumulator);
-    void updatePheromoneTrails(std::vector<std::vector<double>> pheromone_accumulator);
+    void addAntPheromoneContribution(std::vector<std::vector<double>> &pheromone_accumulator,
+                                     std::vector<int> elites,
+                                     const ant &ant, const int ant_nr, double cost);
+    void updatePheromoneTrails(const std::vector<std::vector<double>> &pheromone_accumulator);
 
     void runOptimization();
 

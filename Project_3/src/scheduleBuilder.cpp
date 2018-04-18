@@ -5,8 +5,8 @@
 #include "scheduleBuilder.h"
 using namespace std;
 
-void buildSchedule(schedule &schedule, const vector<pair<task*, task*>> &path, int k, JSSP *jssp) {
-    schedule.filename = "Schedule_" + to_string(k);
+void buildSchedule(schedule &schedule, const vector<pair<task *, task *>> &path, JSSP *jssp) {
+    schedule.filename = "Schedule_" + to_string(schedule.ant_nr);
 
     // Add tasks to machines in correct order
     schedule.machine_schedules.resize(jssp->getNumMachines());
@@ -77,9 +77,9 @@ pair<int, int> findJobInMachineSchedules(int task_id, const vector<vector<schedu
     }
 }
 
-void saveScheduleAsCSV(schedule &schedule, JSSP *jssp) {
+void saveScheduleAsCSV(schedule &schedule, string filename, JSSP *jssp) {
     ofstream file;
-    file.open ("../solutions/" + schedule.filename + ".csv");
+    file.open ("../solutions/" + filename + ".csv");
     file << "Task,Start,Finish,Job,Description\n";
 
     for (auto &machine_schedule: schedule.machine_schedules){

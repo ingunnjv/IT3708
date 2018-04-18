@@ -13,35 +13,43 @@ int main(int argc, char *argv[]) {
 
     /* Create Job shop scheduling problem instance */
     JSSP jssp = JSSP();
-    if(jssp.readInputData("test_3x3")) return 1;
+    if(jssp.readInputData("6")) return 1;
 
     /* Create ant colony optimization object */
     int swarm_size = 10;
-    int cycles = 1;
+    int cycles = 1000;
     double alpha = 0.2;
     double beta = 0.8;
     double rho = 0.7;
     double initial_pheromone = 0.1;
-    ACO aco = ACO(jssp, swarm_size, cycles, alpha, beta, rho, initial_pheromone);
-    aco.printPheromoneTrailsTable();
+    double Q = 1;
+    ACO aco = ACO(jssp, swarm_size, cycles, alpha, beta, rho, initial_pheromone, Q);
+//    aco.printPheromoneTrailsTable();
 
     // Delete old solution files
-    for (int k = 0; k < swarm_size; k++){
-        string file = "../solutions/Schedule_" + to_string(k) + ".csv";
-        const char * filename = file.c_str();
-        if( remove( filename ) != 0 )
-            perror( "Error deleting file" );
-    }
+//    for (int c = 0; c < cycles; c++){
+//        string file = "../solutions/Cycle_" + to_string(c) + ".csv";
+//        const char * filename = file.c_str();
+//        if( remove( filename ) != 0 )
+//            perror( "Error deleting file" );
+//    }
     aco.runOptimization();
 
-    for (int k = 0; k < swarm_size; k++) {
-        string solutionFile = "Schedule_" + to_string(k);
-        printf("Print Gantt chart of solution %d..\n", k);
-        string command = "python \"..\\src\\run_gantt.py\"";
-        string args = " " + solutionFile;
-        command += args;
-        system(command.c_str());
-    }
+//    for (int c = 0; c < cycles; c++){
+//        string solutionFile = "Cycle_" + to_string(c);
+//        printf("Print Gantt chart of cycle %d solution..\n", c);
+//        string command = "python \"..\\src\\run_gantt.py\"";
+//        string args = " " + solutionFile;
+//        command += args;
+//        system(command.c_str());
+//    }
+    string solutionFile = "Best";
+    printf("Print Gantt chart of best solution..\n");
+    string command = "python \"..\\src\\run_gantt.py\"";
+    string args = " " + solutionFile;
+    command += args;
+    system(command.c_str());
+
 
     t = clock() - t;
     printf("Time consumed: %d clicks (%f seconds).\n", int(t), ((float)int(t))/CLOCKS_PER_SEC);

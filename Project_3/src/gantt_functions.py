@@ -308,12 +308,12 @@ def gantt_colorscale(chart, colors, title, index_col, show_colorbar, bar_width,
 
 	    index_vals.sort()
 
-	    if len(colors) < len(index_vals):
-	        raise exceptions.PlotlyError(
-	            "Error. The number of colors in 'colors' must be no less "
-	            "than the number of unique index values in your group "
-	            "column."
-	        )
+	    # if len(colors) < len(index_vals):
+	    #     raise exceptions.PlotlyError(
+	    #         "Error. The number of colors in 'colors' must be no less "
+	    #         "than the number of unique index values in your group "
+	    #         "column."
+	    #     )
 
 	    # make a dictionary assignment to each index value
 	    index_vals_dict = {}
@@ -379,7 +379,7 @@ def gantt_colorscale(chart, colors, title, index_col, show_colorbar, bar_width,
 	                    name=str(index_value),
 	                    hoverinfo='none',
 	                    marker=dict(
-	                        color=colors[k],
+	                        color=index_vals_dict[chart[index][index_col]],#colors[k],
 	                        size=1
 	                    )
 	                )
@@ -725,7 +725,6 @@ def create_gantt(df, colors=None, index_col=None, show_colorbar=False,
         return fig
     else:
         if not isinstance(colors, dict):
-        	print('gantt_colorscale')
         	fig = gantt_colorscale(
         		chart, colors, title, index_col, show_colorbar, bar_width,
         		showgrid_x, showgrid_y, height, width,
@@ -733,7 +732,6 @@ def create_gantt(df, colors=None, index_col=None, show_colorbar=False,
         		)
         	return fig
         else:
-        	print('gantt_dict')
         	fig = gantt_dict(
         		chart, colors, title, index_col, show_colorbar, bar_width,
         		showgrid_x, showgrid_y, height, width,
