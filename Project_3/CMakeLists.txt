@@ -6,5 +6,5 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
 
 INCLUDE_DIRECTORIES(C:/Users/Public/eigen-eigen-5a0156e40feb)
 
-add_executable(Project_3 src/main.cpp src/jssp.cpp src/jssp.h src/aco.cpp src/aco.h src/graph.cpp src/graph.h src/utils.cpp src/utils.h)
+add_executable(Project_3 src/main.cpp src/jssp.cpp src/jssp.h src/aco.cpp src/aco.h src/graph.cpp src/graph.h src/utils.cpp src/utils.h src/scheduleBuilder.cpp src/scheduleBuilder.h)
 
