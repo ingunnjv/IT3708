@@ -79,9 +79,10 @@ void ACO::runOptimization() {
     all_time_best_schedule.makespan = DBL_MAX;
     int cycle = 0;
     while(cycle < cycles){
-        if(cycle % 20 == 0 and cycle != 0){
+        if(cycle % 200 == 0 and cycle != 0){
             printf("Cycle: %d\n", cycle);
-            printf("- Shortest makespan: %f\n", all_time_best_schedule.makespan);
+            printf("- Shortest makespan all time: %f\n", all_time_best_schedule.makespan);
+            printf("- Shortest makespan previous cycle: %f\n", current_cycles_best_schedule.makespan);
         }
         setMatrixToZero(pheromone_accumulator);
 
@@ -226,38 +227,66 @@ vector<pair<task *, task *>> ACO::getStateTransitions(const vector<vector<int>> 
         }
     }
     return state_transitions;
-
 }
 
-std::vector<double> ACO::getStateTransitionProbs(vector<pair<task *, task *>> state_transitions, uint8_t decidability_rule) {
+vector<double> ACO::getStateTransitionProbs(vector<pair<task *, task *>> state_transitions, uint8_t decidability_rule) {
     vector<double> state_transitions_probs;
     double pheromone_and_process_time_sum = 0;
+
+    double max_edge_pheromone = 0;
+    double min_edge_pheromone = DBL_MAX;
+    double max_process_time = 0;
+    double min_process_time = DBL_MAX;
+
+    /* Find minmax of pheromone edges and process time for normalization */
     for(auto &transition: state_transitions){
-        double edge_pheromone = 0;
         double task_process_time = 0;
         task* task_i = transition.first;
         task* task_j = transition.second;
-        edge_pheromone = pheromone_trails[task_i->task_id][task_j->task_id];
+        double edge_pheromone = pheromone_trails[task_i->task_id][task_j->task_id];
         if(decidability_rule == decidability_rules::SPT){
             task_process_time = 1/task_j->process_time;
         }
         else if(decidability_rule == decidability_rules::LPT){
             task_process_time = task_j->process_time;
         }
+        max_edge_pheromone = max(max_edge_pheromone, edge_pheromone);
+        min_edge_pheromone = min(min_edge_pheromone, edge_pheromone);
+        max_process_time = max(max_process_time, task_process_time);
+        min_process_time = min(min_process_time, task_process_time);
+    }
+
+    for(auto &transition: state_transitions){
+        double task_process_time = 0;
+        task* task_i = transition.first;
+        task* task_j = transition.second;
+        double edge_pheromone = pheromone_trails[task_i->task_id][task_j->task_id];
+        if(decidability_rule == decidability_rules::SPT){
+            task_process_time = 1/task_j->process_time;
+        }
+        else if(decidability_rule == decidability_rules::LPT){
+            task_process_time = task_j->process_time;
+        }
+        // Normalize
+        edge_pheromone = (edge_pheromone - min_edge_pheromone)/(max_edge_pheromone - min_edge_pheromone);
+        task_process_time = (task_process_time - min_process_time)/(max_process_time - min_process_time);
         pheromone_and_process_time_sum += pow(edge_pheromone, alpha)*pow(task_process_time, beta);
     }
     for(auto &transition: state_transitions){
-        double edge_pheromone = 0;
         double task_process_time = 0;
         task* task_i = transition.first;
         task* task_j = transition.second;
-        edge_pheromone = pheromone_trails[task_i->task_id][task_j->task_id];
+        double edge_pheromone = pheromone_trails[task_i->task_id][task_j->task_id];
         if(decidability_rule == decidability_rules::SPT){
             task_process_time = 1/task_j->process_time;
         }
         else if(decidability_rule == decidability_rules::LPT){
             task_process_time = task_j->process_time;
         }
+
+        edge_pheromone = (edge_pheromone - min_edge_pheromone)/(max_edge_pheromone - min_edge_pheromone);
+        task_process_time = (task_process_time - min_process_time)/(max_process_time - min_process_time);
+
         double state_transitions_prob = (pow(edge_pheromone, alpha)*pow(task_process_time, beta))/pheromone_and_process_time_sum;
         state_transitions_probs.push_back(state_transitions_prob);
     }
@@ -271,8 +300,8 @@ void ACO::addAntPheromoneContribution(vector<vector<double>> &pheromone_accumula
         for (auto &edge: ant.path){
             task* task_i= edge.first;
             task* task_j = edge.second;
-            pheromone_accumulator[task_i->task_id][task_j->task_id] += (Q / makespan) * elites.size();
-            pheromone_accumulator[task_j->task_id][task_i->task_id] += (Q / makespan) * elites.size();
+            pheromone_accumulator[task_i->task_id][task_j->task_id] += (Q / makespan) * 2*elites.size();
+            pheromone_accumulator[task_j->task_id][task_i->task_id] += (Q / makespan) * 2*elites.size();
         }
     }
     else{
