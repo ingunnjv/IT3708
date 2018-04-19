@@ -13,11 +13,11 @@ int main(int argc, char *argv[]) {
 
     /* Create Job shop scheduling problem instance */
     JSSP jssp = JSSP();
-    if(jssp.readInputData("test_3x3")) return 1;
+    if(jssp.readInputData("6")) return 1;
 
     /* Create ant colony optimization object */
-    int swarm_size = 10;
-    int cycles = 1000;
+    int swarm_size = jssp.getNumJobs()/2;
+    int cycles = 600;
     double alpha = 0.2;
     double beta = 0.8;
     double rho = 0.7;
@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
     double Q = 100;
     ACO aco = ACO(jssp, swarm_size, cycles, alpha, beta, rho, initial_pheromone, Q,
     max_pheromone, min_pheromone);
-//    aco.printPheromoneTrailsTable();
+
 
     // Delete old solution files
 //    for (int c = 0; c < cycles; c++){
@@ -37,6 +37,7 @@ int main(int argc, char *argv[]) {
 //            perror( "Error deleting file" );
 //    }
     aco.runOptimization();
+    aco.printPheromoneTrailsTable();
 
 //    for (int c = 0; c < cycles; c++){
 //        string solutionFile = "Cycle_" + to_string(c);

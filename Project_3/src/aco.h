@@ -41,7 +41,7 @@ public:
     getStateTransitionProbs(std::vector<std::pair<task *, task *>> state_transitions, uint8_t decidability_rule);
     void addAntPheromoneContribution(std::vector<std::vector<double>> &pheromone_accumulator,
                                      std::vector<int> elites,
-                                     const ant &ant, const int ant_nr, double cost);
+                                     const ant &ant, const int ant_nr, double makespan);
     void updatePheromoneTrails(const std::vector<std::vector<double>> &pheromone_accumulator);
 
     void runOptimization();

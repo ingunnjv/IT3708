@@ -61,7 +61,7 @@ void ACO::initializePheromoneTrails(){
 void ACO::printPheromoneTrailsTable(){
     for(const auto &trails: pheromone_trails){
         for(const auto &trail: trails){
-            printf("%d\t", int(trail));
+            printf("%.2f\t", trail);
         }
         printf("\n");
     }
@@ -79,8 +79,10 @@ void ACO::runOptimization() {
     all_time_best_schedule.makespan = DBL_MAX;
     int cycle = 0;
     while(cycle < cycles){
-        printf("Cycle: %d\n", cycle);
-        printf("- Shortest makespan: %f\n", all_time_best_schedule.makespan);
+        if(cycle % 20 == 0 and cycle != 0){
+            printf("Cycle: %d\n", cycle);
+            printf("- Shortest makespan: %f\n", all_time_best_schedule.makespan);
+        }
         setMatrixToZero(pheromone_accumulator);
 
         for (int k = 0; k < this->swarm_size; k++){
@@ -90,13 +92,7 @@ void ACO::runOptimization() {
             auto decidability_rule = uint8_t(k % 2);
             ants[k] = ant(decidability_rule);
 
-            /* Random assignment of the first operation */
-//            int start_task = k % jssp->getNumJobs();
-//            ants[k].path.push_back(make_pair(&source, &jssp->job_tasks[start_task][0]));
-//            updateTabu(tabu, &jssp->job_tasks[start_task][0]);
-
             while(!isTabuFull(tabu)){
-
                 /* Determine the set of operations achievable from the current state */
                 vector<pair<task*, task*>> state_transitions = getStateTransitions(tabu);
 
@@ -113,9 +109,7 @@ void ACO::runOptimization() {
             }
         }
 
-
         current_cycles_best_schedule.makespan = DBL_MAX;
-
         vector<int> elites;
         vector <schedule> schedules(this->swarm_size);
         for (int k = 0; k < this->swarm_size; k++){
@@ -133,8 +127,6 @@ void ACO::runOptimization() {
                 elites.clear();
                 elites.push_back(k);
                 current_cycles_best_schedule = schedules[k];
-//                string filename = "Cycle_" + to_string(cycle);
-//                saveScheduleAsCSV(schedules[k], filename, jssp);
             }
 
         }
@@ -143,27 +135,6 @@ void ACO::runOptimization() {
             addAntPheromoneContribution(pheromone_accumulator, elites, ants[schedule.ant_nr], schedule.ant_nr, schedule.makespan);
         }
         updatePheromoneTrails(pheromone_accumulator);
-
-        /* AFTER ANTS HAVE ACQUIRED PATHS:
-         *
-         * current_cycles_best = INF
-         * for every ant
-         *  decode path to schedule
-         *  find schedule length
-         *  save ants schedule
-         *  if schedule solution better than all_time_best
-         *      save it as best
-         *      save ant as elite
-         *  if schedule better (or equal) than current_cycles_best
-         *      save ant as elite
-         * for every ant not elite
-         *  delta t += ant pheromone contribution to edges w/ eq 3
-         * for every ant elite
-         *  delta t += ant pheromone contribution to edges w/ eq 4
-         * for every edge
-         *  eq 2
-         * */
-
 
         cycle++;
     }
@@ -295,20 +266,21 @@ std::vector<double> ACO::getStateTransitionProbs(vector<pair<task *, task *>> st
 
 void ACO::addAntPheromoneContribution(vector<vector<double>> &pheromone_accumulator,
                                       vector<int> elites,
-                                      const ant &ant, const int ant_nr, double cost) {
+                                      const ant &ant, const int ant_nr, double makespan) {
     if (isElementInVector(ant_nr, elites)){
         for (auto &edge: ant.path){
             task* task_i= edge.first;
             task* task_j = edge.second;
-            pheromone_accumulator[task_i->task_id][task_j->task_id] += Q / cost * elites.size();
-            // holder med ene veien?
+            pheromone_accumulator[task_i->task_id][task_j->task_id] += (Q / makespan) * elites.size();
+            pheromone_accumulator[task_j->task_id][task_i->task_id] += (Q / makespan) * elites.size();
         }
     }
     else{
         for (auto &edge: ant.path){
             task* task_i= edge.first;
             task* task_j = edge.second;
-            pheromone_accumulator[task_i->task_id][task_j->task_id] += Q / cost;
+            pheromone_accumulator[task_i->task_id][task_j->task_id] += Q / makespan;
+            pheromone_accumulator[task_j->task_id][task_i->task_id] += Q / makespan;
         }
     }
 }
