@@ -6,7 +6,7 @@
 using namespace std;
 
 void buildSchedule(schedule &schedule, const vector<pair<task *, task *>> &path, JSSP *jssp) {
-    schedule.filename = "Schedule_" + to_string(schedule.ant_nr);
+    //schedule.filename = "Schedule_" + to_string(schedule.ant_nr);
 
     // Add tasks to machines in correct order
     schedule.machine_schedules.resize(jssp->getNumMachines());
