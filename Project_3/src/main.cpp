@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
 
     /* Create Job shop scheduling problem instance */
     JSSP jssp = JSSP();
-    if(jssp.readInputData("6")) return 1;
+    if(jssp.readInputData("test_3x3")) return 1;
 
     /* Create ant colony optimization object */
     int swarm_size = 10;
@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
     double beta = 0.8;
     double rho = 0.7;
     double initial_pheromone = 0.1;
-    double Q = 1;
+    double Q = 100;
     ACO aco = ACO(jssp, swarm_size, cycles, alpha, beta, rho, initial_pheromone, Q);
 //    aco.printPheromoneTrailsTable();
 

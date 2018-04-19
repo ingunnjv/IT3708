@@ -71,6 +71,7 @@ void ACO::runOptimization() {
     vector<ant> ants(this->swarm_size, ant(0));
     initializePheromoneTrails();
 
+    schedule current_cycles_best_schedule;
     schedule all_time_best_schedule;
     all_time_best_schedule.makespan = DBL_MAX;
     int cycle = 0;
@@ -104,12 +105,10 @@ void ACO::runOptimization() {
 
                 /* Save selected state in tabu */
                 updateTabu(tabu, next_edge.second);
-                int dummy = 0;
             }
         }
 
 
-        schedule current_cycles_best_schedule;
         current_cycles_best_schedule.makespan = DBL_MAX;
 
         vector<int> elites;
@@ -313,6 +312,12 @@ void ACO::updatePheromoneTrails(const vector<vector<double>> &pheromone_accumula
     for (int row = 0; row < this->pheromone_trails.size(); row++) {
         for (int col = 0; col < this->pheromone_trails[row].size(); col++) {
             pheromone_trails[row][col] = rho * pheromone_trails[row][col] + pheromone_accumulator[row][col];
+            if (pheromone_trails[row][col] > max_pheromone){
+                pheromone_trails[row][col] = max_pheromone;
+            }
+            else if (pheromone_trails[row][col] < min_pheromone){
+                pheromone_trails[row][col] = min_pheromone;
+            }
         }
     }
 }
