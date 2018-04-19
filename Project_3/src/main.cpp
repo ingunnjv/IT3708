@@ -13,40 +13,26 @@ int main(int argc, char *argv[]) {
 
     /* Create Job shop scheduling problem instance */
     JSSP jssp = JSSP();
-    if(jssp.readInputData("1")) return 1;
+    if(jssp.readInputData("6")) return 1;
 
-    /* Create ant colony optimization object */
-    int swarm_size = 10;
-    int cycles = 10000;
-    double alpha = 0.2;
-    double beta = 0.8;
-    double rho = 0.7;
+    /* Create parameters and ant colony optimization object */
+    int swarm_size = 100;
+    int cycles = 500;
+    double alpha = 1;
+    double beta = 5;
+    double rho = 0.5;
     double initial_pheromone = 0.1;
-    double max_pheromone = 1;
+    double max_pheromone = 1000;
     double min_pheromone = 0.01;
-    double Q = 5;
+    double Q = 100;
     ACO aco = ACO(jssp, swarm_size, cycles, alpha, beta, rho, initial_pheromone, Q,
     max_pheromone, min_pheromone);
 
-
-    // Delete old solution files
-//    for (int c = 0; c < cycles; c++){
-//        string file = "../solutions/Cycle_" + to_string(c) + ".csv";
-//        const char * filename = file.c_str();
-//        if( remove( filename ) != 0 )
-//            perror( "Error deleting file" );
-//    }
+    /* Run optimization */
     aco.runOptimization();
     aco.printPheromoneTrailsTable();
 
-//    for (int c = 0; c < cycles; c++){
-//        string solutionFile = "Cycle_" + to_string(c);
-//        printf("Print Gantt chart of cycle %d solution..\n", c);
-//        string command = "python \"..\\src\\run_gantt.py\"";
-//        string args = " " + solutionFile;
-//        command += args;
-//        system(command.c_str());
-//    }
+    /* Create gantt chart from python script */
     string solutionFile = "Best";
     printf("Print Gantt chart of best solution..\n");
     string command = "python \"..\\src\\run_gantt.py\"";

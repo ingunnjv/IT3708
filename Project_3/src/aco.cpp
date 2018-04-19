@@ -79,7 +79,7 @@ void ACO::runOptimization() {
     all_time_best_schedule.makespan = DBL_MAX;
     int cycle = 0;
     while(cycle < cycles){
-        if(cycle % 200 == 0 and cycle != 0){
+        if(cycle % 20 == 0 and cycle != 0){
             printf("Cycle: %d\n", cycle);
             printf("- Shortest makespan all time: %f\n", all_time_best_schedule.makespan);
             printf("- Shortest makespan previous cycle: %f\n", current_cycles_best_schedule.makespan);
@@ -268,8 +268,8 @@ vector<double> ACO::getStateTransitionProbs(vector<pair<task *, task *>> state_t
             task_process_time = task_j->process_time;
         }
         // Normalize
-        edge_pheromone = (edge_pheromone - min_edge_pheromone)/(max_edge_pheromone - min_edge_pheromone);
-        task_process_time = (task_process_time - min_process_time)/(max_process_time - min_process_time);
+        edge_pheromone = (edge_pheromone)/(max_edge_pheromone);
+        task_process_time = (task_process_time)/(max_process_time);
         pheromone_and_process_time_sum += pow(edge_pheromone, alpha)*pow(task_process_time, beta);
     }
     for(auto &transition: state_transitions){
@@ -284,8 +284,8 @@ vector<double> ACO::getStateTransitionProbs(vector<pair<task *, task *>> state_t
             task_process_time = task_j->process_time;
         }
 
-        edge_pheromone = (edge_pheromone - min_edge_pheromone)/(max_edge_pheromone - min_edge_pheromone);
-        task_process_time = (task_process_time - min_process_time)/(max_process_time - min_process_time);
+        edge_pheromone = (edge_pheromone)/(max_edge_pheromone);
+        task_process_time = (task_process_time)/(max_process_time);
 
         double state_transitions_prob = (pow(edge_pheromone, alpha)*pow(task_process_time, beta))/pheromone_and_process_time_sum;
         state_transitions_probs.push_back(state_transitions_prob);
