@@ -9,7 +9,8 @@
 
 using namespace std;
 
-ACO::ACO(JSSP &jssp, int swarm_size, int cycles, double alpha, double beta, double rho, double initial_pheromone, double Q){
+ACO::ACO(JSSP &jssp, int swarm_size, int cycles, double alpha, double beta, double rho, double initial_pheromone,
+         double Q, double max_pheromone, double min_pheromone) {
     this->jssp = &jssp;
     this->swarm_size = swarm_size;
     this->cycles = cycles;
@@ -18,6 +19,8 @@ ACO::ACO(JSSP &jssp, int swarm_size, int cycles, double alpha, double beta, doub
     this->rho = rho;
     this->Q = Q;
     this->initial_pheromone = initial_pheromone;
+    this->max_pheromone = max_pheromone;
+    this->min_pheromone = min_pheromone;
     this->pheromone_trails.resize(jssp.getNumTasks()+1, vector<double>(jssp.getNumTasks()+1));
 }
 
@@ -76,6 +79,8 @@ void ACO::runOptimization() {
     all_time_best_schedule.makespan = DBL_MAX;
     int cycle = 0;
     while(cycle < cycles){
+        printf("Cycle: %d\n", cycle);
+        printf("- Shortest makespan: %f\n", all_time_best_schedule.makespan);
         setMatrixToZero(pheromone_accumulator);
 
         for (int k = 0; k < this->swarm_size; k++){

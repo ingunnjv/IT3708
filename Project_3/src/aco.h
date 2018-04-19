@@ -27,10 +27,13 @@ private:
     double rho; // evaporation rate of pheromone
     double Q; // constant factor in ant pheromone contribution
     double initial_pheromone; // initial pheromone for all edges
+    double max_pheromone;
+    double min_pheromone;
     std::vector<std::vector<double>> pheromone_trails; // pheromone on all edges
 
 public:
-    ACO(JSSP &jssp, int swarm_size, int cycles, double alpha, double beta, double rho, double initial_pheromone, double Q);
+    ACO(JSSP &jssp, int swarm_size, int cycles, double alpha, double beta, double rho, double initial_pheromone,
+            double Q, double max_pheromone, double min_pheromone);
     void initializePheromoneTrails();
     void printPheromoneTrailsTable();
     std::vector <std::pair<task *, task *>> getStateTransitions(const std::vector<std::vector<int>> &tabu);

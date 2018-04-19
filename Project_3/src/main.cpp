@@ -22,8 +22,11 @@ int main(int argc, char *argv[]) {
     double beta = 0.8;
     double rho = 0.7;
     double initial_pheromone = 0.1;
+    double max_pheromone = 0.5;
+    double min_pheromone = 0.01;
     double Q = 100;
-    ACO aco = ACO(jssp, swarm_size, cycles, alpha, beta, rho, initial_pheromone, Q);
+    ACO aco = ACO(jssp, swarm_size, cycles, alpha, beta, rho, initial_pheromone, Q,
+    max_pheromone, min_pheromone);
 //    aco.printPheromoneTrailsTable();
 
     // Delete old solution files
