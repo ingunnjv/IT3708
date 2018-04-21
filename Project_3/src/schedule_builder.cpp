@@ -2,7 +2,7 @@
 // Created by Ingunn on 18.04.2018.
 //
 
-#include "scheduleBuilder.h"
+#include "schedule_builder.h"
 using namespace std;
 
 void buildSchedule(schedule &schedule, const vector<pair<task *, task *>> &path, JSSP *jssp) {
@@ -20,8 +20,6 @@ void buildSchedule(schedule &schedule, const vector<pair<task *, task *>> &path,
             block.start_time = schedule.machine_schedules[task->machine_no].back().start_time + schedule.machine_schedules[task->machine_no].back().task->process_time;
         }
         schedule.machine_schedules[task->machine_no].push_back(block);
-
-
     }
 
     // Avoid collisions between tasks in the same job
@@ -40,7 +38,7 @@ void buildSchedule(schedule &schedule, const vector<pair<task *, task *>> &path,
                     job_end_time = schedule.machine_schedules[job_position.first][job_position.second].start_time +
                                    schedule.machine_schedules[job_position.first][job_position.second].task->process_time;
                 }
-                // If there ar tasks that come before the current task in this machine
+                // If there are tasks that come before the current task in this machine
                 if (block_no > 0){
                     // Save when the preceding task ended
                     machine_end_time = schedule.machine_schedules[current_task->machine_no][block_no - 1].start_time +
