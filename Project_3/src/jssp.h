@@ -1,6 +1,7 @@
 #ifndef PROJECT_3_JSSP_H
 #define PROJECT_3_JSSP_H
 
+#pragma once
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -27,10 +28,6 @@ struct task{
     }
 };
 
-struct schedule_block{
-    task* task;
-    double start_time;
-};
 
 typedef std::vector<std::vector<task>> task_matrix;
 
