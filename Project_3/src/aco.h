@@ -1,9 +1,9 @@
 #ifndef PROJECT_3_ACO_H
 #define PROJECT_3_ACO_H
 
+#pragma once
 #include "jssp.h"
-#include "graph.h"
-#include "scheduleBuilder.h"
+#include "schedule_builder.h"
 
 enum decidability_rules{ SPT = 0, LPT };
 

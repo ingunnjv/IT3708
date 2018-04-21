@@ -4,7 +4,7 @@
 #include <climits>
 #include <cfloat>
 #include <fstream>
-#include "scheduleBuilder.h"
+#include "schedule_builder.h"
 #include "utils.h"
 
 using namespace std;
@@ -300,8 +300,8 @@ void ACO::addAntPheromoneContribution(vector<vector<double>> &pheromone_accumula
         for (auto &edge: ant.path){
             task* task_i= edge.first;
             task* task_j = edge.second;
-            pheromone_accumulator[task_i->task_id][task_j->task_id] += (Q / makespan) * 2*elites.size();
-            pheromone_accumulator[task_j->task_id][task_i->task_id] += (Q / makespan) * 2*elites.size();
+            pheromone_accumulator[task_i->task_id][task_j->task_id] += (Q / makespan) * elites.size();
+            pheromone_accumulator[task_j->task_id][task_i->task_id] += (Q / makespan) * elites.size();
         }
     }
     else{
