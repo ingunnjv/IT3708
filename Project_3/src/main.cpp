@@ -40,9 +40,8 @@ int main(int argc, char *argv[]) {
 
 
 
-
     /* Create gantt chart from python script */
-    string solutionFile = "Best";
+    string solutionFile = "Best_bee";
     printf("Print Gantt chart of best solution..\n");
     string command = "python \"..\\src\\run_gantt.py\"";
     string args = " " + solutionFile;
