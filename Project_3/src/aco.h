@@ -5,7 +5,7 @@
 #include "jssp.h"
 #include "schedule_builder.h"
 
-enum decidability_rules{ SPT = 0, LPT };
+enum decidability_rules{MRTasks = 0, MRTime};
 
 struct ant{
     std::vector<std::pair<task*,task*>> path;
@@ -27,8 +27,8 @@ private:
     double rho; // evaporation rate of pheromone
     double Q; // constant factor in ant pheromone contribution
     double initial_pheromone; // initial pheromone for all edges
-    double max_pheromone;
-    double min_pheromone;
+    double max_pheromone_on_trails;
+    double min_pheromone_on_trails;
     std::vector<std::vector<double>> pheromone_trails; // pheromone on all edges
 
 public:
@@ -37,7 +37,8 @@ public:
     void initializePheromoneTrails();
     void printPheromoneTrailsTable();
     std::vector <std::pair<task *, task *>> getStateTransitions(const std::vector<std::vector<int>> &tabu);
-    std::vector<double> getStateTransitionProbs(std::vector<std::pair<task *, task *>> state_transitions, uint8_t decidability_rule);
+    std::vector<double> getStateTransitionProbs(std::vector<std::pair<task *, task *>> state_transitions, uint8_t decidability_rule,
+                                                    const std::vector<std::vector<int>> &tabu);
     void addAntPheromoneContribution(std::vector<std::vector<double>> &pheromone_accumulator,
                                      std::vector<int> elites,
                                      const ant &ant, const int ant_nr, double makespan);
