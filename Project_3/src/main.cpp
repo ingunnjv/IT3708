@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
 
     /* Create Job shop scheduling problem instance */
     JSSP jssp = JSSP();
-    if(jssp.readInputData("test_3x3")) return 1;
+    if(jssp.readInputData("6")) return 1;
 
 //    /* Create parameters and ant colony optimization object */
 //    int swarm_size = 100;
@@ -40,9 +40,8 @@ int main(int argc, char *argv[]) {
 
 
 
-
     /* Create gantt chart from python script */
-    string solutionFile = "Best";
+    string solutionFile = "Best_bee";
     printf("Print Gantt chart of best solution..\n");
     string command = "python \"..\\src\\run_gantt.py\"";
     string args = " " + solutionFile;
