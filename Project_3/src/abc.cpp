@@ -3,13 +3,15 @@
 
 using namespace std;
 
-ABC::ABC(JSSP &jssp, int food_sources, int abandonment_limit, int cycles){
+ABC::ABC(JSSP &jssp, int food_sources, int abandonment_limit, int cycles, int NL_length) {
     this->jssp = &jssp;
     this->num_food_sources = food_sources;
     this->abandonment_limit = abandonment_limit;
     this->cycles = cycles;
-    this->employed_bees.resize(num_food_sources);
+    this->NL_length = NL_length;
+    this->employed_bees.resize((unsigned)num_food_sources);
     initColony();
+    initNeighbourList();
 }
 
 void ABC::initColony() {
@@ -136,18 +138,25 @@ vector<pair<task *, task *>> ABC::decodeOperationsToPath(const bee &colony_bee) 
 }
 
 void ABC::employedBeePhase() {
-    for (int i =0; i < num_food_sources; i++){
+    for (int i = 0; i < num_food_sources; i++){
         /* Produce new solution according to self-adaptive strategy */
+        bool improved = selfAdaptiveStrategy(employed_bees[i]);
+
         /* Perform local search on new solution if r < P_L */
         /* Replace bee with new solution if it is better */
+        /* if not better, increment sequence_age */
+        if (!improved){
+            employed_bees[i].sequence_age++;
+        }
     }
 }
 
 void ABC::onlookerBeePhase() {
-    for (int i =0; i < num_food_sources; i++) {
+    for (int i = 0; i < num_food_sources; i++) {
         /* Select food source according tournament selection */
         /* Produce new solution according to self-adaptive strategy */
         /* Update population if the new solution is better than or equal to the selected one */
+        /* Set sequence_age of this bee to zero (if replaced) */
     }
 }
 
@@ -172,6 +181,113 @@ void ABC::runOptimization() {
     }
 
 }
+
+bool ABC::selfAdaptiveStrategy(bee &colony_bee) {
+    bee new_bee = colony_bee;
+
+    if (neighbour_list.empty()){
+        if (winning_neighbour_list.empty()){
+            initNeighbourList();
+        }
+        else{
+            refillNeighbourList();
+        }
+    }
+
+    if (!neighbour_list.empty()){
+        // Get first approach in neighbour list
+        int approach = neighbour_list.front();
+
+        // Remove first element from neighbour list
+        neighbour_list.erase(neighbour_list.begin());
+
+        // Generate new solution according to approach
+        if (approach == neighbouring_approaches::ONE_SWAP){
+
+        }
+        else if (approach == neighbouring_approaches::ONE_INSERT){
+            oneInsertion(new_bee);
+        }
+        else if (approach == neighbouring_approaches::TWO_SWAP){
+
+        }
+        else if (approach == neighbouring_approaches::TWO_INSERT){
+
+        }
+
+        // Evaluate
+        vector<pair<task *, task *>> path = decodeOperationsToPath(new_bee);
+        buildSchedule(new_bee.schedule, path, jssp);
+        if (new_bee.schedule.makespan < colony_bee.schedule.makespan){
+            // Replace solution and put approach in winning neighbour list
+            winning_neighbour_list.push_back(approach);
+            colony_bee = new_bee;
+            return true;
+        }
+        return false;
+
+        // else: discard new solution
+    }
+}
+
+void ABC::initNeighbourList() {
+    unsigned seed = (unsigned) chrono::system_clock::now().time_since_epoch().count();
+    default_random_engine generator(seed);
+    uniform_int_distribution<int> approach_rand_distribution(neighbouring_approaches::ONE_SWAP, neighbouring_approaches::TWO_INSERT);
+
+    while(neighbour_list.size() < NL_length){
+        int approach = approach_rand_distribution(generator);
+        neighbour_list.push_back(approach);
+    }
+}
+
+void ABC::refillNeighbourList() {
+    unsigned seed = (unsigned) chrono::system_clock::now().time_since_epoch().count();
+    default_random_engine generator(seed);
+    uniform_real_distribution<double> rand_distribution(0.0, 1.0);
+    uniform_int_distribution<int> approach_rand_distribution(neighbouring_approaches::ONE_SWAP, neighbouring_approaches::TWO_INSERT);
+    uniform_int_distribution<int> wnl_rand_distribution(0, winning_neighbour_list.size() - 1);
+
+    while (neighbour_list.size() < NL_length){
+        double r = rand_distribution(generator);
+        if (r < 0.75){
+            /* Randomly select an approach from winning_neighbour_list */
+            int wnl_index = wnl_rand_distribution(generator);
+            neighbour_list.push_back(winning_neighbour_list[wnl_index]);
+        }
+        else{
+            /* Randomly select an approach among the four possibilities */
+            int approach = approach_rand_distribution(generator);
+            neighbour_list.push_back(approach);
+        }
+    }
+    winning_neighbour_list.clear();
+}
+
+void ABC::oneInsertion(bee &colony_bee) {
+    unsigned seed = (unsigned) chrono::system_clock::now().time_since_epoch().count();
+    default_random_engine generator(seed);
+    uniform_int_distribution<int> int_rand_distribution(0, colony_bee.operations_sequence.size() - 1);
+
+    int j = int_rand_distribution(generator);
+    int inserted_element = colony_bee.operations_sequence[j];
+    colony_bee.operations_sequence.erase(colony_bee.operations_sequence.begin() + j);
+
+    uniform_int_distribution<int> int_new_rand_distribution(0, colony_bee.operations_sequence.size() - 1);
+    int k = int_new_rand_distribution(generator);
+    while (k == j){
+        k = int_new_rand_distribution(generator);
+    }
+
+    auto it = colony_bee.operations_sequence.begin();
+    colony_bee.operations_sequence.insert(it + k, inserted_element);
+
+}
+
+void ABC::oneSwap(bee &colony_bee) {
+
+}
+
 
 
 
