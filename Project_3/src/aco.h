@@ -41,7 +41,7 @@ public:
                                                     const std::vector<std::vector<int>> &tabu);
     void addAntPheromoneContribution(std::vector<std::vector<double>> &pheromone_accumulator,
                                      std::vector<int> elites,
-                                     const ant &ant, const int ant_nr, double makespan);
+                                     const ant &colony_ant, const int ant_nr, double makespan);
     void updatePheromoneTrails(const std::vector<std::vector<double>> &pheromone_accumulator);
 
     void runOptimization();
@@ -51,6 +51,7 @@ public:
     bool isTabuFull(std::vector<std::vector<int>> &tabu);
     int chooseNextState(std::vector<double> &state_transistion_probs);
     void updateTabu(std::vector<std::vector<int>> &tabu, task* next_task);
+    void generatePaths(std::vector<std::vector<int>> &tabu, std::vector<ant> &ants);
 
 };
 

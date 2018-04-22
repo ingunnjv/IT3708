@@ -90,32 +90,7 @@ void ACO::runOptimization() {
             printf("- Average makespan size: %f\n", average_makespan);
         }
         setMatrixToZero(pheromone_accumulator);
-
-        for (int k = 0; k < this->swarm_size; k++){
-            setMatrixToZero(tabu);
-            /* Define decidability rule for each ant k */
-            // Either eta = process_time(LPT) or eta = 1/process_time(SPT)
-            auto decidability_rule = uint8_t(k % 2);
-            ants[k] = ant(decidability_rule);
-
-            while(!isTabuFull(tabu)){
-                /* Determine the set of operations achievable from the current state */
-                vector<pair<task*, task*>> state_transitions = getStateTransitions(tabu);
-
-                /* Select next state according to equation 1 */
-                vector<double> state_transistion_probs = getStateTransitionProbs(state_transitions,
-                                                                                 ants[k].decidability_rule,
-                                                                                 tabu);
-                int next_edge_index = chooseNextState(state_transistion_probs);
-                pair<task*, task*> next_edge = state_transitions[next_edge_index];
-
-                /* Move ant to selected state */
-                ants[k].path.push_back(next_edge);
-
-                /* Save selected state in tabu */
-                updateTabu(tabu, next_edge.second);
-            }
-        }
+        generatePaths(tabu, ants);
 
         current_cycles_best_schedule.makespan = DBL_MAX;
         average_makespan = 0;
@@ -326,9 +301,9 @@ vector<double> ACO::getStateTransitionProbs(vector<pair<task *, task *>> state_t
 
 void ACO::addAntPheromoneContribution(vector<vector<double>> &pheromone_accumulator,
                                       vector<int> elites,
-                                      const ant &ant, const int ant_nr, double makespan) {
+                                      const ant &colony_ant, const int ant_nr, double makespan) {
     if (isElementInVector(ant_nr, elites)){
-        for (auto &edge: ant.path){
+        for (auto &edge: colony_ant.path){
             task* task_i= edge.first;
             task* task_j = edge.second;
             pheromone_accumulator[task_i->task_id][task_j->task_id] += (Q / makespan) * elites.size();
@@ -336,7 +311,7 @@ void ACO::addAntPheromoneContribution(vector<vector<double>> &pheromone_accumula
         }
     }
     else{
-        for (auto &edge: ant.path){
+        for (auto &edge: colony_ant.path){
             task* task_i= edge.first;
             task* task_j = edge.second;
             pheromone_accumulator[task_i->task_id][task_j->task_id] += Q / makespan;
@@ -355,6 +330,32 @@ void ACO::updatePheromoneTrails(const vector<vector<double>> &pheromone_accumula
             else if (pheromone_trails[row][col] < min_pheromone_on_trails){
                 pheromone_trails[row][col] = min_pheromone_on_trails;
             }
+        }
+    }
+}
+
+void ACO::generatePaths(vector<vector<int>> &tabu, vector<ant> &ants) {
+    for (int k = 0; k < this->swarm_size; k++){
+        setMatrixToZero(tabu);
+        /* Define decidability rule for each ant k */
+        // Either eta = process_time(LPT) or eta = 1/process_time(SPT)
+        auto decidability_rule = uint8_t(k % 2);
+        ants[k] = ant(decidability_rule);
+
+        while(!isTabuFull(tabu)){
+            /* Determine the set of operations achievable from the current state */
+            vector<pair<task*, task*>> state_transitions = getStateTransitions(tabu);
+
+            /* Select next state according to equation 1 */
+            vector<double> state_transistion_probs = getStateTransitionProbs(state_transitions, ants[k].decidability_rule, tabu);
+            int next_edge_index = chooseNextState(state_transistion_probs);
+            pair<task*, task*> next_edge = state_transitions[next_edge_index];
+
+            /* Move ant to selected state */
+            ants[k].path.push_back(next_edge);
+
+            /* Save selected state in tabu */
+            updateTabu(tabu, next_edge.second);
         }
     }
 }
