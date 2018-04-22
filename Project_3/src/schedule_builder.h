@@ -10,7 +10,6 @@ struct schedule_block{
 };
 
 struct schedule{
-    int ant_nr;
     double makespan;
     std::vector<std::vector<schedule_block>> machine_schedules;
 };

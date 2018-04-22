@@ -115,7 +115,6 @@ void ACO::runOptimization() {
         vector <schedule> schedules(this->swarm_size);
         for (int k = 0; k < this->swarm_size; k++){
             /* Build schedule */
-            schedules[k].ant_nr = k;
             buildSchedule(schedules[k], ants[k].path, jssp);
 
             if (schedules[k].makespan < all_time_best_schedule.makespan){
@@ -132,8 +131,8 @@ void ACO::runOptimization() {
 
         }
 
-        for (auto & schedule: schedules){
-            addAntPheromoneContribution(pheromone_accumulator, elites, ants[schedule.ant_nr], schedule.ant_nr, schedule.makespan);
+        for (int k = 0; k < this->swarm_size; k++){
+            addAntPheromoneContribution(pheromone_accumulator, elites, ants[k], k, schedules[k].makespan);
         }
         updatePheromoneTrails(pheromone_accumulator);
 
