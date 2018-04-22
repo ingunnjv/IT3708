@@ -70,6 +70,7 @@ void ABC::initOperationSequence(bee &colony_bee) {
         double r = task_choice_rule_rand_distribution(generator);
         int index = 0;
         if(r < 0.2){
+            // Choose next task RANDOMLY
             vector<int> job_choices;
             for(int job = 0; job < jssp->getNumJobs(); job++){
                 if(remaining_tasks_per_job[job] != 0){
@@ -86,13 +87,13 @@ void ABC::initOperationSequence(bee &colony_bee) {
 
         }
         else if(r < 0.6 and r >= 0.2){
-            // Choose next task based on time remaining for each job
+            // Choose next task based on TIME remaining for each job
             vector<double>::iterator max_element_it;
             max_element_it = max_element(remaining_time_per_job.begin(), remaining_time_per_job.end());
             index = (int)distance(remaining_time_per_job.begin(), max_element_it);
         }
         else if(r >= 0.6){
-            // Choose next task based on tasks remaining for each job
+            // Choose next task based on TASKS remaining for each job
             vector<int> job_choices;
             int maximum_remaining_tasks = 0;
             for(int i = 0; i < remaining_tasks_per_job.size(); i++){
