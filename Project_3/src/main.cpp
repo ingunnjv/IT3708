@@ -33,10 +33,11 @@ int main(int argc, char *argv[]) {
     aco.printPheromoneTrailsTable();
 
     /* Create parameters and artificial bee colony optimization object */
-  //  int num_food_sources = 50;
-//    int abandonment_limit = 100;
-//    int cycles = 5000;
-//    ABC abc = ABC(jssp, num_food_sources, abandonment_limit, cycles);
+    int num_food_sources = 50;
+    int abandonment_limit = 100;
+    int cycles = 5000;
+    int NL_length = 200;
+    ABC abc = ABC(jssp, num_food_sources, abandonment_limit, cycles, NL_length);
 
 
 
