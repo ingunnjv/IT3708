@@ -33,7 +33,6 @@ void ABC::initColony() {
         }
         i++;
     }
-    saveScheduleAsCSV(super_amazing_bee->schedule, "Best_bee", jssp);
 }
 
 void ABC::initOperationSequence(bee &colony_bee) {
