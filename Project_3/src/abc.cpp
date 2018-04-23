@@ -216,13 +216,13 @@ pair<bee, int> ABC::selfAdaptiveStrategy(bee &colony_bee) {
 
         // Generate new solution according to approach
         if (approach == neighbouring_approaches::ONE_SWAP){
-
+            oneSwap(new_bee);
         }
         else if (approach == neighbouring_approaches::ONE_INSERT){
             oneInsertion(new_bee);
         }
         else if (approach == neighbouring_approaches::TWO_SWAP){
-
+            twoSwaps(new_bee);
         }
         else if (approach == neighbouring_approaches::TWO_INSERT){
             twoInsertions(new_bee);
