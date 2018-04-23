@@ -16,7 +16,6 @@ ABC::ABC(JSSP &jssp, int food_sources, int abandonment_limit, int cycles, int nl
 }
 
 void ABC::initColony() {
-    double worst_makespan = 0;
     auto best_makespan = DBL_MAX;
     int i = 0;
     for (auto &bee: employed_bees){
@@ -27,10 +26,6 @@ void ABC::initColony() {
         buildSchedule(bee.schedule, path, jssp);
         //printf("Bee %d: \tMakespan %f\n",i, bee.schedule.makespan);
 
-        if (bee.schedule.makespan > worst_makespan){
-            worst_makespan = bee.schedule.makespan;
-            idiet_loser_bee = &employed_bees[i];
-        }
         if (bee.schedule.makespan < best_makespan){
             best_makespan = bee.schedule.makespan;
             super_amazing_bee = &employed_bees[i];
@@ -38,7 +33,6 @@ void ABC::initColony() {
         }
         i++;
     }
-    saveScheduleAsCSV(super_amazing_bee->schedule, "Best_bee", jssp);
 }
 
 void ABC::initOperationSequence(bee &colony_bee) {
@@ -158,6 +152,9 @@ void ABC::employedBeePhase() {
             if(new_bee.schedule.makespan < super_amazing_bee->schedule.makespan){
                 super_amazing_bee = &employed_bees[i];
             }
+            if (employed_bees[i].schedule.makespan < best_schedule.makespan){
+                best_schedule = employed_bees[i].schedule;
+            }
         }
         else{
             /* if not better, increment sequence_age */
@@ -195,6 +192,9 @@ void ABC::onlookerBeePhase() {
             employed_bees[winning_bee_index].sequence_age = 0;
             if(new_bee.schedule.makespan < super_amazing_bee->schedule.makespan){
                 super_amazing_bee = &employed_bees[winning_bee_index];
+            }
+            if (employed_bees[winning_bee_index].schedule.makespan < best_schedule.makespan){
+                best_schedule = employed_bees[winning_bee_index].schedule;
             }
         }
         else{
@@ -240,6 +240,10 @@ void ABC::scoutBeePhase() {
         if (employed_bees[old_bee_index].schedule.makespan <= super_amazing_bee->schedule.makespan){
             super_amazing_bee = &employed_bees[old_bee_index];
         }
+        if (employed_bees[old_bee_index].schedule.makespan < best_schedule.makespan){
+            best_schedule = employed_bees[old_bee_index].schedule;
+        }
+
     }
 }
 
