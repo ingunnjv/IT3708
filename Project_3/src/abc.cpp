@@ -296,12 +296,30 @@ void ABC::oneInsertion(bee &colony_bee) {
 }
 
 void ABC::oneSwap(bee &colony_bee) {
+    unsigned seed = (unsigned) chrono::system_clock::now().time_since_epoch().count();
+    default_random_engine generator(seed);
+    uniform_int_distribution<int> int_rand_distribution(0, colony_bee.operations_sequence.size() - 1);
 
+    int first_index = int_rand_distribution(generator);
+    int first_element = colony_bee.operations_sequence[first_element];
+
+    int second_index = int_rand_distribution(generator);
+    while (first_index == second_index){
+        second_index = int_rand_distribution(generator);
+    }
+    int second_element = colony_bee.operations_sequence[second_element];
+
+    colony_bee.operations_sequence[first_index] = second_element;
+    colony_bee.operations_sequence[second_index] = first_element;
 }
 
 void ABC::twoInsertions(bee &colony_bee) {
     oneInsertion(colony_bee);
     oneInsertion(colony_bee);
+}
+void ABC::twoSwaps(bee &colony_bee) {
+    oneSwap(colony_bee);
+    oneSwap(colony_bee);
 }
 
 void ABC::localSearch(bee &new_bee, int approach) {
