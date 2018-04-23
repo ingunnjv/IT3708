@@ -250,6 +250,12 @@ void ABC::scoutBeePhase() {
 void ABC::runOptimization() {
     int cycle = 0;
     while(cycle < cycles) {
+        if(cycle % 20 == 0 and cycle != 0){
+            double average_makespan = computeAverageMakespan();
+            printf("Cycle: %d\n", cycle);
+            printf("- Shortest makespan all time: %f\n", best_schedule.makespan);
+            printf("- Average makespan size: %f\n", average_makespan);
+        }
         old_bees_indices.clear();
         employedBeePhase();
         onlookerBeePhase();
@@ -440,6 +446,15 @@ pair<int, int> ABC::binaryTournamentSelection(int size) {
     }
 
     return pair<int, int>(first_index, second_index);
+}
+
+double ABC::computeAverageMakespan() {
+    double average_makespan = 0;
+    for(const auto &bee: employed_bees){
+        average_makespan += bee.schedule.makespan;
+    }
+    average_makespan /= num_food_sources;
+    return average_makespan;
 }
 
 

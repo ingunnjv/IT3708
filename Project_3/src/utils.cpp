@@ -1,5 +1,4 @@
 #include "utils.h"
-#import <string>
 using namespace std;
 
 std::pair<int, int> id2xy(int id, int num_cols){

@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
         /* Create parameters and artificial bee colony optimization object */
         int num_food_sources = 50;
         int abandonment_limit = 100;
-        int cycles = 5000;
+        int cycles = 1000;
         int nl_length = 200;
         double p_local_search = 0.1;
         ABC abc = ABC(jssp, num_food_sources, abandonment_limit, cycles, nl_length, p_local_search);

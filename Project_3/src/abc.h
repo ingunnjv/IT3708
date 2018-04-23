@@ -50,6 +50,7 @@ public:
     std::pair<bee, int> selfAdaptiveStrategy(bee &colony_bee);
     void localSearch(bee &original_bee, int approach);
     std::pair<int, int> binaryTournamentSelection(int size);
+    double computeAverageMakespan();
 
     void oneInsertion(bee &colony_bee);
     void oneSwap(bee &colony_bee);
