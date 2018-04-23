@@ -23,7 +23,6 @@ private:
     JSSP* jssp;
     std::vector<bee> employed_bees;
     std::vector<int> old_bees_indices;
-    bee* idiet_loser_bee;
     bee* super_amazing_bee;
     schedule best_schedule;
 
@@ -35,7 +34,6 @@ private:
     std::vector<int> neighbour_list;
     std::vector<int> winning_neighbour_list;
     int nl_length;
-
 
 public:
     ABC(JSSP &jssp, int num_food_sources, int abandonment_limit, int cycles, int nl_length, double p_local_search);

@@ -155,6 +155,9 @@ void ABC::employedBeePhase() {
             // Replace solution and reset age
             employed_bees[i] = new_bee;
             employed_bees[i].sequence_age = 0;
+            if(new_bee.schedule.makespan < super_amazing_bee->schedule.makespan){
+                super_amazing_bee = &employed_bees[i];
+            }
         }
         else{
             /* if not better, increment sequence_age */
@@ -173,19 +176,16 @@ void ABC::onlookerBeePhase() {
         pair<int, int> selected_bees_indices = binaryTournamentSelection(num_food_sources);
         int first_bee_index = selected_bees_indices.first;
         int second_bee_index = selected_bees_indices.second;
-        bee* winning_bee;
         int winning_bee_index;
         if(employed_bees[first_bee_index].schedule.makespan <= employed_bees[second_bee_index].schedule.makespan){
-            winning_bee = &employed_bees[first_bee_index];
             winning_bee_index = first_bee_index;
         }
         else{
-            winning_bee = &employed_bees[second_bee_index];
             winning_bee_index = second_bee_index;
         }
 
         /* Produce new solution according to self-adaptive strategy */
-        pair<bee, int> new_bee_and_approach = selfAdaptiveStrategy(*winning_bee);
+        pair<bee, int> new_bee_and_approach = selfAdaptiveStrategy(employed_bees[winning_bee_index]);
         bee new_bee = new_bee_and_approach.first;
 
         /* Update population if the new solution is better than or equal to the selected one */
@@ -193,6 +193,9 @@ void ABC::onlookerBeePhase() {
             // Replace solution and reset age
             employed_bees[winning_bee_index] = new_bee;
             employed_bees[winning_bee_index].sequence_age = 0;
+            if(new_bee.schedule.makespan < super_amazing_bee->schedule.makespan){
+                super_amazing_bee = &employed_bees[winning_bee_index];
+            }
         }
         else{
             /* if not better, increment sequence_age */
