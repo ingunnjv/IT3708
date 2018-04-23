@@ -8,7 +8,7 @@ ABC::ABC(JSSP &jssp, int food_sources, int abandonment_limit, int cycles, int NL
     this->num_food_sources = food_sources;
     this->abandonment_limit = abandonment_limit;
     this->cycles = cycles;
-    this->NL_length = NL_length;
+    this->nl_length = NL_length;
     this->employed_bees.resize((unsigned)num_food_sources);
     initColony();
     initNeighbourList();
@@ -157,19 +157,47 @@ void ABC::employedBeePhase() {
         else{
             /* if not better, increment sequence_age */
             employed_bees[i].sequence_age++;
+            if(employed_bees[i].sequence_age > abandonment_limit){
+                old_bees_indices.push_back(i);
+            }
         }
-
-
-
     }
 }
 
 void ABC::onlookerBeePhase() {
     for (int i = 0; i < num_food_sources; i++) {
         /* Select food source according tournament selection */
+        pair<int, int> selected_bees_indices = binaryTournamentSelection(num_food_sources);
+        int first_bee_index = selected_bees_indices.first;
+        int second_bee_index = selected_bees_indices.second;
+        bee* winning_bee;
+        int winning_bee_index;
+        if(employed_bees[first_bee_index].schedule.makespan <= employed_bees[second_bee_index].schedule.makespan){
+            winning_bee = &employed_bees[first_bee_index];
+            winning_bee_index = first_bee_index;
+        }
+        else{
+            winning_bee = &employed_bees[second_bee_index];
+            winning_bee_index = second_bee_index;
+        }
+
         /* Produce new solution according to self-adaptive strategy */
+        pair<bee, int> new_bee_and_approach = selfAdaptiveStrategy(*winning_bee);
+        bee new_bee = new_bee_and_approach.first;
+
         /* Update population if the new solution is better than or equal to the selected one */
-        /* Set sequence_age of this bee to zero (if replaced) */
+        if (new_bee.schedule.makespan < employed_bees[winning_bee_index].schedule.makespan){
+            // Replace solution and reset age
+            employed_bees[winning_bee_index] = new_bee;
+            employed_bees[winning_bee_index].sequence_age = 0;
+        }
+        else{
+            /* if not better, increment sequence_age */
+            employed_bees[winning_bee_index].sequence_age++;
+            if(employed_bees[winning_bee_index].sequence_age > abandonment_limit){
+                old_bees_indices.push_back(winning_bee_index);
+            }
+        }
     }
 }
 
@@ -183,7 +211,7 @@ void ABC::scoutBeePhase() {
 void ABC::runOptimization() {
     int cycle = 0;
     while(cycle < cycles) {
-
+        vector<int> old_bees_indices;
         employedBeePhase();
         onlookerBeePhase();
         scoutBeePhase();
@@ -234,7 +262,6 @@ pair<bee, int> ABC::selfAdaptiveStrategy(bee &colony_bee) {
         if (new_bee.schedule.makespan < colony_bee.schedule.makespan){
             // Put approach in winning neighbour list
             winning_neighbour_list.push_back(approach);
-            colony_bee = new_bee;
         }
 
         return make_pair(new_bee, approach);
@@ -246,7 +273,7 @@ void ABC::initNeighbourList() {
     default_random_engine generator(seed);
     uniform_int_distribution<int> approach_rand_distribution(neighbouring_approaches::ONE_SWAP, neighbouring_approaches::TWO_INSERT);
 
-    while(neighbour_list.size() < NL_length){
+    while(neighbour_list.size() < nl_length){
         int approach = approach_rand_distribution(generator);
         neighbour_list.push_back(approach);
     }
@@ -259,7 +286,7 @@ void ABC::refillNeighbourList() {
     uniform_int_distribution<int> approach_rand_distribution(neighbouring_approaches::ONE_SWAP, neighbouring_approaches::TWO_INSERT);
     uniform_int_distribution<int> wnl_rand_distribution(0, winning_neighbour_list.size() - 1);
 
-    while (neighbour_list.size() < NL_length){
+    while (neighbour_list.size() < nl_length){
         double r = rand_distribution(generator);
         if (r < 0.75){
             /* Randomly select an approach from winning_neighbour_list */
@@ -278,13 +305,13 @@ void ABC::refillNeighbourList() {
 void ABC::oneInsertion(bee &colony_bee) {
     unsigned seed = (unsigned) chrono::system_clock::now().time_since_epoch().count();
     default_random_engine generator(seed);
-    uniform_int_distribution<int> int_rand_distribution(0, colony_bee.operations_sequence.size() - 1);
+    uniform_int_distribution<int> int_rand_distribution(0, (unsigned)colony_bee.operations_sequence.size() - 1);
 
     int j = int_rand_distribution(generator);
     int inserted_element = colony_bee.operations_sequence[j];
     colony_bee.operations_sequence.erase(colony_bee.operations_sequence.begin() + j);
 
-    uniform_int_distribution<int> int_new_rand_distribution(0, colony_bee.operations_sequence.size() - 1);
+    uniform_int_distribution<int> int_new_rand_distribution(0, (unsigned)colony_bee.operations_sequence.size() - 1);
     int k = int_new_rand_distribution(generator);
     while (k == j){
         k = int_new_rand_distribution(generator);
@@ -298,16 +325,16 @@ void ABC::oneInsertion(bee &colony_bee) {
 void ABC::oneSwap(bee &colony_bee) {
     unsigned seed = (unsigned) chrono::system_clock::now().time_since_epoch().count();
     default_random_engine generator(seed);
-    uniform_int_distribution<int> int_rand_distribution(0, colony_bee.operations_sequence.size() - 1);
+    uniform_int_distribution<int> int_rand_distribution(0, (unsigned)colony_bee.operations_sequence.size() - 1);
 
     int first_index = int_rand_distribution(generator);
-    int first_element = colony_bee.operations_sequence[first_element];
+    int first_element = colony_bee.operations_sequence[first_index];
 
     int second_index = int_rand_distribution(generator);
     while (first_index == second_index){
         second_index = int_rand_distribution(generator);
     }
-    int second_element = colony_bee.operations_sequence[second_element];
+    int second_element = colony_bee.operations_sequence[second_index];
 
     colony_bee.operations_sequence[first_index] = second_element;
     colony_bee.operations_sequence[second_index] = first_element;
@@ -324,6 +351,20 @@ void ABC::twoSwaps(bee &colony_bee) {
 
 void ABC::localSearch(bee &new_bee, int approach) {
 
+}
+
+pair<int, int> ABC::binaryTournamentSelection(int size) {
+    unsigned seed = (unsigned) chrono::system_clock::now().time_since_epoch().count();
+    default_random_engine generator(seed);
+    uniform_int_distribution<int> int_rand_distribution(0, size - 1);
+
+    int first_index = int_rand_distribution(generator);
+    int second_index = int_rand_distribution(generator);
+    while (first_index == second_index){
+        second_index = int_rand_distribution(generator);
+    }
+
+    return pair<int, int>(first_index, second_index);
 }
 
 

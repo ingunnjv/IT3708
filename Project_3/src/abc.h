@@ -22,6 +22,7 @@ class ABC{
 private:
     JSSP* jssp;
     std::vector<bee> employed_bees;
+    std::vector<int> old_bees_indices;
     bee* idiet_loser_bee;
     bee* super_amazing_bee;
     int num_food_sources;
@@ -30,7 +31,7 @@ private:
     // maybe save abandoned_bees?
     std::vector<int> neighbour_list;
     std::vector<int> winning_neighbour_list;
-    int NL_length;
+    int nl_length;
 
 public:
     ABC(JSSP &jssp, int num_food_sources, int abandonment_limit, int cycles, int NL_length);
@@ -45,6 +46,7 @@ public:
     void scoutBeePhase();
     std::pair<bee, int> selfAdaptiveStrategy(bee &colony_bee);
     void localSearch(bee &new_bee, int approach);
+    std::pair<int, int> binaryTournamentSelection(int size);
 
     void oneInsertion(bee &colony_bee);
     void oneSwap(bee &colony_bee);

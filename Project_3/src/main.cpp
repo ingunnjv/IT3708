@@ -36,8 +36,8 @@ int main(int argc, char *argv[]) {
     int num_food_sources = 50;
     int abandonment_limit = 100;
     int cycles = 5000;
-    int NL_length = 200;
-    ABC abc = ABC(jssp, num_food_sources, abandonment_limit, cycles, NL_length);
+    int nl_length = 200;
+    ABC abc = ABC(jssp, num_food_sources, abandonment_limit, cycles, nl_length);
 
 
 
