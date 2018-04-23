@@ -143,6 +143,7 @@ void ABC::employedBeePhase() {
 
         /* Perform local search on new solution if r < p_local_search */
         localSearch(new_bee, approach);
+        //checkValidOperationsSequence(new_bee);
 
         /* Replace current solution with new solution if it is better */
         if (new_bee.schedule.makespan < employed_bees[i].schedule.makespan){
@@ -184,6 +185,7 @@ void ABC::onlookerBeePhase() {
         /* Produce new solution according to self-adaptive strategy */
         pair<bee, int> new_bee_and_approach = selfAdaptiveStrategy(employed_bees[winning_bee_index]);
         bee new_bee = new_bee_and_approach.first;
+        //checkValidOperationsSequence(new_bee);
 
         /* Update population if the new solution is better than or equal to the selected one */
         if (new_bee.schedule.makespan < employed_bees[winning_bee_index].schedule.makespan){
@@ -231,6 +233,7 @@ void ABC::scoutBeePhase() {
         /* Abandon old bee by replacing with new bee */
         employed_bees[old_bee_index] = best_bee;
         employed_bees[old_bee_index].sequence_age = 0;
+        //checkValidOperationsSequence(best_bee);
 
         /* Decode new solution and update schedule */
         vector<pair<task *, task *>> path = decodeOperationsToPath(employed_bees[old_bee_index]);
@@ -363,7 +366,6 @@ void ABC::oneInsertion(bee &colony_bee) {
 
     auto it = colony_bee.operations_sequence.begin();
     colony_bee.operations_sequence.insert(it + k, inserted_element);
-
 }
 
 void ABC::oneSwap(bee &colony_bee) {
@@ -453,8 +455,22 @@ double ABC::computeAverageMakespan() {
     for(const auto &bee: employed_bees){
         average_makespan += bee.schedule.makespan;
     }
-    average_makespan /= num_food_sources;
+    average_makespan = average_makespan / num_food_sources;
     return average_makespan;
+}
+
+void ABC::checkValidOperationsSequence(bee &colony_bee) {
+    vector<int> job_counter;
+    job_counter.resize((unsigned)jssp->getNumJobs());
+    for(const auto &operation: colony_bee.operations_sequence){
+        job_counter[operation]++;
+    }
+    for(int i = 0; i < job_counter.size(); i++){
+        if(job_counter[i] != jssp->getNumMachines()){
+            printf("Invalid number of tasks for one job!\n");
+            printf("Job %d had %d tasks, expected %d!\n", (i, job_counter[i], jssp->getNumMachines()));
+        }
+    }
 }
 
 

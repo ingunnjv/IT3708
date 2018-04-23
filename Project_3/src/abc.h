@@ -51,6 +51,7 @@ public:
     void localSearch(bee &original_bee, int approach);
     std::pair<int, int> binaryTournamentSelection(int size);
     double computeAverageMakespan();
+    void checkValidOperationsSequence(bee &colony_bee);
 
     void oneInsertion(bee &colony_bee);
     void oneSwap(bee &colony_bee);
