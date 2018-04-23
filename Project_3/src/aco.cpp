@@ -84,7 +84,7 @@ void ACO::runOptimization() {
 
     int cycle = 0;
     while(cycle < cycles){
-        if(cycle % 20 == 0 and cycle != 0){
+        if(cycle % 1 == 0 and cycle != 0){
             printf("Cycle: %d\n", cycle);
             printf("- Shortest makespan all time: %f\n", all_time_best_schedule.makespan);
             printf("- Average makespan size: %f\n", average_makespan);
@@ -219,10 +219,10 @@ vector<double> ACO::getStateTransitionProbs(vector<pair<task *, task *>> state_t
     vector<double> state_transitions_probs;
     double pheromone_and_heuristic_sum = 0;
 
-    double max_edge_pheromone = 0;
-    double min_edge_pheromone = DBL_MAX;
-    double max_heuristic_val = 0;
-    double min_heuristic_val = DBL_MAX;
+//    double max_edge_pheromone = 0;
+//    double min_edge_pheromone = DBL_MAX;
+//    double max_heuristic_val = 0;
+//    double min_heuristic_val = DBL_MAX;
 
     vector<double> remaining_time_per_job;
     vector<int> remaining_tasks_per_job;
@@ -245,23 +245,23 @@ vector<double> ACO::getStateTransitionProbs(vector<pair<task *, task *>> state_t
         }
     }
 
-    /* Find minmax of pheromone edges and process time for normalization */
-    for(auto &transition: state_transitions){
-        double decidability_heuristic = 0;
-        task* task_i = transition.first;
-        task* task_j = transition.second;
-        double edge_pheromone = pheromone_trails[task_i->task_id][task_j->task_id];
-        if(decidability_rule == decidability_rules::MRTasks){
-            decidability_heuristic = remaining_tasks_per_job[task_j->job_id];
-        }
-        else if(decidability_rule == decidability_rules::MRTime){
-            decidability_heuristic = remaining_time_per_job[task_j->job_id];
-        }
-        max_edge_pheromone = max(max_edge_pheromone, edge_pheromone);
-        min_edge_pheromone = min(min_edge_pheromone, edge_pheromone);
-        max_heuristic_val = max(max_heuristic_val, decidability_heuristic);
-        min_heuristic_val = min(min_heuristic_val, decidability_heuristic);
-    }
+//    /* Find minmax of pheromone edges and process time for normalization */
+//    for(auto &transition: state_transitions){
+//        double decidability_heuristic = 0;
+//        task* task_i = transition.first;
+//        task* task_j = transition.second;
+//        double edge_pheromone = pheromone_trails[task_i->task_id][task_j->task_id];
+//        if(decidability_rule == decidability_rules::MRTasks){
+//            decidability_heuristic = remaining_tasks_per_job[task_j->job_id];
+//        }
+//        else if(decidability_rule == decidability_rules::MRTime){
+//            decidability_heuristic = remaining_time_per_job[task_j->job_id];
+//        }
+//        max_edge_pheromone = max(max_edge_pheromone, edge_pheromone);
+//        min_edge_pheromone = min(min_edge_pheromone, edge_pheromone);
+//        max_heuristic_val = max(max_heuristic_val, decidability_heuristic);
+//        min_heuristic_val = min(min_heuristic_val, decidability_heuristic);
+//    }
 
     for(auto &transition: state_transitions){
         double decidability_heuristic = 0;
@@ -275,8 +275,8 @@ vector<double> ACO::getStateTransitionProbs(vector<pair<task *, task *>> state_t
             decidability_heuristic = remaining_time_per_job[task_j->job_id];
         }
         // Normalize
-        edge_pheromone = (edge_pheromone)/(max_edge_pheromone);
-        decidability_heuristic = (decidability_heuristic)/(max_heuristic_val);
+        //edge_pheromone = (edge_pheromone)/(max_edge_pheromone);
+        //decidability_heuristic = (decidability_heuristic)/(max_heuristic_val);
         pheromone_and_heuristic_sum += pow(edge_pheromone, alpha)*pow(decidability_heuristic, beta);
     }
     for(auto &transition: state_transitions){
@@ -291,8 +291,8 @@ vector<double> ACO::getStateTransitionProbs(vector<pair<task *, task *>> state_t
             decidability_heuristic = remaining_time_per_job[task_j->job_id];
         }
 
-        edge_pheromone = (edge_pheromone)/(max_edge_pheromone);
-        decidability_heuristic = (decidability_heuristic)/(max_heuristic_val);
+        //edge_pheromone = (edge_pheromone)/(max_edge_pheromone);
+        //decidability_heuristic = (decidability_heuristic)/(max_heuristic_val);
 
         double state_transitions_prob = (pow(edge_pheromone, alpha)*pow(decidability_heuristic, beta))/pheromone_and_heuristic_sum;
         state_transitions_probs.push_back(state_transitions_prob);

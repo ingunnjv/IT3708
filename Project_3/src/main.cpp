@@ -12,21 +12,21 @@ int main(int argc, char *argv[]) {
 
 
     /* Create Job shop scheduling problem instance */
-    string optimizer = "abc";
+    string optimizer = "aco";
     JSSP jssp = JSSP();
     if(jssp.readInputData("6")) return 1;
 
     if(optimizer == "aco"){
         /* Create parameters and ant colony optimization object */
-        int swarm_size = jssp.getNumJobs()/2;
+        int swarm_size = 50;
         int cycles = 1000;
-        double alpha = 1;
-        double beta = 5;
-        double rho = 0.8;
-        double initial_pheromone = 0.5;
+        double alpha = 0.2;
+        double beta = 2;
+        double rho = 0.7;
+        double initial_pheromone = 0.1;
         double max_pheromone = 1;
         double min_pheromone = 0.01;
-        double Q = 100;
+        double Q = 1;
         ACO aco = ACO(jssp, swarm_size, cycles, alpha, beta, rho, initial_pheromone, Q,
                       max_pheromone, min_pheromone);
 
@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
     else if(optimizer == "abc"){
         /* Create parameters and artificial bee colony optimization object */
         int num_food_sources = 50;
-        int abandonment_limit = 100;
+        int abandonment_limit = 50;
         int cycles = 1000;
         int nl_length = 200;
         double p_local_search = 0.1;
