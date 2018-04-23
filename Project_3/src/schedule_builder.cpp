@@ -9,6 +9,9 @@ void buildSchedule(schedule &schedule, const vector<pair<task *, task *>> &path,
 
     // Add tasks to machines in correct order
     schedule.machine_schedules.resize(jssp->getNumMachines());
+    for(auto &machine_schedule: schedule.machine_schedules){
+        machine_schedule.clear();
+    }
     for (auto &edge: path){
         task* task = edge.second;
         schedule_block block;
