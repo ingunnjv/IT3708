@@ -3,12 +3,13 @@
 
 using namespace std;
 
-ABC::ABC(JSSP &jssp, int food_sources, int abandonment_limit, int cycles, int NL_length) {
+ABC::ABC(JSSP &jssp, int food_sources, int abandonment_limit, int cycles, int NL_length, double p_local_search) {
     this->jssp = &jssp;
     this->num_food_sources = food_sources;
     this->abandonment_limit = abandonment_limit;
     this->cycles = cycles;
     this->NL_length = NL_length;
+    this->p_local_search = p_local_search;
     this->employed_bees.resize((unsigned)num_food_sources);
     initColony();
     initNeighbourList();
@@ -145,7 +146,7 @@ void ABC::employedBeePhase() {
         bee new_bee = new_bee_and_approach.first;
         int approach = new_bee_and_approach.second;
 
-        /* Perform local search on new solution if r < P_L */
+        /* Perform local search on new solution if r < p_local_search */
         localSearch(new_bee, approach);
 
         /* Replace current solution with new solution if it is better */
@@ -158,8 +159,6 @@ void ABC::employedBeePhase() {
             /* if not better, increment sequence_age */
             employed_bees[i].sequence_age++;
         }
-
-
 
     }
 }
@@ -234,7 +233,6 @@ pair<bee, int> ABC::selfAdaptiveStrategy(bee &colony_bee) {
         if (new_bee.schedule.makespan < colony_bee.schedule.makespan){
             // Put approach in winning neighbour list
             winning_neighbour_list.push_back(approach);
-            colony_bee = new_bee;
         }
 
         return make_pair(new_bee, approach);
@@ -301,13 +299,13 @@ void ABC::oneSwap(bee &colony_bee) {
     uniform_int_distribution<int> int_rand_distribution(0, colony_bee.operations_sequence.size() - 1);
 
     int first_index = int_rand_distribution(generator);
-    int first_element = colony_bee.operations_sequence[first_element];
+    int first_element = colony_bee.operations_sequence[first_index];
 
     int second_index = int_rand_distribution(generator);
     while (first_index == second_index){
         second_index = int_rand_distribution(generator);
     }
-    int second_element = colony_bee.operations_sequence[second_element];
+    int second_element = colony_bee.operations_sequence[second_index];
 
     colony_bee.operations_sequence[first_index] = second_element;
     colony_bee.operations_sequence[second_index] = first_element;
@@ -322,7 +320,44 @@ void ABC::twoSwaps(bee &colony_bee) {
     oneSwap(colony_bee);
 }
 
-void ABC::localSearch(bee &new_bee, int approach) {
+void ABC::localSearch(bee &original_bee, int approach) {
+    unsigned seed = (unsigned) chrono::system_clock::now().time_since_epoch().count();
+    default_random_engine generator(seed);
+    uniform_real_distribution<double> rand_distribution(0.0, 1.0);
+
+    double r = rand_distribution(generator);
+    if (r < p_local_search){
+        /* Determine local search operator */
+        int local_search_approach = 0;
+        if (approach == neighbouring_approaches::ONE_SWAP || approach == neighbouring_approaches::TWO_SWAP){
+            local_search_approach = neighbouring_approaches::ONE_INSERT;
+        }
+        else if (approach == neighbouring_approaches::ONE_INSERT || approach == neighbouring_approaches::TWO_INSERT){
+            local_search_approach = neighbouring_approaches::ONE_SWAP;
+        }
+
+        /* Perform local search */
+        int l = 1;
+        auto l_max = (int)pow(jssp->getNumJobs(), 2);
+        while (l <= l_max){
+            bee new_bee = original_bee;
+            switch (local_search_approach){
+                case neighbouring_approaches::ONE_SWAP:
+                    oneSwap(new_bee);
+                case neighbouring_approaches::ONE_INSERT:
+                    oneInsertion(new_bee);
+                default:
+                    oneSwap(new_bee);
+            }
+
+            vector<pair<task*, task*>> path = decodeOperationsToPath(new_bee);
+            buildSchedule(new_bee.schedule, path, jssp);
+            if (new_bee.schedule.makespan < original_bee.schedule.makespan){
+                original_bee = new_bee;
+            }
+            l++;
+        }
+    }
 
 }
 
