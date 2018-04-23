@@ -25,7 +25,7 @@ private:
     std::vector<int> old_bees_indices;
     bee* idiet_loser_bee;
     bee* super_amazing_bee;
-    // maybe save abandoned_bees?
+    schedule best_schedule;
 
     int num_food_sources;
     int abandonment_limit;
