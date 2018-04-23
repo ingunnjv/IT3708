@@ -43,10 +43,12 @@ public:
     void employedBeePhase();
     void onlookerBeePhase();
     void scoutBeePhase();
-    bool selfAdaptiveStrategy(bee &colony_bee);
+    std::pair<bee, int> selfAdaptiveStrategy(bee &colony_bee);
+    void localSearch(bee &new_bee, int approach);
 
     void oneInsertion(bee &colony_bee);
     void oneSwap(bee &colony_bee);
+    void twoInsertions(bee &colony_bee);
 
     void runOptimization();
 };

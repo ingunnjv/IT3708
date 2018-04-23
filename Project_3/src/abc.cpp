@@ -141,14 +141,26 @@ vector<pair<task *, task *>> ABC::decodeOperationsToPath(const bee &colony_bee) 
 void ABC::employedBeePhase() {
     for (int i = 0; i < num_food_sources; i++){
         /* Produce new solution according to self-adaptive strategy */
-        bool improved = selfAdaptiveStrategy(employed_bees[i]);
+        pair<bee, int> new_bee_and_approach = selfAdaptiveStrategy(employed_bees[i]);
+        bee new_bee = new_bee_and_approach.first;
+        int approach = new_bee_and_approach.second;
 
         /* Perform local search on new solution if r < P_L */
-        /* Replace bee with new solution if it is better */
-        /* if not better, increment sequence_age */
-        if (!improved){
+        localSearch(new_bee, approach);
+
+        /* Replace current solution with new solution if it is better */
+        if (new_bee.schedule.makespan < employed_bees[i].schedule.makespan){
+            // Replace solution and reset age
+            employed_bees[i] = new_bee;
+            employed_bees[i].sequence_age = 0;
+        }
+        else{
+            /* if not better, increment sequence_age */
             employed_bees[i].sequence_age++;
         }
+
+
+
     }
 }
 
@@ -183,7 +195,7 @@ void ABC::runOptimization() {
 
 }
 
-bool ABC::selfAdaptiveStrategy(bee &colony_bee) {
+pair<bee, int> ABC::selfAdaptiveStrategy(bee &colony_bee) {
     bee new_bee = colony_bee;
 
     if (neighbour_list.empty()){
@@ -213,21 +225,19 @@ bool ABC::selfAdaptiveStrategy(bee &colony_bee) {
 
         }
         else if (approach == neighbouring_approaches::TWO_INSERT){
-
+            twoInsertions(new_bee);
         }
 
         // Evaluate
         vector<pair<task *, task *>> path = decodeOperationsToPath(new_bee);
         buildSchedule(new_bee.schedule, path, jssp);
         if (new_bee.schedule.makespan < colony_bee.schedule.makespan){
-            // Replace solution and put approach in winning neighbour list
+            // Put approach in winning neighbour list
             winning_neighbour_list.push_back(approach);
             colony_bee = new_bee;
-            return true;
         }
-        return false;
 
-        // else: discard new solution
+        return make_pair(new_bee, approach);
     }
 }
 
@@ -289,7 +299,16 @@ void ABC::oneSwap(bee &colony_bee) {
 
 }
 
-//yo
+void ABC::twoInsertions(bee &colony_bee) {
+    oneInsertion(colony_bee);
+    oneInsertion(colony_bee);
+}
+
+void ABC::localSearch(bee &new_bee, int approach) {
+
+}
+
+
 
 
 
