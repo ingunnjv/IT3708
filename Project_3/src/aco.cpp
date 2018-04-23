@@ -123,7 +123,8 @@ void ACO::runOptimization() {
 
         cycle++;
     }
-    saveScheduleAsCSV(all_time_best_schedule, "Best", jssp);
+    saveScheduleAsCSV(all_time_best_schedule, "Best-ant-schedule", jssp);
+    callPythonGanttChartPlotter("Best-ant-schedule");
 }
 
 template<typename T>

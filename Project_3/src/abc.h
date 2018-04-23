@@ -9,6 +9,7 @@
 #include <ctime>
 #include <cstdlib>
 #include "schedule_builder.h"
+#include "utils.h"
 
 enum neighbouring_approaches {ONE_SWAP = 0, ONE_INSERT, TWO_SWAP, TWO_INSERT};
 

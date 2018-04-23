@@ -1,4 +1,5 @@
 #include "utils.h"
+#import <string>
 using namespace std;
 
 std::pair<int, int> id2xy(int id, int num_cols){
@@ -15,4 +16,13 @@ bool isElementInVector(int element, std::vector<int> vec){
         }
     }
     return false;
+}
+
+void callPythonGanttChartPlotter(string solutionFileName){
+    /* Create gantt chart from python script */
+    printf("Print Gantt chart of best solution..\n");
+    string command = "python \"..\\src\\run_gantt.py\"";
+    string args = " " + solutionFileName;
+    command += args;
+    system(command.c_str());
 }

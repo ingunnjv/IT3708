@@ -253,6 +253,8 @@ void ABC::runOptimization() {
 
         cycle++;
     }
+    saveScheduleAsCSV(best_schedule, "Best-bee-schedule", jssp);
+    callPythonGanttChartPlotter("Best-bee-schedule");
 }
 
 pair<bee, int> ABC::selfAdaptiveStrategy(bee &colony_bee) {
