@@ -36,8 +36,8 @@ int main(int argc, char *argv[]) {
     }
     else if(optimizer == "abc"){
         /* Create parameters and artificial bee colony optimization object */
-        int num_food_sources = 50;
-        int abandonment_limit = 50;
+        int num_food_sources = 20;
+        int abandonment_limit = 100;
         int cycles = 1000;
         int nl_length = 200;
         double p_local_search = 0.1;
