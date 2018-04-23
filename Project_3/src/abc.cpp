@@ -250,7 +250,7 @@ void ABC::scoutBeePhase() {
 void ABC::runOptimization() {
     int cycle = 0;
     while(cycle < cycles) {
-        if(cycle % 20 == 0 and cycle != 0){
+        if(cycle % 100 == 0 and cycle != 0){
             double average_makespan = computeAverageMakespan();
             printf("Cycle: %d\n", cycle);
             printf("- Shortest makespan all time: %f\n", best_schedule.makespan);
@@ -417,8 +417,10 @@ void ABC::localSearch(bee &original_bee, int approach) {
             switch (local_search_approach){
                 case neighbouring_approaches::ONE_SWAP:
                     oneSwap(new_bee);
+                    break;
                 case neighbouring_approaches::ONE_INSERT:
                     oneInsertion(new_bee);
+                    break;
                 default:
                     oneSwap(new_bee);
             }

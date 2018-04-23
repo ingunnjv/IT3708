@@ -9,6 +9,10 @@ void buildSchedule(schedule &schedule, const vector<pair<task *, task *>> &path,
 
     // Add tasks to machines in correct order
     schedule.machine_schedules.resize(jssp->getNumMachines());
+    for (auto &machine_schedule: schedule.machine_schedules){
+        machine_schedule.clear();
+    }
+
     for (auto &edge: path){
         task* task = edge.second;
         schedule_block block;
@@ -83,7 +87,7 @@ void saveScheduleAsCSV(schedule &schedule, string filename, JSSP *jssp) {
         for (auto &schedule_block: machine_schedule){
             file << "Machine " << schedule_block.task->machine_no << ",";
             file << schedule_block.start_time << "," << schedule_block.start_time + schedule_block.task->process_time << ",";
-            file << "Job " << schedule_block.task->job_id << ",J" << schedule_block.task->job_id << (schedule_block.task->task_id - 1) % jssp->getNumMachines() << "\n";
+            file << "Job " << schedule_block.task->job_id << "," << schedule_block.task->job_id << "-" << (schedule_block.task->task_id - 1) % jssp->getNumMachines() << "\n";
         }
     }
     file.close();
