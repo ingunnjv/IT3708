@@ -18,15 +18,15 @@ int main(int argc, char *argv[]) {
 
     if(optimizer == "aco"){
         /* Create parameters and ant colony optimization object */
-        int swarm_size = 50;
-        int cycles = 1000;
-        double alpha = 0.2;
-        double beta = 2;
-        double rho = 0.7;
-        double initial_pheromone = 0.1;
-        double max_pheromone = 1;
-        double min_pheromone = 0.01;
-        double Q = 1;
+        int swarm_size = 10;
+        int cycles = 3000;
+        double alpha = 2;
+        double beta = 4;
+        double rho = 0.8;
+        double initial_pheromone = 10;
+        double max_pheromone = 100;
+        double min_pheromone = 1;
+        double Q = 1000;
         ACO aco = ACO(jssp, swarm_size, cycles, alpha, beta, rho, initial_pheromone, Q,
                       max_pheromone, min_pheromone);
 
