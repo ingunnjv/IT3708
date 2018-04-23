@@ -25,16 +25,20 @@ private:
     std::vector<int> old_bees_indices;
     bee* idiet_loser_bee;
     bee* super_amazing_bee;
+    // maybe save abandoned_bees?
+
     int num_food_sources;
     int abandonment_limit;
     int cycles;
-    // maybe save abandoned_bees?
+    double p_local_search;
+
     std::vector<int> neighbour_list;
     std::vector<int> winning_neighbour_list;
     int nl_length;
 
+
 public:
-    ABC(JSSP &jssp, int num_food_sources, int abandonment_limit, int cycles, int NL_length);
+    ABC(JSSP &jssp, int num_food_sources, int abandonment_limit, int cycles, int nl_length, double p_local_search);
     void initColony();
     void initOperationSequence(bee &colony_bee);
     void initNeighbourList();
@@ -45,7 +49,7 @@ public:
     void onlookerBeePhase();
     void scoutBeePhase();
     std::pair<bee, int> selfAdaptiveStrategy(bee &colony_bee);
-    void localSearch(bee &new_bee, int approach);
+    void localSearch(bee &original_bee, int approach);
     std::pair<int, int> binaryTournamentSelection(int size);
 
     void oneInsertion(bee &colony_bee);
