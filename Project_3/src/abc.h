@@ -47,6 +47,7 @@ public:
 
     void oneInsertion(bee &colony_bee);
     void oneSwap(bee &colony_bee);
+    void twoSwaps(bee &colony_bee);
 
     void runOptimization();
 };
