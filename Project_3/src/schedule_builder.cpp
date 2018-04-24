@@ -86,7 +86,7 @@ void saveScheduleAsCSV(schedule &schedule, string filename, JSSP *jssp) {
         for (auto &schedule_block: machine_schedule){
             file << "Machine " << schedule_block.task->machine_no << ",";
             file << schedule_block.start_time << "," << schedule_block.start_time + schedule_block.task->process_time << ",";
-            file << "Job " << schedule_block.task->job_id << "," << schedule_block.task->job_id << "-" << (schedule_block.task->task_id - 1) % jssp->getNumMachines() << "\n";
+            file << "Job " << schedule_block.task->job_id << "," << schedule_block.task->job_id << "/" << (schedule_block.task->task_id - 1) % jssp->getNumMachines() << "\n";
         }
     }
     file.close();
