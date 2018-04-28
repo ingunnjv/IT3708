@@ -5,7 +5,9 @@
 #include "jssp.h"
 #include "schedule_builder.h"
 
-enum decidability_rules{MRTasks = 0, MRTime};
+const int NUMBER_OF_RULES = 4;
+
+enum decidability_rules{MRTasks = 0, MRTime, LRTasks, LRTime};
 
 struct ant{
     std::vector<std::pair<task*,task*>> path;
@@ -37,7 +39,8 @@ public:
             double Q, double max_pheromone, double min_pheromone, double optimal_solution_val);
     void initializePheromoneTrails();
     void printPheromoneTrailsTable();
-    std::vector <std::pair<task *, task *>> getStateTransitions(const std::vector<std::vector<int>> &tabu);
+    std::vector<std::pair<task *, task *>> getStateTransitions(const std::vector<std::vector<int>> &tabu);
+    std::vector<std::pair<task *, task *>> getStateTransitions2(const std::vector<std::vector<int>> &tabu, const ant &colony_ant);
     std::vector<double> getStateTransitionProbs(std::vector<std::pair<task *, task *>> state_transitions, uint8_t decidability_rule,
                                                     const std::vector<std::vector<int>> &tabu);
     void addAntPheromoneContribution(std::vector<std::vector<double>> &pheromone_accumulator,
@@ -52,7 +55,10 @@ public:
     bool isTabuFull(std::vector<std::vector<int>> &tabu);
     int chooseNextState(std::vector<double> &state_transistion_probs);
     void updateTabu(std::vector<std::vector<int>> &tabu, task* next_task);
-    void generatePaths(std::vector<std::vector<int>> &tabu, std::vector<ant> &ants);
+    double decodeHeuristicToValue(std::vector<double> &remaining_time_per_job, std::vector<int> &remaining_tasks_per_job,
+                                  int decidability_rule, task* next_task);
+    void simpleTabuViz(std::vector<std::vector<int>> matrix);
+    void printAvailableStateTransitions(std::vector<std::pair<task*, task*>> availableStateTransitions);
 
 };
 
