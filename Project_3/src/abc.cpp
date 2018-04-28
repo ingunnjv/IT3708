@@ -3,13 +3,15 @@
 
 using namespace std;
 
-ABC::ABC(JSSP &jssp, int food_sources, int abandonment_limit, int cycles, int nl_length, double p_local_search) {
+ABC::ABC(JSSP &jssp, int food_sources, int abandonment_limit, int cycles, int nl_length, double p_local_search,
+         double optimal_solution_val) {
     this->jssp = &jssp;
     this->num_food_sources = food_sources;
     this->abandonment_limit = abandonment_limit;
     this->cycles = cycles;
     this->p_local_search = p_local_search;
     this->nl_length = nl_length;
+    this->optimal_solution_val = optimal_solution_val;
     this->employed_bees.resize((unsigned)num_food_sources);
     initColony();
     initNeighbourList();
@@ -267,6 +269,7 @@ void ABC::runOptimization() {
         cycle++;
     }
     saveScheduleAsCSV(best_schedule, "Best-bee-schedule", jssp);
+    printScoreToScreen(best_schedule.makespan, optimal_solution_val);
     callPythonGanttChartPlotter("Best-bee-schedule");
 }
 

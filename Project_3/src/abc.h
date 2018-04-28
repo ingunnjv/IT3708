@@ -31,13 +31,15 @@ private:
     int abandonment_limit;
     int cycles;
     double p_local_search;
+    double optimal_solution_val;
 
     std::vector<int> neighbour_list;
     std::vector<int> winning_neighbour_list;
     int nl_length;
 
 public:
-    ABC(JSSP &jssp, int num_food_sources, int abandonment_limit, int cycles, int nl_length, double p_local_search);
+    ABC(JSSP &jssp, int num_food_sources, int abandonment_limit, int cycles, int nl_length, double p_local_search,
+            double optimal_solution_val);
     void initColony();
     void initOperationSequence(bee &colony_bee);
     void initNeighbourList();
