@@ -1,5 +1,5 @@
-#ifndef PROJECT_3_SCHEDULEBUILDER_H
-#define PROJECT_3_SCHEDULEBUILDER_H
+#ifndef PROJECT_3_SCHEDULE_BUILDER_H
+#define PROJECT_3_SCHEDULE_BUILDER_H
 
 #include "jssp.h"
 
@@ -20,4 +20,4 @@ void saveScheduleAsCSV(schedule &schedule, std::string filename, JSSP *jssp);
 
 
 
-#endif //PROJECT_3_SCHEDULEBUILDER_H
+#endif //PROJECT_3_SCHEDULE_BUILDER_H

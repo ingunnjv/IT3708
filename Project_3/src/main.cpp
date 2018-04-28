@@ -19,10 +19,10 @@ int main(int argc, char *argv[]) {
     if(optimizer == "aco"){
         /* Create parameters and ant colony optimization object */
         int swarm_size = 10;
-        int cycles = 3000;
+        int cycles = 500;
         double alpha = 2;
-        double beta = 4;
-        double rho = 0.8;
+        double beta = 10;
+        double rho = 0.7;
         double initial_pheromone = 10;
         double max_pheromone = 100;
         double min_pheromone = 1;
@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
 
         /* Run optimization */
         aco.runOptimization();
-        aco.printPheromoneTrailsTable();
+//        aco.printPheromoneTrailsTable();
     }
     else if(optimizer == "abc"){
         /* Create parameters and artificial bee colony optimization object */
