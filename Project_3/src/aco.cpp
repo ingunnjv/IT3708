@@ -60,7 +60,7 @@ void ACO::runOptimization() {
 
     int cycle = 0;
     while(cycle < cycles){
-        if(cycle % 1 == 0 and cycle != 0){
+        if(cycle % 10 == 0 and cycle != 0){
             printf("Cycle: %d\n", cycle);
             printf("- Shortest makespan all time: %f\n", all_time_best_schedule.makespan);
             printf("- Average makespan size: %f\n", average_makespan);
