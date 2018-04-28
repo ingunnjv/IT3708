@@ -10,7 +10,7 @@
 using namespace std;
 
 ACO::ACO(JSSP &jssp, int swarm_size, int cycles, double alpha, double beta, double rho, double initial_pheromone,
-         double Q, double max_pheromone, double min_pheromone) {
+         double Q, double max_pheromone, double min_pheromone, double optimal_solution_val) {
     this->jssp = &jssp;
     this->swarm_size = swarm_size;
     this->cycles = cycles;
@@ -21,6 +21,7 @@ ACO::ACO(JSSP &jssp, int swarm_size, int cycles, double alpha, double beta, doub
     this->initial_pheromone = initial_pheromone;
     this->max_pheromone_on_trails = max_pheromone;
     this->min_pheromone_on_trails = min_pheromone;
+    this->optimal_solution_val = optimal_solution_val;
     this->pheromone_trails.resize(jssp.getNumTasks()+1, vector<double>(jssp.getNumTasks()+1));
 }
 
@@ -119,11 +120,12 @@ void ACO::runOptimization() {
             addAntPheromoneContribution(pheromone_accumulator, elites, ants[k], k, schedules[k].makespan);
         }
         updatePheromoneTrails(pheromone_accumulator);
-        average_makespan /= swarm_size;
+        average_makespan = average_makespan / swarm_size;
 
         cycle++;
     }
     saveScheduleAsCSV(all_time_best_schedule, "Best-ant-schedule", jssp);
+    printScoreToScreen(all_time_best_schedule.makespan, optimal_solution_val);
     callPythonGanttChartPlotter("Best-ant-schedule");
 }
 

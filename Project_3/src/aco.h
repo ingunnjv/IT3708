@@ -29,11 +29,12 @@ private:
     double initial_pheromone; // initial pheromone for all edges
     double max_pheromone_on_trails;
     double min_pheromone_on_trails;
+    double optimal_solution_val;
     std::vector<std::vector<double>> pheromone_trails; // pheromone on all edges
 
 public:
     ACO(JSSP &jssp, int swarm_size, int cycles, double alpha, double beta, double rho, double initial_pheromone,
-            double Q, double max_pheromone, double min_pheromone);
+            double Q, double max_pheromone, double min_pheromone, double optimal_solution_val);
     void initializePheromoneTrails();
     void printPheromoneTrailsTable();
     std::vector <std::pair<task *, task *>> getStateTransitions(const std::vector<std::vector<int>> &tabu);
