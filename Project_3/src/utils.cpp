@@ -29,6 +29,6 @@ void callPythonGanttChartPlotter(string solutionFileName){
 void printScoreToScreen(double best_makespan, double optimal_makespan){
     printf("\nOptimizer algorithm terminated successfuly\n");
     printf("Shortest makespan obtained: %.1f\n", best_makespan);
-    printf("Shortest known optimal makespan: %.1f\n", optimal_makespan);
-    printf("The best solution obtained is within %.2f %% of the optimal solution\n", 100.0*(1.0 - optimal_makespan/best_makespan));
+    printf("Acceptable makespan value: %.1f\n", optimal_makespan);
+    printf("The best solution obtained is within %.2f %% of the optimal solution\n", 100.0*(best_makespan/optimal_makespan - 1.0));
 }

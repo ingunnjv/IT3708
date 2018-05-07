@@ -31,7 +31,7 @@ private:
     int abandonment_limit;
     int cycles;
     double p_local_search;
-    double optimal_solution_val;
+    double acceptable_solution_makespan;
 
     std::vector<int> neighbour_list;
     std::vector<int> winning_neighbour_list;

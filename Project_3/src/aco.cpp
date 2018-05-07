@@ -21,7 +21,7 @@ ACO::ACO(JSSP &jssp, int swarm_size, int cycles, double alpha, double beta, doub
     this->initial_pheromone = initial_pheromone;
     this->max_pheromone_on_trails = max_pheromone;
     this->min_pheromone_on_trails = min_pheromone;
-    this->optimal_solution_val = optimal_solution_val;
+    this->acceptable_solution_makespan = optimal_solution_val;
     this->pheromone_trails.resize(jssp.getNumTasks()+1, vector<double>(jssp.getNumTasks()+1));
 }
 
@@ -60,11 +60,18 @@ void ACO::runOptimization() {
 
     int cycle = 0;
     while(cycle < cycles){
-        if(cycle % 10 == 0 and cycle != 0){
+        // Print progress to screen
+        if(cycle % 1 == 0 and cycle != 0){
             printf("Cycle: %d\n", cycle);
             printf("- Shortest makespan all time: %f\n", all_time_best_schedule.makespan);
             printf("- Average makespan size: %f\n", average_makespan);
         }
+
+        // Early stopping
+        if(100.0*(all_time_best_schedule.makespan/acceptable_solution_makespan - 1) <= 10.0){
+            break;
+        }
+
         // Reset pheromone accumulator
         setMatrixToZero(pheromone_accumulator);
 
@@ -137,7 +144,7 @@ void ACO::runOptimization() {
         cycle++;
     }
     saveScheduleAsCSV(all_time_best_schedule, "Best-ant-schedule", jssp);
-    printScoreToScreen(all_time_best_schedule.makespan, optimal_solution_val);
+    printScoreToScreen(all_time_best_schedule.makespan, acceptable_solution_makespan);
     callPythonGanttChartPlotter("Best-ant-schedule");
 }
 
@@ -299,16 +306,8 @@ void ACO::addAntPheromoneContribution(vector<vector<double>> &pheromone_accumula
         for (auto &edge: colony_ant.path){
             task* task_i= edge.first;
             task* task_j = edge.second;
-            pheromone_accumulator[task_i->task_id][task_j->task_id] += (Q / makespan) * elites.size() + 20;
-            pheromone_accumulator[task_j->task_id][task_i->task_id] += (Q / makespan) * elites.size() + 20;
-        }
-    }
-    else{
-        for (auto &edge: colony_ant.path){
-            task* task_i= edge.first;
-            task* task_j = edge.second;
-            pheromone_accumulator[task_i->task_id][task_j->task_id] += Q / makespan;
-            pheromone_accumulator[task_j->task_id][task_i->task_id] += Q / makespan;
+            pheromone_accumulator[task_i->task_id][task_j->task_id] += (Q / makespan) * elites.size();
+            pheromone_accumulator[task_j->task_id][task_i->task_id] += (Q / makespan) * elites.size();
         }
     }
 }

@@ -31,7 +31,7 @@ private:
     double initial_pheromone; // initial pheromone for all edges
     double max_pheromone_on_trails;
     double min_pheromone_on_trails;
-    double optimal_solution_val;
+    double acceptable_solution_makespan;
     std::vector<std::vector<double>> pheromone_trails; // pheromone on all edges
 
 public:

@@ -13,20 +13,20 @@ int main(int argc, char *argv[]) {
     /* Create Job shop scheduling problem instance */
     string optimizer = "aco";
     JSSP jssp = JSSP();
-    if(jssp.readInputData("6")) return 1;
-    double optimal_solution_val = 979;
+    if(jssp.readInputData("5")) return 1;
+    double optimal_solution_val = 1451;
 
     if(optimizer == "aco"){
         /* Create parameters and ant colony optimization object */
-        int swarm_size = jssp.getNumJobs()/2;
-        int cycles = 500;
-        double alpha = 2;
-        double beta = 5;
-        double rho = 0.75;
+        int swarm_size = 20;
+        int cycles = 1000;
+        double alpha = 10;
+        double beta = 20;
+        double rho = 0.95;
         double initial_pheromone = 10;
         double max_pheromone = 100;
         double min_pheromone = 1;
-        double Q = 1000;
+        double Q = 2000;
         ACO aco = ACO(jssp, swarm_size, cycles, alpha, beta, rho,
                       initial_pheromone, Q, max_pheromone, min_pheromone, optimal_solution_val);
 

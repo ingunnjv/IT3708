@@ -11,7 +11,7 @@ ABC::ABC(JSSP &jssp, int food_sources, int abandonment_limit, int cycles, int nl
     this->cycles = cycles;
     this->p_local_search = p_local_search;
     this->nl_length = nl_length;
-    this->optimal_solution_val = optimal_solution_val;
+    this->acceptable_solution_makespan = optimal_solution_val;
     this->employed_bees.resize((unsigned)num_food_sources);
     initColony();
     initNeighbourList();
@@ -261,6 +261,11 @@ void ABC::runOptimization() {
             printf("- Shortest makespan all time: %f\n", best_schedule.makespan);
             printf("- Average makespan size: %f\n", average_makespan);
         }
+        // Early stopping
+        if(100.0*(best_schedule.makespan/acceptable_solution_makespan - 1) <= 10.0){
+            break;
+        }
+
         old_bees_indices.clear();
         employedBeePhase();
         onlookerBeePhase();
@@ -269,7 +274,7 @@ void ABC::runOptimization() {
         cycle++;
     }
     saveScheduleAsCSV(best_schedule, "Best-bee-schedule", jssp);
-    printScoreToScreen(best_schedule.makespan, optimal_solution_val);
+    printScoreToScreen(best_schedule.makespan, acceptable_solution_makespan);
     callPythonGanttChartPlotter("Best-bee-schedule");
 }
 
