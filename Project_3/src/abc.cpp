@@ -255,13 +255,12 @@ void ABC::scoutBeePhase() {
 void ABC::runOptimization() {
     int cycle = 0;
     while(cycle < cycles) {
-        if(cycle % 10 == 0 and cycle != 0){
-            double average_makespan = computeAverageMakespan();
-            printf("Cycle: %d\n", cycle);
-            printf("- Shortest makespan all time: %f\n", best_schedule.makespan);
-            printf("- Average makespan size: %f\n", average_makespan);
-        }
-        // Early stopping
+        // Print progress to screen
+        double average_makespan = computeAverageMakespan();
+        printf("Cycle: %d\n", cycle);
+        printf("- Shortest makespan all time: %.2f\n", best_schedule.makespan);
+        printf("- Average makespan size: %.2f\n", average_makespan);
+        // Check for early stopping
         if(100.0*(best_schedule.makespan/acceptable_solution_makespan - 1) <= 10.0){
             break;
         }

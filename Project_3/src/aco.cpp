@@ -60,16 +60,16 @@ void ACO::runOptimization() {
 
     int cycle = 0;
     while(cycle < cycles){
-        // Print progress to screen
-        if(cycle % 1 == 0 and cycle != 0){
+        if(cycle != 0){
+            // Print progress to screen
             printf("Cycle: %d\n", cycle);
-            printf("- Shortest makespan all time: %f\n", all_time_best_schedule.makespan);
-            printf("- Average makespan size: %f\n", average_makespan);
-        }
+            printf("- Shortest makespan all time: %.2f\n", all_time_best_schedule.makespan);
+            printf("- Average makespan size: %.2f\n", average_makespan);
 
-        // Early stopping
-        if(100.0*(all_time_best_schedule.makespan/acceptable_solution_makespan - 1) <= 10.0){
-            break;
+            // Early stopping
+            if(100.0*(all_time_best_schedule.makespan/acceptable_solution_makespan - 1) <= 10.0){
+                break;
+            }
         }
 
         // Reset pheromone accumulator
